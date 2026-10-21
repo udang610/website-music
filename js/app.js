@@ -4449,7 +4449,13 @@ function copyRomanticQuote() {
 let currentTrackForPlaylist = null;
 
 function openAddToPlaylistModal(trackIdentifier) {
-  const track = findTrackByIdOrIdx(trackIdentifier);
+  let track = (typeof trackIdentifier === 'object' && trackIdentifier !== null)
+    ? trackIdentifier
+    : findTrackByIdOrIdx(trackIdentifier);
+
+  if (!track && typeof getPlayingTrack === 'function') {
+    track = getPlayingTrack();
+  }
   if (!track) return;
   currentTrackForPlaylist = track;
 
@@ -4458,9 +4464,9 @@ function openAddToPlaylistModal(trackIdentifier) {
   const title = document.getElementById('addToPlTrackTitle');
   const artist = document.getElementById('addToPlTrackArtist');
 
-  if (cover) cover.src = track.cover;
-  if (title) title.textContent = track.title;
-  if (artist) artist.textContent = track.artist;
+  if (cover) cover.src = track.cover || 'images/covers/those_eyes.jpg';
+  if (title) title.textContent = track.title || 'Lagu';
+  if (artist) artist.textContent = track.artist || '';
 
   renderAddToPlaylistItems();
 
@@ -4471,6 +4477,13 @@ function openAddToPlaylistModal(trackIdentifier) {
 }
 
 function openAddToPlaylistModalCurrent() {
+  if (typeof getPlayingTrack === 'function') {
+    const playing = getPlayingTrack();
+    if (playing) {
+      openAddToPlaylistModal(playing);
+      return;
+    }
+  }
   const tracks = getActiveTracks();
   if (!tracks.length) return;
   openAddToPlaylistModal(tracks[currentIndex]?.id || currentIndex);
@@ -4490,7 +4503,7 @@ function renderAddToPlaylistItems() {
 
   const track = currentTrackForPlaylist;
   container.innerHTML = state.playlists.map(pl => {
-    const hasTrack = pl.tracks.some(t => 
+    const hasTrack = Array.isArray(pl.tracks) && pl.tracks.some(t => 
       (t.id && track.id && t.id === track.id) || 
       (t.title && track.title && t.title.toLowerCase().trim() === track.title.toLowerCase().trim())
     );
@@ -4501,16 +4514,16 @@ function renderAddToPlaylistItems() {
           <img src="${pl.cover || 'images/spotify_covers/jakarta.jpg'}" class="w-10 h-10 rounded-xl object-cover border border-[#FFD2DC] shrink-0" alt="${pl.title}" />
           <div class="min-w-0">
             <h5 class="text-xs font-bold text-[#3B2328] truncate">${pl.title}</h5>
-            <p class="text-[11px] text-[#9A737C]">${pl.tracks.length} lagu</p>
+            <p class="text-[11px] text-[#9A737C]">${(pl.tracks || []).length} lagu</p>
           </div>
         </div>
         <div>
           ${hasTrack ? `
-            <span class="px-3 py-1.5 rounded-full bg-emerald-100 text-emerald-700 text-[11px] font-bold flex items-center gap-1">
-              <i class="fa-solid fa-check text-xs"></i> Sudah Ada
+            <span class="px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-300 text-[11px] font-bold flex items-center gap-1 shadow-xs transition">
+              <i class="fa-solid fa-check text-xs text-emerald-600"></i> Sudah Tersimpan
             </span>
           ` : `
-            <button onclick="addTrackToSelectedPlaylist('${pl.id}')" class="px-3 py-1.5 rounded-full bg-gradient-to-r from-[#FA8072] to-[#E85D75] hover:opacity-95 text-white text-[11px] font-bold flex items-center gap-1 shadow-xs transition cursor-pointer">
+            <button type="button" onclick="event.stopPropagation(); addTrackToSelectedPlaylist('${pl.id}')" class="px-3 py-1.5 rounded-full bg-gradient-to-r from-[#FA8072] to-[#E85D75] hover:opacity-95 text-white text-[11px] font-bold flex items-center gap-1 shadow-xs transition cursor-pointer active:scale-95">
               <i class="fa-solid fa-plus text-xs"></i> Tambahkan
             </button>
           `}
@@ -4525,6 +4538,10 @@ function addTrackToSelectedPlaylist(targetPlId) {
   const pl = state.playlists.find(p => p.id === targetPlId);
   if (!pl) return;
 
+  if (!Array.isArray(pl.tracks)) {
+    pl.tracks = [];
+  }
+
   const track = currentTrackForPlaylist;
   const alreadyIn = pl.tracks.some(t => 
     (t.id && track.id && t.id === track.id) || 
@@ -4533,6 +4550,7 @@ function addTrackToSelectedPlaylist(targetPlId) {
 
   if (alreadyIn) {
     showToastNotification(`Lagu '${track.title}' sudah ada di playlist '${pl.title}'`, 'info');
+    renderAddToPlaylistItems();
     return;
   }
 
@@ -4544,13 +4562,14 @@ function addTrackToSelectedPlaylist(targetPlId) {
   pl.tracks.push(newTrack);
   saveState();
 
-  renderPlaylists();
-  renderSidebarPlaylists();
+  if (typeof renderHomePlaylistsGrid === 'function') renderHomePlaylistsGrid();
+  if (typeof renderSidebarPlaylists === 'function') renderSidebarPlaylists();
   if (state.activePlaylistId === targetPlId) {
-    renderTracklist();
-    updatePlaylistHeader();
+    if (typeof renderTracklist === 'function') renderTracklist();
+    if (typeof updatePlaylistHeader === 'function') updatePlaylistHeader();
   }
 
+  // Immediately re-render items so button changes to "Sudah Tersimpan"
   renderAddToPlaylistItems();
   showToastNotification(`Lagu '${track.title}' berhasil ditambahkan ke '${pl.title}'! 🎵`, 'success');
 }
