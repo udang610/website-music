@@ -282,31 +282,50 @@ async function initSupabaseSync() {
     } else if (data && data.data && Object.keys(data.data).length > 0) {
       const cloudData = data.data;
 
-      // Check if current client has local customizations while cloud is still on default
-      const localCustomPin = localStorage.getItem('romantic_music_custom_pin') || (state.pinCode !== '1402' ? state.pinCode : null);
+      // Always retrieve and apply the cloud state (since cloud is the cross-device single source of truth)
+      console.log('✦ Retrieved existing Cloud state from Supabase!');
+      applyRemoteState(cloudData);
+
+      // Check if this client has any pending local-only profile changes that were not yet in cloud
+      const localCustomPin = localStorage.getItem('romantic_music_custom_pin');
       const localCustomProfile = localStorage.getItem('romantic_music_profile_config');
       let parsedProfile = null;
       if (localCustomProfile) {
         try { parsedProfile = JSON.parse(localCustomProfile); } catch(e){}
       }
-      const localHasCustomAvatar = (parsedProfile && parsedProfile.yourAvatar) || (state.yourAvatar && !state.yourAvatar.includes('profile_nadeyy.jpg'));
-      const cloudHasDefaultPin = !cloudData.pinCode || cloudData.pinCode === '1402';
-      const cloudHasDefaultAvatar = !cloudData.yourAvatar || cloudData.yourAvatar.includes('profile_nadeyy.jpg');
 
-      if ((localCustomPin || localHasCustomAvatar) && (cloudHasDefaultPin && cloudHasDefaultAvatar)) {
-        console.log('✦ Preserving local profile/PIN and syncing to Supabase Cloud...');
-        if (localCustomPin) state.pinCode = localCustomPin;
-        if (parsedProfile) {
-          if (parsedProfile.yourName) state.yourName = parsedProfile.yourName;
-          if (parsedProfile.partnerName) state.partnerName = parsedProfile.partnerName;
-          if (parsedProfile.yourAvatar) state.yourAvatar = parsedProfile.yourAvatar;
-          if (parsedProfile.partnerAvatar) state.partnerAvatar = parsedProfile.partnerAvatar;
-          if (parsedProfile.loveNote) state.loveNote = parsedProfile.loveNote;
+      let localDiff = false;
+      if (localCustomPin && localCustomPin !== '1402' && (!cloudData.pinCode || cloudData.pinCode === '1402')) {
+        state.pinCode = localCustomPin;
+        localDiff = true;
+      }
+      if (parsedProfile) {
+        if (parsedProfile.yourName && (!cloudData.yourName || cloudData.yourName === 'nadeyy ★')) {
+          state.yourName = parsedProfile.yourName;
+          localDiff = true;
         }
+        if (parsedProfile.partnerName && (!cloudData.partnerName || cloudData.partnerName === 'sayang')) {
+          state.partnerName = parsedProfile.partnerName;
+          localDiff = true;
+        }
+        if (parsedProfile.yourAvatar && parsedProfile.yourAvatar !== cloudData.yourAvatar && !parsedProfile.yourAvatar.includes('profile_nadeyy.jpg')) {
+          state.yourAvatar = parsedProfile.yourAvatar;
+          localDiff = true;
+        }
+        if (parsedProfile.partnerAvatar && parsedProfile.partnerAvatar !== cloudData.partnerAvatar) {
+          state.partnerAvatar = parsedProfile.partnerAvatar;
+          localDiff = true;
+        }
+        if (parsedProfile.loveNote && parsedProfile.loveNote !== cloudData.loveNote) {
+          state.loveNote = parsedProfile.loveNote;
+          localDiff = true;
+        }
+      }
+
+      if (localDiff) {
+        console.log('✦ Pushing newer local customizations up to Supabase Cloud...');
+        saveState();
         await pushStateToSupabase();
-      } else {
-        console.log('✦ Retrieved existing Cloud state from Supabase!');
-        applyRemoteState(cloudData);
       }
     } else {
       console.log('✦ Cloud database is empty, initializing with local state...');
