@@ -177,8 +177,34 @@ async function initSupabaseSync() {
     if (error) {
       console.warn('Supabase fetch error:', error);
     } else if (data && data.data && Object.keys(data.data).length > 0) {
-      console.log('✦ Retrieved existing Cloud state from Supabase!');
-      applyRemoteState(data.data);
+      const cloudData = data.data;
+
+      // Check if current client has local customizations while cloud is still on default
+      const localCustomPin = localStorage.getItem('romantic_music_custom_pin') || (state.pinCode !== '1402' ? state.pinCode : null);
+      const localCustomProfile = localStorage.getItem('romantic_music_profile_config');
+      let parsedProfile = null;
+      if (localCustomProfile) {
+        try { parsedProfile = JSON.parse(localCustomProfile); } catch(e){}
+      }
+      const localHasCustomAvatar = (parsedProfile && parsedProfile.yourAvatar) || (state.yourAvatar && !state.yourAvatar.includes('profile_nadeyy.jpg'));
+      const cloudHasDefaultPin = !cloudData.pinCode || cloudData.pinCode === '1402';
+      const cloudHasDefaultAvatar = !cloudData.yourAvatar || cloudData.yourAvatar.includes('profile_nadeyy.jpg');
+
+      if ((localCustomPin || localHasCustomAvatar) && (cloudHasDefaultPin && cloudHasDefaultAvatar)) {
+        console.log('✦ Preserving local profile/PIN and syncing to Supabase Cloud...');
+        if (localCustomPin) state.pinCode = localCustomPin;
+        if (parsedProfile) {
+          if (parsedProfile.yourName) state.yourName = parsedProfile.yourName;
+          if (parsedProfile.partnerName) state.partnerName = parsedProfile.partnerName;
+          if (parsedProfile.yourAvatar) state.yourAvatar = parsedProfile.yourAvatar;
+          if (parsedProfile.partnerAvatar) state.partnerAvatar = parsedProfile.partnerAvatar;
+          if (parsedProfile.loveNote) state.loveNote = parsedProfile.loveNote;
+        }
+        await pushStateToSupabase();
+      } else {
+        console.log('✦ Retrieved existing Cloud state from Supabase!');
+        applyRemoteState(cloudData);
+      }
     } else {
       console.log('✦ Cloud database is empty, initializing with local state...');
       await pushStateToSupabase();
@@ -2015,9 +2041,6 @@ function saveState() {
   } catch (err) {
     console.warn('Could not save profile config:', err);
   }
-
-  // Automatically sync updates to Supabase Cloud Database!
-  triggerSupabaseSync();
 }
 
 function getActivePlaylist() {
@@ -3662,6 +3685,9 @@ async function savePlaylistSettings(e) {
 
     populateProfileShowcaseView();
     switchToProfileShowcaseMode();
+    
+    // Explicitly sync user settings to Supabase Cloud!
+    await pushStateToSupabase();
     showToastNotification('Perubahan profil & data kustomisasi berhasil disimpan! 💕', 'success');
   } catch (err) {
     console.error('Error saving playlist settings:', err);
@@ -3919,6 +3945,7 @@ function saveNewPolaroid(event) {
   state.polaroidMemories.unshift(newPol);
   localStorage.setItem('romantic_music_polaroid_memories', JSON.stringify(state.polaroidMemories));
   saveState();
+  triggerSupabaseSync();
   closeAddPolaroidModal();
   renderPolaroidGallery();
   showToastNotification('Foto polaroid baru berhasil disimpan ke Galeri! ✨', 'success');
@@ -3929,6 +3956,7 @@ function deletePolaroid(id) {
     state.polaroidMemories = (state.polaroidMemories || []).filter(p => p.id !== id);
     localStorage.setItem('romantic_music_polaroid_memories', JSON.stringify(state.polaroidMemories));
     saveState();
+    triggerSupabaseSync();
     renderPolaroidGallery();
     showToastNotification('Foto polaroid telah dihapus permanen', 'success');
   }
@@ -3939,6 +3967,7 @@ function clearAllPolaroids() {
     state.polaroidMemories = [];
     localStorage.setItem('romantic_music_polaroid_memories', JSON.stringify([]));
     saveState();
+    triggerSupabaseSync();
     renderPolaroidGallery();
     showToastNotification('Seluruh foto polaroid telah dihapus permanen', 'success');
   }
@@ -4037,6 +4066,7 @@ function sendMainJamChatMessage(event) {
   if (!state.jamMessages) state.jamMessages = [];
   state.jamMessages.push({ sender: 'you', text, time: timeStr });
   saveState();
+  triggerSupabaseSync();
   input.value = '';
   renderMainJamChat();
   renderJamChat();
