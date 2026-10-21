@@ -3427,6 +3427,10 @@ function handleFileUpload(event, targetInputId) {
     compressImageFile(file, maxDim, quality, (compressedDataUrl) => {
       const input = document.getElementById(targetInputId);
       if (input) input.value = compressedDataUrl;
+      if (targetInputId === 'editPlaylistCover') {
+        const prev = document.getElementById('editPlaylistCoverPreview');
+        if (prev) prev.src = compressedDataUrl;
+      }
       showToastNotification(`Foto "${file.name}" siap disimpan! ✨`, 'success');
     });
   } else {
@@ -3434,6 +3438,10 @@ function handleFileUpload(event, targetInputId) {
     reader.onload = (e) => {
       const input = document.getElementById(targetInputId);
       if (input) input.value = e.target.result;
+      if (targetInputId === 'editPlaylistCover') {
+        const prev = document.getElementById('editPlaylistCoverPreview');
+        if (prev) prev.src = e.target.result;
+      }
       showToastNotification(`File "${file.name}" berhasil diunggah!`, 'success');
     };
     reader.readAsDataURL(file);
@@ -3615,57 +3623,81 @@ function switchToProfileShowcaseMode() {
   }
 }
 
-function openSettingsModal() {
-  const activePl = getActivePlaylist();
-  
-  // Fill form inputs
-  document.getElementById('setPlaylistTitle').value = activePl.title;
-  document.getElementById('setPinCode').value = localStorage.getItem('romantic_music_custom_pin') || state.pinCode || '1402';
-  document.getElementById('setPlaylistDesc').value = activePl.desc;
-  document.getElementById('setPlaylistCover').value = activePl.cover;
-  document.getElementById('setYourName').value = state.yourName;
-  document.getElementById('setPartnerName').value = state.partnerName;
-  document.getElementById('setYourAvatar').value = state.yourAvatar;
-  document.getElementById('setPartnerAvatar').value = state.partnerAvatar;
-  document.getElementById('setLoveNote').value = state.loveNote;
+function openProfileModal() {
+  if (document.getElementById('setPinCode')) {
+    document.getElementById('setPinCode').value = localStorage.getItem('romantic_music_custom_pin') || state.pinCode || '1402';
+  }
+  if (document.getElementById('setYourName')) document.getElementById('setYourName').value = state.yourName || '';
+  if (document.getElementById('setPartnerName')) document.getElementById('setPartnerName').value = state.partnerName || '';
+  if (document.getElementById('setYourAvatar')) document.getElementById('setYourAvatar').value = state.yourAvatar || '';
+  if (document.getElementById('setPartnerAvatar')) document.getElementById('setPartnerAvatar').value = state.partnerAvatar || '';
+  if (document.getElementById('setLoveNote')) document.getElementById('setLoveNote').value = state.loveNote || '';
 
-  // Show showcase view first as requested by user
   switchToProfileShowcaseMode();
   populateProfileShowcaseView();
 
-  const modal = document.getElementById('settingsModal');
-  modal.classList.remove('hidden');
-  modal.classList.add('flex');
+  const modal = document.getElementById('profileModal') || document.getElementById('settingsModal');
+  if (modal) {
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+  }
 }
 
-function closeSettingsModal() {
-  const modal = document.getElementById('settingsModal');
-  modal.classList.add('hidden');
-  modal.classList.remove('flex');
+function closeProfileModal() {
+  const modal = document.getElementById('profileModal') || document.getElementById('settingsModal');
+  if (modal) {
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+  }
 }
 
-async function savePlaylistSettings(e) {
+// Aliases for compatibility
+function openSettingsModal() { openProfileModal(); }
+function closeSettingsModal() { closeProfileModal(); }
+
+function openEditPlaylistModal() {
+  const activePl = getActivePlaylist();
+  if (document.getElementById('editPlaylistTitle')) {
+    document.getElementById('editPlaylistTitle').value = activePl.title || '';
+  }
+  if (document.getElementById('editPlaylistDesc')) {
+    document.getElementById('editPlaylistDesc').value = activePl.desc || '';
+  }
+  if (document.getElementById('editPlaylistCover')) {
+    document.getElementById('editPlaylistCover').value = activePl.cover || '';
+  }
+  if (document.getElementById('editPlaylistCoverPreview')) {
+    document.getElementById('editPlaylistCoverPreview').src = activePl.cover || 'images/spotify_covers/jakarta.jpg';
+  }
+
+  const modal = document.getElementById('editPlaylistModal');
+  if (modal) {
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+  }
+}
+
+function closeEditPlaylistModal() {
+  const modal = document.getElementById('editPlaylistModal');
+  if (modal) {
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+  }
+}
+
+async function saveProfileOnlySettings(e) {
   if (e) {
     if (e.preventDefault) e.preventDefault();
     if (e.stopPropagation) e.stopPropagation();
   }
 
-  const saveBtn = document.getElementById('btnSaveSettings');
+  const saveBtn = document.getElementById('btnSaveProfileOnly') || document.getElementById('btnSaveSettings');
   if (saveBtn) {
     saveBtn.disabled = true;
     saveBtn.textContent = 'Menyimpan... ⏳';
   }
 
   try {
-    const activePl = getActivePlaylist();
-
-    // 1. Title & Desc
-    if (activePl) {
-      activePl.title = (document.getElementById('setPlaylistTitle')?.value || '').trim() || activePl.title || '✦ our melodies.';
-      activePl.desc = (document.getElementById('setPlaylistDesc')?.value || '').trim();
-    }
-
-    // 2. PIN
     const newPin = (document.getElementById('setPinCode')?.value || '').trim() || '1402';
     state.pinCode = newPin;
     try {
@@ -3674,26 +3706,16 @@ async function savePlaylistSettings(e) {
       console.warn('PIN localStorage warn:', err);
     }
 
-    // 3. Compress any uploaded base64 images so they never exceed localStorage quota
-    let rawCover = (document.getElementById('setPlaylistCover')?.value || '').trim();
     let rawYourAvatar = (document.getElementById('setYourAvatar')?.value || '').trim();
     let rawPartnerAvatar = (document.getElementById('setPartnerAvatar')?.value || '').trim();
 
-    const [compressedCover, compressedYourAvatar, compressedPartnerAvatar] = await Promise.all([
-      compressDataUrlIfNeeded(rawCover, 700, 0.8),
+    const [compressedYourAvatar, compressedPartnerAvatar] = await Promise.all([
       compressDataUrlIfNeeded(rawYourAvatar, 300, 0.8),
       compressDataUrlIfNeeded(rawPartnerAvatar, 300, 0.8)
     ]);
 
-    if (activePl && compressedCover) {
-      activePl.cover = compressedCover;
-    }
-    if (compressedYourAvatar) {
-      state.yourAvatar = compressedYourAvatar;
-    }
-    if (compressedPartnerAvatar) {
-      state.partnerAvatar = compressedPartnerAvatar;
-    }
+    if (compressedYourAvatar) state.yourAvatar = compressedYourAvatar;
+    if (compressedPartnerAvatar) state.partnerAvatar = compressedPartnerAvatar;
 
     state.yourName = (document.getElementById('setYourName')?.value || '').trim() || 'Kamu';
     state.partnerName = (document.getElementById('setPartnerName')?.value || '').trim() || 'Sayang';
@@ -3706,19 +3728,67 @@ async function savePlaylistSettings(e) {
 
     populateProfileShowcaseView();
     switchToProfileShowcaseMode();
-    
-    // Explicitly sync user settings to Supabase Cloud!
+
     await pushStateToSupabase();
-    showToastNotification('Perubahan profil & data kustomisasi berhasil disimpan! 💕', 'success');
+    showToastNotification('Profil & PIN berhasil disimpan! 💕', 'success');
   } catch (err) {
-    console.error('Error saving playlist settings:', err);
-    showToastNotification('Gagal menyimpan: ' + err.message, 'error');
+    console.error('Error saving profile settings:', err);
+    showToastNotification('Gagal menyimpan profil: ' + err.message, 'error');
   } finally {
     if (saveBtn) {
       saveBtn.disabled = false;
-      saveBtn.textContent = 'Simpan Perubahan';
+      saveBtn.textContent = 'Simpan Profil';
     }
   }
+}
+
+async function savePlaylistOnlySettings(e) {
+  if (e) {
+    if (e.preventDefault) e.preventDefault();
+    if (e.stopPropagation) e.stopPropagation();
+  }
+
+  const saveBtn = document.getElementById('btnSavePlaylistOnly');
+  if (saveBtn) {
+    saveBtn.disabled = true;
+    saveBtn.textContent = 'Menyimpan... ⏳';
+  }
+
+  try {
+    const activePl = getActivePlaylist();
+    if (activePl) {
+      activePl.title = (document.getElementById('editPlaylistTitle')?.value || '').trim() || activePl.title || '✦ our melodies.';
+      activePl.desc = (document.getElementById('editPlaylistDesc')?.value || '').trim();
+
+      let rawCover = (document.getElementById('editPlaylistCover')?.value || '').trim();
+      const compressedCover = await compressDataUrlIfNeeded(rawCover, 700, 0.8);
+      if (compressedCover) {
+        activePl.cover = compressedCover;
+      }
+    }
+
+    saveState();
+    hydrateUI();
+    if (currentView === 'playlist') renderTracklist();
+    else if (currentView === 'home') renderHomeView();
+
+    await pushStateToSupabase();
+    closeEditPlaylistModal();
+    showToastNotification('Detail playlist berhasil diperbarui! 🎵', 'success');
+  } catch (err) {
+    console.error('Error saving playlist details:', err);
+    showToastNotification('Gagal menyimpan playlist: ' + err.message, 'error');
+  } finally {
+    if (saveBtn) {
+      saveBtn.disabled = false;
+      saveBtn.textContent = 'Simpan Playlist';
+    }
+  }
+}
+
+// Wrapper for backward compatibility
+async function savePlaylistSettings(e) {
+  return saveProfileOnlySettings(e);
 }
 
 function resetDefaultData() {

@@ -118,9 +118,9 @@
       </button>
 
       <!-- Couple Dual Avatar (Profile & Settings Configuration) -->
-      <div onclick="openSettingsModal()"
+      <div onclick="openProfileModal()"
         class="flex items-center -space-x-2 cursor-pointer pl-1 hover:scale-105 transition"
-        title="Konfigurasi Profil & Pasangan">
+        title="Profil Kita & Konfigurasi">
         <img id="navAvatarYou" src="images/spotify_covers/profile_nadeyy.jpg"
           class="w-8 h-8 rounded-full object-cover border-2 border-white shadow" alt="You" />
         <img id="navAvatarPartner"
@@ -308,8 +308,8 @@
               <i class="fa-solid fa-trash-can text-[11px]"></i>
               <span class="hidden sm:inline">Hapus Playlist</span>
             </button>
-            <button onclick="openSettingsModal()"
-              class="px-3 py-1.5 rounded-full bg-white/80 hover:bg-white text-[#3B2328] text-xs font-bold shadow-sm flex items-center gap-1.5 backdrop-blur-md transition">
+            <button onclick="openEditPlaylistModal()"
+              class="px-3 py-1.5 rounded-full bg-white/80 hover:bg-white text-[#3B2328] text-xs font-bold shadow-sm flex items-center gap-1.5 backdrop-blur-md transition cursor-pointer">
               <i class="fa-solid fa-pen text-[#FA8072]"></i>
               <span>Edit Playlist</span>
             </button>
@@ -320,8 +320,9 @@
         <div
           class="relative p-5 md:p-7 bg-gradient-to-b from-[#FA8072]/90 via-[#FF9EAB]/75 to-white flex flex-col md:flex-row items-center md:items-end gap-6">
           <!-- Square Album Cover with Shadow -->
-          <div onclick="openSettingsModal()"
-            class="w-40 h-40 md:w-48 md:h-48 rounded-xl overflow-hidden shadow-2xl shadow-[#3B2328]/25 shrink-0 cursor-pointer group relative border-2 border-white/60">
+          <div onclick="openEditPlaylistModal()"
+            class="w-40 h-40 md:w-48 md:h-48 rounded-xl overflow-hidden shadow-2xl shadow-[#3B2328]/25 shrink-0 cursor-pointer group relative border-2 border-white/60"
+            title="Klik untuk Ganti Cover Playlist">
             <img id="heroPlaylistCover" src="images/spotify_covers/jakarta.jpg"
               class="w-full h-full object-cover group-hover:scale-105 transition duration-500" alt="Playlist Cover" />
             <div
@@ -1195,8 +1196,8 @@
     </div>
   </div>
 
-  <!-- ================= MODAL 2: PROFIL PASANGAN & KUSTOMISASI ================= -->
-  <div id="settingsModal"
+  <!-- ================= MODAL 2: PROFIL KITA & AKUN ================= -->
+  <div id="profileModal"
     class="fixed inset-0 z-50 bg-black/45 backdrop-blur-xs hidden items-center justify-center p-4">
     <div
       class="bg-white border border-[#FFD2DC] rounded-3xl max-w-lg w-full shadow-2xl max-h-[92vh] overflow-y-auto text-xs relative overflow-hidden"
@@ -1350,84 +1351,65 @@
         </div>
       </div>
 
-      <!-- VIEW 2: PROFILE & CONFIGURATION EDIT FORM (FORM INPUT) -->
+      <!-- VIEW 2: PROFILE EDIT FORM (KHUSUS PROFIL & AKUN) -->
       <div id="profileEditView" class="hidden p-6">
         <div class="flex items-center justify-between pb-3 mb-4 border-b border-[#FFE4E9]">
           <button type="button" onclick="switchToProfileShowcaseMode()"
-            class="text-xs font-bold text-[#FA8072] hover:text-[#E85D75] flex items-center gap-1.5 transition">
+            class="text-xs font-bold text-[#FA8072] hover:text-[#E85D75] flex items-center gap-1.5 transition cursor-pointer">
             <i class="fa-solid fa-arrow-left"></i>
             <span>Kembali ke Profil</span>
           </button>
-          <h3 class="text-base font-extrabold text-[#3B2328]">Edit Konfigurasi 🎨</h3>
-          <button type="button" onclick="closeSettingsModal()"
-            class="w-7 h-7 rounded-full bg-[#FFF5F7] text-[#9A737C] flex items-center justify-center hover:bg-[#FFE4E9] transition"
+          <h3 class="text-base font-extrabold text-[#3B2328]">Edit Profil & Akun ✨</h3>
+          <button type="button" onclick="closeProfileModal()"
+            class="w-7 h-7 rounded-full bg-[#FFF5F7] text-[#9A737C] flex items-center justify-center hover:bg-[#FFE4E9] transition cursor-pointer"
             title="Tutup">
             <i class="fa-solid fa-xmark text-xs"></i>
           </button>
         </div>
 
-        <form id="profileEditForm" onsubmit="savePlaylistSettings(event); return false;" class="space-y-3">
+        <form id="profileEditForm" onsubmit="saveProfileOnlySettings(event); return false;" class="space-y-3.5">
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label class="font-bold block mb-1">Judul Playlist (Header Besar)</label>
-              <input id="setPlaylistTitle" type="text"
-                class="w-full px-3 py-2 rounded-xl bg-[#FFF5F7] border border-[#FFD2DC]" />
-            </div>
-            <div>
-              <label class="font-bold block mb-1">PIN Layar Kunci (4 Digit)</label>
-              <input id="setPinCode" type="text" maxlength="4"
-                class="w-full px-3 py-2 rounded-xl bg-[#FFF5F7] border border-[#FFD2DC]" />
-            </div>
-          </div>
-
-          <div>
-            <label class="font-bold block mb-1">Deskripsi Subtitle Playlist</label>
-            <input id="setPlaylistDesc" type="text"
-              class="w-full px-3 py-2 rounded-xl bg-[#FFF5F7] border border-[#FFD2DC]" />
-          </div>
-
-          <div>
-            <label class="font-bold block mb-1">URL Foto Cover Utama Playlist</label>
-            <input id="setPlaylistCover" type="text"
-              class="w-full px-3 py-2 rounded-xl bg-[#FFF5F7] border border-[#FFD2DC]" />
-            <input type="file" accept="image/*" onchange="handleFileUpload(event, 'setPlaylistCover')"
-              class="mt-1 text-[10px] text-[#9A737C]" />
-          </div>
-
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-            <div>
-              <label class="font-bold block mb-1">Nama Kamu (Curator)</label>
+              <label class="font-bold block mb-1 text-[#3B2328]">Nama Kamu</label>
               <input id="setYourName" type="text"
-                class="w-full px-3 py-2 rounded-xl bg-[#FFF5F7] border border-[#FFD2DC]" />
+                class="w-full px-3 py-2 rounded-xl bg-[#FFF5F7] border border-[#FFD2DC] focus:outline-none focus:border-[#FA8072]" />
             </div>
             <div>
-              <label class="font-bold block mb-1">Nama Pasanganmu</label>
+              <label class="font-bold block mb-1 text-[#3B2328]">Nama Pasangan</label>
               <input id="setPartnerName" type="text"
-                class="w-full px-3 py-2 rounded-xl bg-[#FFF5F7] border border-[#FFD2DC]" />
+                class="w-full px-3 py-2 rounded-xl bg-[#FFF5F7] border border-[#FFD2DC] focus:outline-none focus:border-[#FA8072]" />
             </div>
           </div>
 
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label class="font-bold block mb-1">Foto Avatar Kamu (URL)</label>
+              <label class="font-bold block mb-1 text-[#3B2328]">Foto Avatar Kamu</label>
               <input id="setYourAvatar" type="text"
-                class="w-full px-3 py-2 rounded-xl bg-[#FFF5F7] border border-[#FFD2DC]" />
+                class="w-full px-3 py-2 rounded-xl bg-[#FFF5F7] border border-[#FFD2DC] focus:outline-none focus:border-[#FA8072]"
+                placeholder="URL atau pilih file..." />
               <input type="file" accept="image/*" onchange="handleFileUpload(event, 'setYourAvatar')"
                 class="mt-1 text-[10px] text-[#9A737C]" />
             </div>
             <div>
-              <label class="font-bold block mb-1">Foto Avatar Pasangan (URL)</label>
+              <label class="font-bold block mb-1 text-[#3B2328]">Foto Avatar Pasangan</label>
               <input id="setPartnerAvatar" type="text"
-                class="w-full px-3 py-2 rounded-xl bg-[#FFF5F7] border border-[#FFD2DC]" />
+                class="w-full px-3 py-2 rounded-xl bg-[#FFF5F7] border border-[#FFD2DC] focus:outline-none focus:border-[#FA8072]"
+                placeholder="URL atau pilih file..." />
               <input type="file" accept="image/*" onchange="handleFileUpload(event, 'setPartnerAvatar')"
                 class="mt-1 text-[10px] text-[#9A737C]" />
             </div>
           </div>
 
           <div>
-            <label class="font-bold block mb-1">Isi Surat Cinta Rahasia (Love Note) 💌</label>
+            <label class="font-bold block mb-1 text-[#3B2328]">PIN Layar Kunci (4 Digit)</label>
+            <input id="setPinCode" type="text" maxlength="4"
+              class="w-full px-3 py-2 rounded-xl bg-[#FFF5F7] border border-[#FFD2DC] font-mono tracking-widest focus:outline-none focus:border-[#FA8072]" />
+          </div>
+
+          <div>
+            <label class="font-bold block mb-1 text-[#3B2328]">Isi Surat Cinta Rahasia (Love Note) 💌</label>
             <textarea id="setLoveNote" rows="3"
-              class="w-full px-3 py-2 rounded-xl bg-[#FFF5F7] border border-[#FFD2DC]"></textarea>
+              class="w-full px-3 py-2 rounded-xl bg-[#FFF5F7] border border-[#FFD2DC] focus:outline-none focus:border-[#FA8072]"></textarea>
           </div>
 
           <div class="pt-3 flex items-center justify-between">
@@ -1436,13 +1418,86 @@
             <div class="flex gap-2">
               <button type="button" onclick="switchToProfileShowcaseMode()"
                 class="px-4 py-2 rounded-xl bg-[#FFF5F7] text-[#9A737C] font-bold cursor-pointer">Batal</button>
-              <button id="btnSaveSettings" type="button" onclick="savePlaylistSettings(event)"
+              <button id="btnSaveProfileOnly" type="submit"
                 class="px-5 py-2 rounded-xl bg-gradient-to-r from-[#FA8072] to-[#E85D75] text-white font-bold shadow-md hover:scale-105 active:scale-95 transition cursor-pointer">Simpan
-                Perubahan</button>
+                Profil</button>
             </div>
           </div>
         </form>
       </div>
+
+    </div>
+  </div>
+
+  <!-- ================= MODAL: EDIT KHUSUS PLAYLIST ================= -->
+  <div id="editPlaylistModal"
+    class="fixed inset-0 z-50 bg-black/45 backdrop-blur-xs hidden items-center justify-center p-4">
+    <div
+      class="bg-white border border-[#FFD2DC] rounded-3xl max-w-md w-full shadow-2xl p-6 text-xs relative overflow-hidden"
+      onclick="event.stopPropagation()">
+      
+      <div class="flex items-center justify-between pb-3 mb-4 border-b border-[#FFE4E9]">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-full bg-[#FFE4E9] flex items-center justify-center text-[#FA8072]">
+            <i class="fa-solid fa-pen-nib text-sm"></i>
+          </div>
+          <div>
+            <h3 class="text-base font-extrabold text-[#3B2328]">Edit Detail Playlist</h3>
+            <p class="text-[10px] text-[#9A737C]">Ubah judul, deskripsi, dan foto cover playlist</p>
+          </div>
+        </div>
+        <button type="button" onclick="closeEditPlaylistModal()"
+          class="w-7 h-7 rounded-full bg-[#FFF5F7] text-[#9A737C] flex items-center justify-center hover:bg-[#FFE4E9] transition cursor-pointer"
+          title="Tutup">
+          <i class="fa-solid fa-xmark text-xs"></i>
+        </button>
+      </div>
+
+      <form onsubmit="savePlaylistOnlySettings(event); return false;" class="space-y-3.5">
+        <div>
+          <label class="font-bold block mb-1 text-[#3B2328]">Judul Playlist</label>
+          <input id="editPlaylistTitle" type="text"
+            class="w-full px-3.5 py-2.5 rounded-xl bg-[#FFF5F7] border border-[#FFD2DC] text-[#3B2328] font-bold focus:outline-none focus:border-[#FA8072]"
+            placeholder="Contoh: ✦ our melodies." />
+        </div>
+
+        <div>
+          <label class="font-bold block mb-1 text-[#3B2328]">Deskripsi Subtitle</label>
+          <input id="editPlaylistDesc" type="text"
+            class="w-full px-3.5 py-2.5 rounded-xl bg-[#FFF5F7] border border-[#FFD2DC] text-[#3B2328] focus:outline-none focus:border-[#FA8072]"
+            placeholder="Contoh: after rain and lean with u <3" />
+        </div>
+
+        <div>
+          <label class="font-bold block mb-1 text-[#3B2328]">Foto Cover Playlist</label>
+          <div class="flex items-center gap-3 mb-1">
+            <img id="editPlaylistCoverPreview" src="images/spotify_covers/jakarta.jpg"
+              class="w-16 h-16 rounded-xl object-cover border border-[#FFD2DC] shadow-xs shrink-0" alt="Cover Preview" />
+            <div class="flex-1 min-w-0">
+              <input id="editPlaylistCover" type="text"
+                oninput="document.getElementById('editPlaylistCoverPreview').src = this.value"
+                class="w-full px-3 py-2 rounded-xl bg-[#FFF5F7] border border-[#FFD2DC] text-xs focus:outline-none focus:border-[#FA8072]"
+                placeholder="URL Gambar atau pilih file..." />
+              <input type="file" accept="image/*" onchange="handleFileUpload(event, 'editPlaylistCover')"
+                class="mt-1.5 text-[10px] text-[#9A737C]" />
+            </div>
+          </div>
+        </div>
+
+        <div class="pt-3 border-t border-[#FFE4E9] flex items-center justify-end gap-2">
+          <button type="button" onclick="closeEditPlaylistModal()"
+            class="px-4 py-2.5 rounded-xl bg-[#FFF5F7] text-[#9A737C] font-bold hover:bg-[#FFE4E9] transition cursor-pointer">
+            Batal
+          </button>
+          <button id="btnSavePlaylistOnly" type="submit"
+            class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#FA8072] to-[#E85D75] text-white font-bold shadow-md shadow-[#FA8072]/25 hover:opacity-95 active:scale-95 transition cursor-pointer flex items-center gap-1.5">
+            <i class="fa-solid fa-check"></i>
+            <span>Simpan Playlist</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
 
     </div>
   </div>
@@ -1746,7 +1801,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <!-- App Script -->
-  <script src="js/app.js?v=20261021_v3"></script>
+  <script src="js/app.js?v=20261021_v4"></script>
 </body>
 
 </html>
