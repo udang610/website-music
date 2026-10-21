@@ -37,7 +37,7 @@ async function pushStateToSupabase() {
   if (!client) return;
 
   try {
-    const activePl = (typeof getActivePlaylist === 'function') ? getActivePlaylist() : (state && state.playlists ? state.playlists[0] : null);
+    const oursPl = (state && state.playlists) ? (state.playlists.find(p => p.id === 'pl-ours') || state.playlists[0]) : null;
     const syncPayload = {
       pinCode: state.pinCode,
       yourName: state.yourName,
@@ -48,9 +48,10 @@ async function pushStateToSupabase() {
       polaroidMemories: state.polaroidMemories || [],
       jamMessages: state.jamMessages || [],
       activePlaylistId: state.activePlaylistId,
-      playlistTitle: activePl ? activePl.title : '',
-      playlistDesc: activePl ? activePl.desc : '',
-      playlistCover: activePl ? activePl.cover : ''
+      targetPlaylistId: 'pl-ours',
+      playlistTitle: oursPl ? oursPl.title : '',
+      playlistDesc: oursPl ? oursPl.desc : '',
+      playlistCover: oursPl ? oursPl.cover : ''
     };
 
     const { error } = await client
@@ -119,21 +120,38 @@ function applyRemoteState(remoteData) {
       changed = true;
     }
 
-    const activePl = (typeof getActivePlaylist === 'function') ? getActivePlaylist() : null;
-    if (activePl) {
-      if (remoteData.playlistTitle && activePl.title !== remoteData.playlistTitle) {
-        activePl.title = remoteData.playlistTitle;
+    const targetPlId = remoteData.targetPlaylistId || 'pl-ours';
+    const targetPl = state.playlists.find(p => p.id === targetPlId);
+    if (targetPl) {
+      if (remoteData.playlistTitle && targetPl.title !== remoteData.playlistTitle) {
+        targetPl.title = remoteData.playlistTitle;
         changed = true;
       }
-      if (remoteData.playlistDesc !== undefined && activePl.desc !== remoteData.playlistDesc) {
-        activePl.desc = remoteData.playlistDesc;
+      if (remoteData.playlistDesc !== undefined && targetPl.desc !== remoteData.playlistDesc) {
+        targetPl.desc = remoteData.playlistDesc;
         changed = true;
       }
-      if (remoteData.playlistCover && activePl.cover !== remoteData.playlistCover) {
-        activePl.cover = remoteData.playlistCover;
+      if (remoteData.playlistCover && targetPl.cover !== remoteData.playlistCover) {
+        targetPl.cover = remoteData.playlistCover;
         changed = true;
       }
     }
+
+    // Auto-heal: Ensure other default playlists that were corrupted by the sync bug are restored to defaults
+    state.playlists.forEach(pl => {
+      if (pl.id !== 'pl-ours') {
+        const defaultPl = defaultState.playlists.find(dp => dp.id === pl.id);
+        if (defaultPl) {
+          if (pl.title === 'ours' || (pl.cover && pl.cover.startsWith('data:image'))) {
+            console.log(`✦ Restoring corrupted playlist ${pl.id} to original default: ${defaultPl.title}`);
+            pl.title = defaultPl.title;
+            pl.desc = defaultPl.desc;
+            pl.cover = defaultPl.cover;
+            changed = true;
+          }
+        }
+      }
+    });
 
     if (changed) {
       try {
@@ -1966,9 +1984,34 @@ function loadState() {
       parsed.polaroidMemories = defaultState.polaroidMemories;
     }
 
-    // Ensure real studio audio files & official covers are mapped to tracks
+    // Deduplicate playlist IDs & auto-repair any corrupted default playlists
     if (parsed.playlists) {
+      const seenIds = new Set();
+      parsed.playlists = parsed.playlists.filter(pl => {
+        if (!pl.id || seenIds.has(pl.id)) return false;
+        seenIds.add(pl.id);
+        return true;
+      });
+
       parsed.playlists.forEach(pl => {
+        if (pl.id !== 'pl-ours') {
+          const defaultPl = defaultState.playlists.find(dp => dp.id === pl.id);
+          if (defaultPl) {
+            if (pl.title === 'ours' || (pl.cover && pl.cover.startsWith('data:image'))) {
+              console.log(`✦ Auto-healing corrupted playlist ${pl.id} back to: ${defaultPl.title}`);
+              pl.title = defaultPl.title;
+              pl.desc = defaultPl.desc;
+              pl.cover = defaultPl.cover;
+            }
+          }
+        }
+      });
+      parsed.playlists.forEach(pl => {
+        if (!pl.tracks) {
+          const defaultPl = defaultState.playlists.find(dp => dp.id === pl.id);
+          pl.tracks = defaultPl && defaultPl.tracks ? JSON.parse(JSON.stringify(defaultPl.tracks)) : [];
+        }
+
         if (['pl-ours', 'pl-1'].includes(pl.id)) {
           const hasDua = pl.tracks.some(t => (t.title || '').toLowerCase().includes('dua sejoli') || t.id === 't-dua-sejoli');
           if (!hasDua) {
@@ -1988,7 +2031,8 @@ function loadState() {
           }
         }
 
-        pl.tracks.forEach(t => {
+        if (Array.isArray(pl.tracks)) {
+          pl.tracks.forEach(t => {
           const lowTitle = (t.title || '').toLowerCase().trim();
           for (const [key, localPath] of Object.entries(realAudioTracks)) {
             if (lowTitle.includes(key)) {
@@ -2006,7 +2050,8 @@ function loadState() {
             t.duration = '4:18';
           }
         });
-      });
+      }
+    });
     }
 
     const mergedState = { ...defaultState, ...parsed };
