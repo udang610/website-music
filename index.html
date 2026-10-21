@@ -21,7 +21,7 @@
   <script src="https://www.youtube.com/iframe_api"></script>
 </head>
 
-<body class="lg:h-screen lg:overflow-hidden flex flex-col select-none">
+<body class="h-[100dvh] max-h-[100dvh] overflow-hidden flex flex-col select-none bg-[#FFF5F7]">
 
   <!-- ================= PIN LOCK SCREEN MODAL (SIMPLE & PRIVATE) ================= -->
   <div id="lockScreen"
@@ -70,7 +70,7 @@
   </div>
 
   <!-- ================= TOP NAVIGATION BAR (SPOTIFY HEADER) ================= -->
-  <header class="h-16 px-2.5 lg:px-3 flex items-center justify-between gap-3 shrink-0 bg-[#FFF5F7]">
+  <header class="hidden lg:flex h-16 px-2.5 lg:px-3 items-center justify-between gap-3 shrink-0 bg-[#FFF5F7]">
     <!-- Left Logo aligned with sidebar -->
     <div class="flex items-center gap-2.5">
       <div class="w-[74px] flex items-center justify-center shrink-0">
@@ -131,7 +131,7 @@
   </header>
 
   <!-- ================= MAIN 3-COLUMN SPOTIFY WORKSPACE ================= -->
-  <div class="flex-1 flex flex-col lg:flex-row gap-2.5 px-2.5 lg:px-3 pb-2 overflow-hidden">
+  <div class="hidden lg:flex flex-1 flex-col lg:flex-row gap-2.5 px-2.5 lg:px-3 pb-2 overflow-hidden">
 
     <!-- 1. LEFT MINI LIBRARY SIDEBAR -->
     <aside
@@ -943,8 +943,295 @@
     </aside>
   </div>
 
+  <!-- ================= DEDICATED MOBILE TURNTABLE PLAYER (AESTHETIC VINTAGE VINYL) ================= -->
+  <div id="mobileTurntableContainer" class="flex lg:hidden flex-col h-[100dvh] max-h-[100dvh] w-full overflow-hidden justify-between px-3.5 py-2.5 select-none relative bg-gradient-to-b from-[#FFF5F7] via-[#FFF0F3] to-[#FFE4E9]">
+    
+    <!-- 1. MOBILE TOP BAR -->
+    <div class="flex items-center justify-between shrink-0 h-10 w-full z-10">
+      <!-- Left: Open Playlist Drawer Button -->
+      <button onclick="openMobilePlaylistDrawer()"
+        class="w-9 h-9 rounded-full bg-white/80 backdrop-blur-md border border-[#FFD2DC] text-[#3B2328] hover:text-[#FA8072] flex items-center justify-center shadow-xs transition active:scale-95"
+        title="Daftar Lagu">
+        <i class="fa-solid fa-chevron-down text-sm"></i>
+      </button>
+
+      <!-- Center: Aesthetic Segmented Tabs / Title -->
+      <div class="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/75 backdrop-blur-md border border-[#FFD2DC] shadow-xs">
+        <button onclick="openMobilePlaylistDrawer()" class="text-xs font-bold text-[#E85D75] flex items-center gap-1">
+          <span>Lullaby</span>
+          <span class="w-1.5 h-1.5 rounded-full bg-[#FA8072]"></span>
+        </button>
+        <span class="text-[#FFD2DC] text-xs">|</span>
+        <button onclick="openLoveNoteModal()" class="text-[11px] font-semibold text-[#9A737C] hover:text-[#FA8072] transition">
+          Surat Cinta
+        </button>
+        <span class="text-[#FFD2DC] text-xs">|</span>
+        <button onclick="togglePolaroidModal()" class="text-[11px] font-semibold text-[#9A737C] hover:text-[#FA8072] transition">
+          Polaroid
+        </button>
+      </div>
+
+      <!-- Right: Share Song + Couple Profile Avatar Trigger -->
+      <div class="flex items-center gap-2">
+        <button onclick="openShareSongModalCurrent()"
+          class="w-9 h-9 rounded-full bg-white/80 backdrop-blur-md border border-[#FFD2DC] text-[#3B2328] hover:text-[#FA8072] flex items-center justify-center shadow-xs transition active:scale-95"
+          title="Bagikan Lagu">
+          <i class="fa-solid fa-arrow-up-from-bracket text-xs"></i>
+        </button>
+        <div onclick="openProfileModal()"
+          class="flex items-center -space-x-1.5 cursor-pointer pl-0.5 active:scale-95 transition"
+          title="Profil & PIN Kita">
+          <img id="mobileNavAvatarYou" src="images/spotify_covers/profile_nadeyy.jpg"
+            class="w-7 h-7 rounded-full object-cover border-2 border-white shadow-xs" alt="You" />
+          <img id="mobileNavAvatarPartner"
+            src="https://images.unsplash.com/photo-1517841905240-472988babdf9?w=120&auto=format&fit=crop&q=80"
+            class="w-7 h-7 rounded-full object-cover border-2 border-[#FA8072] shadow-xs" alt="Partner" />
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. VINTAGE REALISTIC VINYL TURNTABLE DECK (PEMUTAR PIRINGAN HITAM) -->
+    <div class="flex-1 flex items-center justify-center py-1 relative min-h-0">
+      <div class="mobile-turntable-deck">
+        
+        <!-- Deck Top-Left: Vintage Audio Badge & Power Indicator -->
+        <div class="absolute top-3 left-3.5 flex items-center gap-1 opacity-60 pointer-events-none">
+          <div class="w-4 h-4 rounded-full border border-[#8C6D75] flex items-center justify-center">
+            <span class="text-[7.5px] font-black text-[#8C6D75]">L</span>
+          </div>
+          <span class="text-[8px] font-extrabold tracking-wider text-[#8C6D75] uppercase">Hi-Fi</span>
+        </div>
+
+        <!-- Deck Recessed Turntable Platter Well -->
+        <div class="mobile-turntable-platter">
+          <!-- Spinning Vinyl Record -->
+          <div id="mobileVinylDisc" onclick="togglePlay()"
+            class="spin-vinyl mobile-vinyl-disc"
+            title="Ketuk vinyl untuk Play / Pause">
+            <!-- Concentric Grooves with Specular Sheen -->
+            <div class="absolute inset-2 rounded-full border border-white/10 pointer-events-none"></div>
+            <div class="absolute inset-4 rounded-full border border-white/10 pointer-events-none"></div>
+            <div class="absolute inset-7 rounded-full border border-white/10 pointer-events-none"></div>
+            <div class="absolute inset-10 rounded-full border border-white/10 pointer-events-none"></div>
+            <div class="absolute inset-0 rounded-full vinyl-sheen pointer-events-none"></div>
+            
+            <!-- Center Album Artwork Cover -->
+            <img id="mobileVinylCenterArt" src="images/covers/those_eyes.jpg"
+              class="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover border-2 border-[#FA8072] shadow-inner relative z-10 pointer-events-none"
+              alt="Vinyl Label" />
+            
+            <!-- Center Spindle Hole -->
+            <div class="w-3.5 h-3.5 rounded-full bg-white border border-neutral-800 absolute z-20 pointer-events-none shadow-xs"></div>
+          </div>
+        </div>
+
+        <!-- Realistic Mechanical Tonearm Assembly -->
+        <div id="mobileVinylTonearm" class="mobile-tonearm">
+          <div class="mobile-tonearm-rest"></div>
+          <div class="mobile-tonearm-pivot"></div>
+          <div class="mobile-tonearm-rod"></div>
+          <div class="mobile-tonearm-head">
+            <div class="mobile-tonearm-needle"></div>
+          </div>
+        </div>
+
+        <!-- Deck Bottom-Left: Vintage On/Off Toggle Switch -->
+        <div class="absolute bottom-2.5 left-3.5 flex flex-col items-center gap-0.5 opacity-70">
+          <div class="w-3.5 h-7 rounded-full bg-gradient-to-b from-[#b8aab0] to-[#8f8087] p-0.5 shadow-inner flex flex-col justify-between items-center cursor-pointer" onclick="togglePlay()">
+            <div class="w-2.5 h-2.5 rounded-full bg-white shadow-xs"></div>
+          </div>
+          <span class="text-[7px] font-bold text-[#8C6D75] tracking-tighter">OFF / ON</span>
+        </div>
+
+        <!-- Deck Bottom-Right: Vintage Pitch/Speed Slider -->
+        <div class="absolute bottom-2.5 right-3.5 flex flex-col items-center gap-0.5 opacity-70">
+          <div class="w-2 h-7 rounded-sm bg-gradient-to-b from-[#2b2225] to-[#1a1416] p-0.5 relative shadow-inner">
+            <div class="w-3 h-1.5 rounded bg-gradient-to-r from-[#d1c4c9] to-[#ffffff] border border-[#8C6D75] absolute top-1.5 -left-0.5 shadow-xs"></div>
+          </div>
+          <span class="text-[7px] font-bold text-[#8C6D75] tracking-tighter">PITCH</span>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- 3. TRACK INFO & FAVORITE LIKE BUTTON -->
+    <div class="flex items-center justify-between gap-3 px-2 shrink-0">
+      <div class="min-w-0 flex-1">
+        <h3 id="mobileTrackTitle" class="text-lg font-extrabold text-[#3B2328] truncate leading-tight tracking-tight">
+          Those Eyes
+        </h3>
+        <div class="flex items-center gap-1.5 mt-0.5">
+          <p id="mobileTrackArtist" class="text-xs font-semibold text-[#9A737C] truncate">
+            New West
+          </p>
+          <span class="px-1.5 py-0.2 rounded-md bg-[#FFE4E9] text-[#E85D75] text-[9px] font-black uppercase tracking-wider shrink-0">
+            Lullaby
+          </span>
+        </div>
+        <p id="mobileTrackMemory" class="text-[11px] text-[#9A737C]/80 italic truncate mt-0.5">
+          "Tatapan pertama yang bikin aku langsung jatuh hati sama kamu 👀✨"
+        </p>
+      </div>
+
+      <!-- Like Heart Button -->
+      <button onclick="toggleLikeCurrent()" id="mobileLikeBtn"
+        class="w-10 h-10 rounded-full bg-white/80 border border-[#FFD2DC] flex items-center justify-center text-[#9A737C] hover:text-[#FA8072] text-lg shadow-xs transition active:scale-125 shrink-0"
+        title="Suka Lagu Ini">
+        <i class="fa-regular fa-heart"></i>
+      </button>
+    </div>
+
+    <!-- 4. FEATURE ACTION TOOLBAR (ICON ROW SESUAI REFERENSI) -->
+    <div class="flex items-center justify-around py-1.5 px-3 bg-white/70 backdrop-blur-md rounded-2xl border border-[#FFD2DC]/80 shadow-xs shrink-0 my-1">
+      <!-- 1. Lyrics / Love Note -->
+      <button onclick="openLoveNoteModal()" class="flex flex-col items-center gap-0.5 text-[#9A737C] hover:text-[#FA8072] transition active:scale-110" title="Lirik & Surat Cinta">
+        <i class="fa-solid fa-microphone-lines text-sm"></i>
+        <span class="text-[9px] font-bold">Lirik</span>
+      </button>
+
+      <!-- 2. Listening Together / Jam -->
+      <button onclick="navigateTo('jam'); switchRightPanelTab('jam');" class="flex flex-col items-center gap-0.5 text-[#9A737C] hover:text-[#FA8072] transition active:scale-110" title="Jam Bersama Pasangan">
+        <i class="fa-solid fa-tower-broadcast text-sm text-[#FA8072]"></i>
+        <span class="text-[9px] font-bold">Jam</span>
+      </button>
+
+      <!-- 3. Polaroid Gallery -->
+      <button onclick="togglePolaroidModal()" class="flex flex-col items-center gap-0.5 text-[#9A737C] hover:text-[#FA8072] transition active:scale-110" title="Galeri Polaroid">
+        <i class="fa-solid fa-camera-retro text-sm text-[#E85D75]"></i>
+        <span class="text-[9px] font-bold">Foto</span>
+      </button>
+
+      <!-- 4. Couple Sweet Chat Message -->
+      <button onclick="openLoveNoteModal()" class="flex flex-col items-center gap-0.5 text-[#9A737C] hover:text-[#FA8072] transition active:scale-110" title="Pesan Cinta">
+        <i class="fa-solid fa-comment-dots text-sm"></i>
+        <span class="text-[9px] font-bold">Pesan</span>
+      </button>
+
+      <!-- 5. More Actions (Share / Add / Download) -->
+      <button onclick="openShareSongModalCurrent()" class="flex flex-col items-center gap-0.5 text-[#9A737C] hover:text-[#FA8072] transition active:scale-110" title="Opsi & Bagikan">
+        <i class="fa-solid fa-ellipsis-vertical text-sm"></i>
+        <span class="text-[9px] font-bold">Menu</span>
+      </button>
+    </div>
+
+    <!-- 5. TIMELINE PROGRESS SCRUBBER -->
+    <div class="px-2 shrink-0">
+      <div class="w-full flex items-center gap-2">
+        <input id="mobileProgressSlider" type="range" min="0" max="100" value="0"
+          oninput="seekAudio(this.value)" class="flex-1 w-full" />
+      </div>
+      <div class="flex items-center justify-between text-[11px] font-bold text-[#9A737C] px-0.5 mt-0.5">
+        <span id="mobileCurrentTimeText">0:00</span>
+        <span id="mobileDurationTimeText">3:41</span>
+      </div>
+    </div>
+
+    <!-- 6. MAIN PLAYBACK CONTROLS (ROW BAWAH SESUAI REFERENSI) -->
+    <div class="flex items-center justify-between px-3 pt-0.5 pb-1 shrink-0">
+      <!-- Shuffle Button -->
+      <button onclick="toggleShuffle()" id="mobileShuffleBtn"
+        class="w-10 h-10 rounded-full flex items-center justify-center text-[#9A737C] hover:text-[#FA8072] text-base transition active:scale-110"
+        title="Shuffle">
+        <i class="fa-solid fa-shuffle"></i>
+      </button>
+
+      <!-- Previous Track -->
+      <button onclick="prevTrack()"
+        class="w-11 h-11 rounded-full flex items-center justify-center text-[#3B2328] hover:text-[#FA8072] text-xl transition active:scale-110"
+        title="Lagu Sebelumnya">
+        <i class="fa-solid fa-backward-step"></i>
+      </button>
+
+      <!-- Big Central Play/Pause Button -->
+      <button onclick="togglePlay()" id="mobilePlayBtn"
+        class="w-15 h-15 rounded-full bg-[#3B2328] hover:bg-[#FA8072] text-white flex items-center justify-center shadow-lg shadow-[#3B2328]/25 hover:shadow-[#FA8072]/30 active:scale-95 transition-all duration-200 border-2 border-white/60"
+        title="Play / Pause">
+        <i id="mobilePlayIcon" class="fa-solid fa-play text-xl ml-0.5"></i>
+      </button>
+
+      <!-- Next Track -->
+      <button onclick="nextTrack()"
+        class="w-11 h-11 rounded-full flex items-center justify-center text-[#3B2328] hover:text-[#FA8072] text-xl transition active:scale-110"
+        title="Lagu Berikutnya">
+        <i class="fa-solid fa-forward-step"></i>
+      </button>
+
+      <!-- Playlist Queue Drawer Button (Floating Rounded Pill / Circle) -->
+      <button onclick="openMobilePlaylistDrawer()"
+        class="w-10 h-10 rounded-2xl bg-white border border-[#FFD2DC] shadow-xs flex items-center justify-center text-[#FA8072] hover:bg-[#FFE4E9] transition active:scale-110 relative"
+        title="Buka Daftar Lagu">
+        <i class="fa-solid fa-list-ul text-base"></i>
+        <span class="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-[#FA8072]"></span>
+      </button>
+    </div>
+
+  </div>
+
+  <!-- ================= MOBILE PLAYLIST DRAWER (BOTTOM SHEET MODAL) ================= -->
+  <div id="mobilePlaylistDrawerBackdrop" onclick="closeMobilePlaylistDrawer()"
+    class="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs transition-opacity duration-300 hidden opacity-0 pointer-events-none lg:hidden">
+  </div>
+
+  <div id="mobilePlaylistDrawer"
+    class="fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-3xl border-t border-[#FFD2DC] shadow-2xl transition-transform duration-300 ease-out transform translate-y-full flex flex-col max-h-[82vh] h-[82vh] lg:hidden">
+    
+    <!-- Drag Pill Indicator -->
+    <div class="w-full flex justify-center pt-2.5 pb-1 cursor-pointer" onclick="closeMobilePlaylistDrawer()">
+      <div class="w-12 h-1.5 rounded-full bg-[#FFD2DC]"></div>
+    </div>
+
+    <!-- Drawer Header -->
+    <div class="flex items-center justify-between px-4 pb-2.5 border-b border-[#FFE4E9]">
+      <div class="flex items-center gap-2">
+        <div class="w-8 h-8 rounded-full bg-[#FFF0F3] text-[#FA8072] flex items-center justify-center">
+          <i class="fa-solid fa-compact-disc text-sm"></i>
+        </div>
+        <div>
+          <h4 class="text-sm font-extrabold text-[#3B2328]">Daftar Lagu Lullaby</h4>
+          <p id="mobileDrawerSubtitle" class="text-[11px] text-[#9A737C]">Koleksi lagu kenangan kita berdua</p>
+        </div>
+      </div>
+      <button onclick="closeMobilePlaylistDrawer()"
+        class="w-8 h-8 rounded-full bg-[#FFF5F7] text-[#9A737C] hover:text-[#FA8072] flex items-center justify-center">
+        <i class="fa-solid fa-xmark text-sm"></i>
+      </button>
+    </div>
+
+    <!-- Playlist Switcher Tabs in Drawer -->
+    <div id="mobileDrawerPlaylistsBar" class="flex items-center gap-2 px-4 py-2 overflow-x-auto border-b border-[#FFE4E9] shrink-0">
+      <!-- Injected via renderMobileDrawerPlaylists() -->
+    </div>
+
+    <!-- Search in Drawer -->
+    <div class="p-3 border-b border-[#FFE4E9] shrink-0">
+      <div class="relative">
+        <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-[#9A737C] text-xs"></i>
+        <input id="mobileDrawerSearchInput" oninput="renderMobileDrawerTracklist()" type="text"
+          placeholder="Cari lagu di playlist..."
+          class="w-full pl-9 pr-3 py-2 rounded-xl bg-[#FFF5F7] border border-[#FFD2DC] text-xs text-[#3B2328] placeholder-[#9A737C] focus:outline-none focus:border-[#FA8072]" />
+      </div>
+    </div>
+
+    <!-- Scrollable Songs List in Drawer -->
+    <div id="mobileDrawerTracklist" class="flex-1 overflow-y-auto p-2 space-y-1">
+      <!-- Injected via renderMobileDrawerTracklist() -->
+    </div>
+
+    <!-- Drawer Footer Actions -->
+    <div class="p-3 border-t border-[#FFE4E9] bg-[#FFF9FA] flex items-center justify-between gap-2 shrink-0">
+      <button onclick="closeMobilePlaylistDrawer(); openAddSongModal();"
+        class="flex-1 py-2 rounded-xl bg-[#FFF0F3] border border-[#FFD2DC] text-[#E85D75] text-xs font-bold hover:bg-[#FA8072] hover:text-white transition flex items-center justify-center gap-1.5">
+        <i class="fa-solid fa-plus text-xs"></i> Tambah Lagu
+      </button>
+      <button onclick="closeMobilePlaylistDrawer(); togglePolaroidModal();"
+        class="px-4 py-2 rounded-xl bg-white border border-[#FFD2DC] text-[#3B2328] text-xs font-bold hover:text-[#FA8072] transition flex items-center justify-center gap-1.5">
+        <i class="fa-solid fa-camera-retro text-[#FA8072]"></i> Foto
+      </button>
+    </div>
+  </div>
+
   <!-- ================= BOTTOM STICKY NOW PLAYING BAR (SPOTIFY FOOTER) ================= -->
-  <footer class="h-20 px-4 bg-white border-t border-[#FFD2DC] flex items-center justify-between gap-4 shrink-0 z-40">
+  <footer class="hidden lg:flex h-20 px-4 bg-white border-t border-[#FFD2DC] items-center justify-between gap-4 shrink-0 z-40">
 
     <!-- Left: Active Track Cover + Title + Artist + Add Heart + Download -->
     <div class="flex items-center gap-3 w-1/4 min-w-[180px] max-w-[280px]">

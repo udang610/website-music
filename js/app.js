@@ -1847,9 +1847,19 @@ function startYtScrubber() {
       const dur = ytPlayer.getDuration();
       if (dur && isFinite(dur) && dur > 0) {
         const pct = (cur / dur) * 100;
-        document.getElementById('progressSlider').value = pct;
-        document.getElementById('currentTimeText').textContent = formatTime(cur);
-        document.getElementById('durationTimeText').textContent = formatTime(dur);
+        const progressSlider = document.getElementById('progressSlider');
+        if (progressSlider) progressSlider.value = pct;
+        const curEl = document.getElementById('currentTimeText');
+        if (curEl) curEl.textContent = formatTime(cur);
+        const durEl = document.getElementById('durationTimeText');
+        if (durEl) durEl.textContent = formatTime(dur);
+
+        const mobSlider = document.getElementById('mobileProgressSlider');
+        if (mobSlider) mobSlider.value = pct;
+        const mobCur = document.getElementById('mobileCurrentTimeText');
+        if (mobCur) mobCur.textContent = formatTime(cur);
+        const mobDur = document.getElementById('mobileDurationTimeText');
+        if (mobDur) mobDur.textContent = formatTime(dur);
 
         const tracks = getActiveTracks();
         if (tracks[currentIndex] && (!tracks[currentIndex].duration || tracks[currentIndex].duration === 'Full')) {
@@ -2131,6 +2141,12 @@ function hydrateUI() {
 
   const trackCount = (activePl && activePl.tracks) ? activePl.tracks.length : 0;
   document.getElementById('heroStatsCount').textContent = `${trackCount} songs, about infinite love`;
+
+  // Mobile Top Bar Avatars
+  const mobYou = document.getElementById('mobileNavAvatarYou');
+  if (mobYou) mobYou.src = state.yourAvatar;
+  const mobPartner = document.getElementById('mobileNavAvatarPartner');
+  if (mobPartner) mobPartner.src = state.partnerAvatar;
 
   renderSidebarPlaylists();
 }
@@ -2716,6 +2732,23 @@ function updateActiveTrackUI() {
   // Like status
   const likeIcon = track.liked ? '<i class="fa-solid fa-heart text-[#FF4D6D]"></i>' : '<i class="fa-regular fa-heart text-white"></i>';
   document.getElementById('rightLikeBtn').innerHTML = likeIcon;
+
+  // Mobile Turntable Center Art & Meta
+  const mobCover = document.getElementById('mobileVinylCenterArt');
+  if (mobCover) mobCover.src = track.cover;
+  const mobTitle = document.getElementById('mobileTrackTitle');
+  if (mobTitle) mobTitle.textContent = track.title;
+  const mobArtist = document.getElementById('mobileTrackArtist');
+  if (mobArtist) mobArtist.textContent = track.artist;
+  const mobMemory = document.getElementById('mobileTrackMemory');
+  if (mobMemory) mobMemory.textContent = `"${track.memory || 'Lagu spesial buat kita berdua 💕'}"`;
+
+  const mobLikeBtn = document.getElementById('mobileLikeBtn');
+  if (mobLikeBtn) {
+    mobLikeBtn.innerHTML = track.liked
+      ? '<i class="fa-solid fa-heart text-[#FF4D6D]"></i>'
+      : '<i class="fa-regular fa-heart text-[#9A737C]"></i>';
+  }
 }
 
 function selectTrackFromList(index) {
@@ -2773,6 +2806,9 @@ function updatePlayButtons() {
   const vinylDisc = document.getElementById('vinylDisc');
   const vinylTonearm = document.getElementById('vinylTonearm');
   const mainJamPlayIcon = document.getElementById('mainJamPlayIcon');
+  const mobilePlayIcon = document.getElementById('mobilePlayIcon');
+  const mobileVinylDisc = document.getElementById('mobileVinylDisc');
+  const mobileVinylTonearm = document.getElementById('mobileVinylTonearm');
 
   if (isPlaying) {
     if (heroIcon) heroIcon.className = 'fa-solid fa-pause text-xl';
@@ -2780,12 +2816,18 @@ function updatePlayButtons() {
     if (vinylDisc) vinylDisc.classList.add('playing');
     if (vinylTonearm) vinylTonearm.classList.add('playing');
     if (mainJamPlayIcon) mainJamPlayIcon.className = 'fa-solid fa-pause text-xl';
+    if (mobilePlayIcon) mobilePlayIcon.className = 'fa-solid fa-pause text-xl';
+    if (mobileVinylDisc) mobileVinylDisc.classList.add('playing');
+    if (mobileVinylTonearm) mobileVinylTonearm.classList.add('playing');
   } else {
     if (heroIcon) heroIcon.className = 'fa-solid fa-play text-xl ml-0.5';
     bottomIcon.className = 'fa-solid fa-play text-xs ml-0.5';
     if (vinylDisc) vinylDisc.classList.remove('playing');
     if (vinylTonearm) vinylTonearm.classList.remove('playing');
     if (mainJamPlayIcon) mainJamPlayIcon.className = 'fa-solid fa-play text-xl ml-0.5';
+    if (mobilePlayIcon) mobilePlayIcon.className = 'fa-solid fa-play text-xl ml-0.5';
+    if (mobileVinylDisc) mobileVinylDisc.classList.remove('playing');
+    if (mobileVinylTonearm) mobileVinylTonearm.classList.remove('playing');
   }
 }
 
@@ -2820,28 +2862,45 @@ function toggleShuffle() {
   isShuffle = !isShuffle;
   const btnTop = document.getElementById('btnShuffleTop');
   if (btnTop) btnTop.classList.toggle('text-[#FA8072]', isShuffle);
-  document.getElementById('btnShuffleBottom').classList.toggle('text-[#FA8072]', isShuffle);
+  const btnBottom = document.getElementById('btnShuffleBottom');
+  if (btnBottom) btnBottom.classList.toggle('text-[#FA8072]', isShuffle);
+  const mobShuffle = document.getElementById('mobileShuffleBtn');
+  if (mobShuffle) mobShuffle.classList.toggle('text-[#FA8072]', isShuffle);
 }
 
 function toggleRepeat() {
   isRepeat = !isRepeat;
-  document.getElementById('btnRepeatBottom').classList.toggle('text-[#FA8072]', isRepeat);
+  const btnBottom = document.getElementById('btnRepeatBottom');
+  if (btnBottom) btnBottom.classList.toggle('text-[#FA8072]', isRepeat);
 }
 
 // HTML5 Audio Time & Metadata Updates
 audio.addEventListener('timeupdate', () => {
   if (currentEngine === 'html5' && audio.duration && isFinite(audio.duration)) {
     const pct = (audio.currentTime / audio.duration) * 100;
-    document.getElementById('progressSlider').value = pct;
-    document.getElementById('currentTimeText').textContent = formatTime(audio.currentTime);
-    document.getElementById('durationTimeText').textContent = formatTime(audio.duration);
+    const progressSlider = document.getElementById('progressSlider');
+    if (progressSlider) progressSlider.value = pct;
+    const curEl = document.getElementById('currentTimeText');
+    if (curEl) curEl.textContent = formatTime(audio.currentTime);
+    const durEl = document.getElementById('durationTimeText');
+    if (durEl) durEl.textContent = formatTime(audio.duration);
+
+    const mobSlider = document.getElementById('mobileProgressSlider');
+    if (mobSlider) mobSlider.value = pct;
+    const mobCur = document.getElementById('mobileCurrentTimeText');
+    if (mobCur) mobCur.textContent = formatTime(audio.currentTime);
+    const mobDur = document.getElementById('mobileDurationTimeText');
+    if (mobDur) mobDur.textContent = formatTime(audio.duration);
   }
 });
 
 audio.addEventListener('loadedmetadata', () => {
   if (currentEngine === 'html5' && audio.duration && isFinite(audio.duration)) {
     const dur = formatTime(audio.duration);
-    document.getElementById('durationTimeText').textContent = dur;
+    const durEl = document.getElementById('durationTimeText');
+    if (durEl) durEl.textContent = dur;
+    const mobDur = document.getElementById('mobileDurationTimeText');
+    if (mobDur) mobDur.textContent = dur;
     const tracks = getActiveTracks();
     if (tracks[currentIndex]) {
       tracks[currentIndex].duration = dur;
@@ -4410,4 +4469,122 @@ function checkUrlPlayParam() {
     }, 400);
   }
 }
+
+// ================= MOBILE PLAYLIST DRAWER ENGINE =================
+function openMobilePlaylistDrawer() {
+  renderMobileDrawerPlaylists();
+  renderMobileDrawerTracklist();
+  const drawer = document.getElementById('mobilePlaylistDrawer');
+  const backdrop = document.getElementById('mobilePlaylistDrawerBackdrop');
+  if (drawer && backdrop) {
+    backdrop.classList.remove('hidden');
+    void backdrop.offsetWidth;
+    backdrop.classList.remove('opacity-0', 'pointer-events-none');
+    drawer.classList.remove('translate-y-full');
+  }
+}
+
+function closeMobilePlaylistDrawer() {
+  const drawer = document.getElementById('mobilePlaylistDrawer');
+  const backdrop = document.getElementById('mobilePlaylistDrawerBackdrop');
+  if (drawer && backdrop) {
+    drawer.classList.add('translate-y-full');
+    backdrop.classList.add('opacity-0', 'pointer-events-none');
+    setTimeout(() => backdrop.classList.add('hidden'), 300);
+  }
+}
+
+function renderMobileDrawerPlaylists() {
+  const bar = document.getElementById('mobileDrawerPlaylistsBar');
+  if (!bar) return;
+
+  bar.innerHTML = state.playlists.map(pl => {
+    const isCurrent = pl.id === state.activePlaylistId;
+    return `
+      <button onclick="selectMobileDrawerPlaylist('${pl.id}')"
+        class="px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition flex items-center gap-1.5 shrink-0 ${isCurrent ? 'bg-gradient-to-r from-[#FA8072] to-[#E85D75] text-white shadow-xs' : 'bg-[#FFF5F7] text-[#3B2328] border border-[#FFD2DC]'}">
+        <i class="fa-solid fa-compact-disc text-[10px]"></i>
+        <span>${pl.title}</span>
+        <span class="text-[10px] opacity-80">(${pl.tracks ? pl.tracks.length : 0})</span>
+      </button>
+    `;
+  }).join('');
+}
+
+function selectMobileDrawerPlaylist(plId) {
+  state.activePlaylistId = plId;
+  saveState();
+  hydrateUI();
+  if (currentView === 'playlist') renderTracklist();
+  renderMobileDrawerPlaylists();
+  renderMobileDrawerTracklist();
+  const pl = getActivePlaylist();
+  const sub = document.getElementById('mobileDrawerSubtitle');
+  if (sub && pl) sub.textContent = pl.desc || `${pl.tracks.length} lagu romantis`;
+}
+
+function renderMobileDrawerTracklist() {
+  const container = document.getElementById('mobileDrawerTracklist');
+  if (!container) return;
+  const query = (document.getElementById('mobileDrawerSearchInput')?.value || '').toLowerCase().trim();
+  const tracks = getActiveTracks();
+
+  const filtered = tracks
+    .map((track, idx) => ({ ...track, originalIndex: idx }))
+    .filter(item => {
+      if (!query) return true;
+      return item.title.toLowerCase().includes(query) ||
+             item.artist.toLowerCase().includes(query) ||
+             (item.memory || '').toLowerCase().includes(query);
+    });
+
+  if (filtered.length === 0) {
+    container.innerHTML = `
+      <div class="py-8 text-center text-[#9A737C]">
+        <i class="fa-solid fa-music text-xl mb-1.5 text-[#FA8072]"></i>
+        <p class="text-xs font-bold">Lagu tidak ditemukan</p>
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = filtered.map((track, displayIdx) => {
+    const currentPlaying = getPlayingTrack();
+    const isPlayingThisPlaylist = currentPlayingPlaylistId === state.activePlaylistId;
+    const isCurrent = isPlayingThisPlaylist && (
+      (currentPlaying && (currentPlaying.id === track.id || currentPlaying.title.toLowerCase() === track.title.toLowerCase())) ||
+      track.originalIndex === currentPlayingIndex
+    );
+
+    return `
+      <div onclick="selectTrackFromList(${track.originalIndex})"
+        class="flex items-center justify-between p-2 rounded-2xl cursor-pointer transition ${isCurrent ? 'bg-[#FFE4E9] text-[#E85D75] font-bold' : 'hover:bg-[#FFF5F7] text-[#3B2328]'}">
+        <div class="flex items-center gap-3 min-w-0 flex-1">
+          <div class="w-6 text-center text-xs text-[#9A737C] shrink-0">
+            ${isCurrent && isPlaying ? `
+              <div class="inline-flex items-end gap-0.5 h-3">
+                <span class="eq-bar"></span>
+                <span class="eq-bar"></span>
+                <span class="eq-bar"></span>
+              </div>
+            ` : `<span class="text-xs font-semibold">${displayIdx + 1}</span>`}
+          </div>
+          <img src="${track.cover}" class="w-10 h-10 rounded-xl object-cover border border-[#FFD2DC] shrink-0" alt="${track.title}" />
+          <div class="min-w-0 flex-1 truncate">
+            <h5 class="text-xs font-extrabold truncate ${isCurrent ? 'text-[#E85D75]' : 'text-[#3B2328]'}">${track.title}</h5>
+            <p class="text-[10px] text-[#9A737C] truncate">${track.artist} ${track.memory ? '• <i>"' + track.memory.substring(0, 24) + '..."</i>' : ''}</p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-1.5 shrink-0 pl-2" onclick="event.stopPropagation()">
+          <button onclick="toggleLikeTrack(${track.originalIndex}); renderMobileDrawerTracklist();"
+            class="w-8 h-8 rounded-full flex items-center justify-center ${track.liked ? 'text-[#FA8072]' : 'text-[#9A737C]'}">
+            <i class="${track.liked ? 'fa-solid' : 'fa-regular'} fa-heart text-xs"></i>
+          </button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
 
