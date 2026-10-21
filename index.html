@@ -28,10 +28,23 @@
     class="fixed inset-0 z-[100] bg-[#FFF5F7]/95 backdrop-blur-xl flex items-center justify-center p-4 transition-all duration-500">
     <div
       class="bg-white border border-[#FFD2DC] rounded-3xl max-w-sm w-full p-7 shadow-2xl shadow-[#FA8072]/15 text-center relative overflow-hidden">
-      <!-- Heart Icon -->
+      <!-- Vinyl Record Icon (Piringan Hitam) -->
       <div
-        class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-[#FA8072] to-[#FFB3C1] text-white flex items-center justify-center mx-auto mb-4 shadow-lg shadow-[#FA8072]/30">
-        <i class="fa-solid fa-heart text-2xl"></i>
+        class="w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center shadow-xl shadow-[#FA8072]/20 hover:scale-105 transition-transform duration-300">
+        <svg class="w-16 h-16" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="50" cy="50" r="48" fill="#1E1214"/>
+          <circle cx="50" cy="50" r="42" stroke="#382428" stroke-width="2.5"/>
+          <circle cx="50" cy="50" r="34" stroke="#2B1A1E" stroke-width="2"/>
+          <circle cx="50" cy="50" r="26" stroke="#382428" stroke-width="2"/>
+          <circle cx="50" cy="50" r="18" fill="url(#vinylLoginGrad)"/>
+          <circle cx="50" cy="50" r="5" fill="#FFF5F7"/>
+          <defs>
+            <linearGradient id="vinylLoginGrad" x1="32" y1="32" x2="68" y2="68" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#FA8072"/>
+              <stop offset="1" stop-color="#E85D75"/>
+            </linearGradient>
+          </defs>
+        </svg>
       </div>
 
       <!-- Title & Subtitle without PIN/badge pill -->
@@ -62,9 +75,22 @@
     <div class="flex items-center gap-2.5">
       <div class="w-[74px] flex items-center justify-center shrink-0">
         <div onclick="navigateTo('home')"
-          class="w-11 h-11 rounded-full bg-gradient-to-br from-[#FA8072] to-[#E85D75] flex items-center justify-center text-white shadow-md shadow-[#FA8072]/25 cursor-pointer hover:scale-105 transition"
+          class="w-11 h-11 rounded-full flex items-center justify-center shadow-md shadow-[#FA8072]/20 cursor-pointer hover:scale-105 active:scale-95 transition-all duration-300"
           title="Lullaby">
-          <i class="fa-solid fa-compact-disc text-xl"></i>
+          <svg class="w-11 h-11" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="50" cy="50" r="48" fill="#1E1214"/>
+            <circle cx="50" cy="50" r="42" stroke="#382428" stroke-width="2.5"/>
+            <circle cx="50" cy="50" r="34" stroke="#2B1A1E" stroke-width="2"/>
+            <circle cx="50" cy="50" r="26" stroke="#382428" stroke-width="2"/>
+            <circle cx="50" cy="50" r="18" fill="url(#vinylNavGrad)"/>
+            <circle cx="50" cy="50" r="5" fill="#FFF5F7"/>
+            <defs>
+              <linearGradient id="vinylNavGrad" x1="32" y1="32" x2="68" y2="68" gradientUnits="userSpaceOnUse">
+                <stop stop-color="#FA8072"/>
+                <stop offset="1" stop-color="#E85D75"/>
+              </linearGradient>
+            </defs>
+          </svg>
         </div>
       </div>
 
