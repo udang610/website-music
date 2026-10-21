@@ -1,6 +1,215 @@
 // ================= REAL AUDIO ENGINE & STATE =================
 const STORAGE_KEY = 'romantic_spotify_v15_all_covers_synced';
 
+// ================= SUPABASE CLOUD DATABASE CONFIG =================
+const SUPABASE_URL = 'https://onikjvzkbhpbubnqjmib.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9uaWtqdnprYmhwYnVibnFqbWliIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI1NjEyMzgsImV4cCI6MjEwODEzNzIzOH0.VvnY63Ysf3q73_owAdYVeBn96rQEkhDZyqwY4s3W1Gc';
+
+let supabaseClient = null;
+function getSupabaseClient() {
+  if (!supabaseClient && window.supabase && typeof window.supabase.createClient === 'function') {
+    try {
+      supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      console.log('✦ Supabase Cloud Database Connected!');
+    } catch (e) {
+      console.warn('Supabase initialization error:', e);
+    }
+  }
+  return supabaseClient;
+}
+
+let supabaseSyncTimer = null;
+let isApplyingRemoteState = false;
+
+function triggerSupabaseSync() {
+  if (isApplyingRemoteState) return;
+  const client = getSupabaseClient();
+  if (!client) return;
+
+  clearTimeout(supabaseSyncTimer);
+  supabaseSyncTimer = setTimeout(() => {
+    pushStateToSupabase();
+  }, 500);
+}
+
+async function pushStateToSupabase() {
+  const client = getSupabaseClient();
+  if (!client) return;
+
+  try {
+    const activePl = (typeof getActivePlaylist === 'function') ? getActivePlaylist() : (state && state.playlists ? state.playlists[0] : null);
+    const syncPayload = {
+      pinCode: state.pinCode,
+      yourName: state.yourName,
+      partnerName: state.partnerName,
+      yourAvatar: state.yourAvatar,
+      partnerAvatar: state.partnerAvatar,
+      loveNote: state.loveNote,
+      polaroidMemories: state.polaroidMemories || [],
+      jamMessages: state.jamMessages || [],
+      activePlaylistId: state.activePlaylistId,
+      playlistTitle: activePl ? activePl.title : '',
+      playlistDesc: activePl ? activePl.desc : '',
+      playlistCover: activePl ? activePl.cover : ''
+    };
+
+    const { error } = await client
+      .from('app_config')
+      .upsert({
+        id: 'romantic_music_state',
+        data: syncPayload,
+        updated_at: new Date().toISOString()
+      });
+
+    if (error) {
+      console.warn('Supabase save warning:', error);
+    } else {
+      console.log('✦ State successfully synced to Supabase Cloud!');
+    }
+  } catch (err) {
+    console.warn('pushStateToSupabase error:', err);
+  }
+}
+
+function applyRemoteState(remoteData) {
+  if (!remoteData || typeof remoteData !== 'object') return;
+  isApplyingRemoteState = true;
+  try {
+    let changed = false;
+
+    if (remoteData.pinCode && remoteData.pinCode !== state.pinCode) {
+      state.pinCode = remoteData.pinCode;
+      try { localStorage.setItem('romantic_music_custom_pin', remoteData.pinCode); } catch(e){}
+      changed = true;
+    }
+
+    if (remoteData.yourName && remoteData.yourName !== state.yourName) {
+      state.yourName = remoteData.yourName;
+      changed = true;
+    }
+
+    if (remoteData.partnerName && remoteData.partnerName !== state.partnerName) {
+      state.partnerName = remoteData.partnerName;
+      changed = true;
+    }
+
+    if (remoteData.yourAvatar && remoteData.yourAvatar !== state.yourAvatar) {
+      state.yourAvatar = remoteData.yourAvatar;
+      changed = true;
+    }
+
+    if (remoteData.partnerAvatar && remoteData.partnerAvatar !== state.partnerAvatar) {
+      state.partnerAvatar = remoteData.partnerAvatar;
+      changed = true;
+    }
+
+    if (remoteData.loveNote !== undefined && remoteData.loveNote !== state.loveNote) {
+      state.loveNote = remoteData.loveNote;
+      changed = true;
+    }
+
+    if (remoteData.polaroidMemories && JSON.stringify(remoteData.polaroidMemories) !== JSON.stringify(state.polaroidMemories)) {
+      state.polaroidMemories = remoteData.polaroidMemories;
+      try { localStorage.setItem('romantic_music_polaroid_memories', JSON.stringify(remoteData.polaroidMemories)); } catch(e){}
+      changed = true;
+    }
+
+    if (remoteData.jamMessages && JSON.stringify(remoteData.jamMessages) !== JSON.stringify(state.jamMessages)) {
+      state.jamMessages = remoteData.jamMessages;
+      changed = true;
+    }
+
+    const activePl = (typeof getActivePlaylist === 'function') ? getActivePlaylist() : null;
+    if (activePl) {
+      if (remoteData.playlistTitle && activePl.title !== remoteData.playlistTitle) {
+        activePl.title = remoteData.playlistTitle;
+        changed = true;
+      }
+      if (remoteData.playlistDesc !== undefined && activePl.desc !== remoteData.playlistDesc) {
+        activePl.desc = remoteData.playlistDesc;
+        changed = true;
+      }
+      if (remoteData.playlistCover && activePl.cover !== remoteData.playlistCover) {
+        activePl.cover = remoteData.playlistCover;
+        changed = true;
+      }
+    }
+
+    if (changed) {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        const profileConfig = {
+          yourName: state.yourName,
+          partnerName: state.partnerName,
+          yourAvatar: state.yourAvatar,
+          partnerAvatar: state.partnerAvatar,
+          loveNote: state.loveNote
+        };
+        localStorage.setItem('romantic_music_profile_config', JSON.stringify(profileConfig));
+      } catch(e){}
+
+      if (typeof hydrateUI === 'function') hydrateUI();
+      if (typeof populateProfileShowcaseView === 'function') populateProfileShowcaseView();
+      if (currentView === 'home' && typeof renderHomeView === 'function') renderHomeView();
+      else if (currentView === 'jam' && typeof updateMainJamView === 'function') {
+        updateMainJamView();
+        if (typeof renderJamChat === 'function') renderJamChat();
+      } else if (currentView === 'gallery' && typeof renderPolaroidGallery === 'function') {
+        renderPolaroidGallery();
+      }
+    }
+  } finally {
+    isApplyingRemoteState = false;
+  }
+}
+
+async function initSupabaseSync() {
+  const client = getSupabaseClient();
+  if (!client) return;
+
+  try {
+    const { data, error } = await client
+      .from('app_config')
+      .select('data')
+      .eq('id', 'romantic_music_state')
+      .maybeSingle();
+
+    if (error) {
+      console.warn('Supabase fetch error:', error);
+    } else if (data && data.data && Object.keys(data.data).length > 0) {
+      console.log('✦ Retrieved existing Cloud state from Supabase!');
+      applyRemoteState(data.data);
+    } else {
+      console.log('✦ Cloud database is empty, initializing with local state...');
+      await pushStateToSupabase();
+    }
+  } catch (err) {
+    console.warn('initSupabaseSync error:', err);
+  }
+
+  // Subscribe to Realtime Updates
+  try {
+    client
+      .channel('public:app_config')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'app_config', filter: 'id=eq.romantic_music_state' },
+        (payload) => {
+          if (payload.new && payload.new.data) {
+            console.log('✦ Incoming Realtime update from Supabase:', payload.new.data);
+            applyRemoteState(payload.new.data);
+          }
+        }
+      )
+      .subscribe((status) => {
+        console.log('✦ Supabase Realtime channel status:', status);
+      });
+  } catch (e) {
+    console.warn('Supabase realtime subscribe error:', e);
+  }
+}
+
+
 // Verified Genuine Studio Audio Tracks stored locally
 const realAudioTracks = {
   'those eyes': 'audio/new_west_those_eyes.m4a',
@@ -1806,6 +2015,9 @@ function saveState() {
   } catch (err) {
     console.warn('Could not save profile config:', err);
   }
+
+  // Automatically sync updates to Supabase Cloud Database!
+  triggerSupabaseSync();
 }
 
 function getActivePlaylist() {
@@ -1842,6 +2054,7 @@ window.addEventListener('DOMContentLoaded', () => {
   renderJamChat();
   hydrateItunesCovers();
   checkUrlPlayParam();
+  initSupabaseSync();
 });
 
 // Fetch HD album covers without touching audio streams
