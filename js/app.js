@@ -2126,6 +2126,17 @@ function getPlayingTrack() {
 
 // ================= INITIALIZATION =================
 window.addEventListener('DOMContentLoaded', () => {
+  // Check persisted login / unlock session
+  try {
+    if (localStorage.getItem('romantic_music_unlocked') === 'true') {
+      const lock = document.getElementById('lockScreen');
+      if (lock) {
+        lock.style.display = 'none';
+        lock.classList.add('hidden', 'opacity-0', 'pointer-events-none');
+      }
+    }
+  } catch (e) {}
+
   hydrateUI();
   navigateTo('home');
 
@@ -2554,10 +2565,17 @@ function unlockApp() {
   const validPin = localStorage.getItem('romantic_music_custom_pin') || state.pinCode || '1402';
 
   if (val === validPin) {
+    try {
+      localStorage.setItem('romantic_music_unlocked', 'true');
+    } catch (e) {}
+
     const lock = document.getElementById('lockScreen');
     if (lock) {
       lock.classList.add('opacity-0', 'pointer-events-none');
-      setTimeout(() => lock.classList.add('hidden'), 450);
+      setTimeout(() => {
+        lock.classList.add('hidden');
+        lock.style.display = 'none';
+      }, 450);
     }
   } else {
     const err = document.getElementById('pinError');
@@ -2584,12 +2602,17 @@ function unlockApp() {
 }
 
 function logOutApp() {
+  try {
+    localStorage.removeItem('romantic_music_unlocked');
+  } catch (e) {}
+
   closeSettingsModal();
   if (isPlaying) {
     togglePlay();
   }
   const lock = document.getElementById('lockScreen');
   if (lock) {
+    lock.style.display = '';
     lock.classList.remove('hidden');
     void lock.offsetWidth;
     lock.classList.remove('opacity-0', 'pointer-events-none');

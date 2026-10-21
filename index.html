@@ -26,6 +26,17 @@
   <!-- ================= PIN LOCK SCREEN MODAL (SIMPLE & PRIVATE) ================= -->
   <div id="lockScreen"
     class="fixed inset-0 z-[100] bg-[#FFF5F7]/95 backdrop-blur-xl flex items-center justify-center p-4 transition-all duration-500">
+    <script>
+      try {
+        if (localStorage.getItem('romantic_music_unlocked') === 'true') {
+          var ls = document.getElementById('lockScreen');
+          if (ls) {
+            ls.style.display = 'none';
+            ls.classList.add('hidden', 'opacity-0', 'pointer-events-none');
+          }
+        }
+      } catch (e) {}
+    </script>
     <div
       class="bg-white border border-[#FFD2DC] rounded-3xl max-w-sm w-full p-7 shadow-2xl shadow-[#FA8072]/15 text-center relative overflow-hidden">
       <!-- Vinyl Record Icon (Piringan Hitam) -->
