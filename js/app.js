@@ -4313,34 +4313,34 @@ function renderPolaroidGallery() {
   container.innerHTML = memories.map((item, idx) => {
     const tiltClass = tilts[idx % tilts.length];
     return `
-      <div class="polaroid-card polaroid-card-compact w-full shrink-0 ${tiltClass} group cursor-pointer" onclick="viewPolaroidDetail('${item.id}')">
+      <div class="polaroid-card polaroid-card-compact lg:polaroid-card w-full shrink-0 lg:shrink ${tiltClass} group cursor-pointer" onclick="viewPolaroidDetail('${item.id}')">
         <!-- Washi Tape -->
         <div class="washi-tape"></div>
 
         <!-- Image Frame -->
-        <div class="w-full h-28 sm:h-32 bg-neutral-100 rounded-sm overflow-hidden mb-1.5 relative border border-neutral-200/60">
+        <div class="w-full h-28 sm:h-32 lg:h-52 xl:h-56 bg-neutral-100 rounded-sm overflow-hidden mb-1.5 lg:mb-3 relative border border-neutral-200/60">
           <img src="${item.imageUrl}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500" alt="Polaroid photo" loading="lazy" />
           
           <!-- Hover Overlay with Zoom & Delete Buttons -->
           <div class="absolute inset-0 bg-black/35 opacity-0 group-hover:opacity-100 transition flex items-center justify-center gap-2" onclick="event.stopPropagation()">
-            <button onclick="viewPolaroidDetail('${item.id}')" class="w-7 h-7 rounded-full bg-white text-[#3B2328] hover:text-[#FA8072] flex items-center justify-center shadow-md transition" title="Lihat Foto Penuh">
-              <i class="fa-solid fa-expand text-[10px]"></i>
+            <button onclick="viewPolaroidDetail('${item.id}')" class="w-7 h-7 lg:w-8 lg:h-8 rounded-full bg-white text-[#3B2328] hover:text-[#FA8072] flex items-center justify-center shadow-md transition" title="Lihat Foto Penuh">
+              <i class="fa-solid fa-expand text-[10px] lg:text-xs"></i>
             </button>
-            <button onclick="deletePolaroid('${item.id}')" class="w-7 h-7 rounded-full bg-white text-[#9A737C] hover:text-rose-500 flex items-center justify-center shadow-md transition" title="Hapus Polaroid">
-              <i class="fa-solid fa-trash-can text-[10px]"></i>
+            <button onclick="deletePolaroid('${item.id}')" class="w-7 h-7 lg:w-8 lg:h-8 rounded-full bg-white text-[#9A737C] hover:text-rose-500 flex items-center justify-center shadow-md transition" title="Hapus Polaroid">
+              <i class="fa-solid fa-trash-can text-[10px] lg:text-xs"></i>
             </button>
           </div>
         </div>
 
         <!-- Handwritten Caption -->
-        <p class="font-handwriting text-sm sm:text-base text-[#3B2328] text-center leading-snug px-1 truncate">
+        <p class="font-handwriting text-sm sm:text-base lg:text-xl text-[#3B2328] text-center leading-snug px-1 truncate lg:line-clamp-2">
           ${item.caption || 'Kenangan manis berdua ✦'}
         </p>
 
         <!-- Date & Location Footer -->
-        <div class="flex items-center justify-between text-[10px] font-semibold text-[#9A737C] mt-1 pt-1 border-t border-[#FFF0F3] px-1">
-          <span class="truncate max-w-[80px]">${item.date || 'Sweet moment'}</span>
-          <span class="text-[#FA8072] truncate max-w-[70px]">${item.location || 'Special place'}</span>
+        <div class="flex items-center justify-between text-[10px] lg:text-[11px] font-semibold text-[#9A737C] mt-1 lg:mt-2 pt-1 lg:pt-2 border-t border-[#FFF0F3] px-1">
+          <span class="truncate max-w-[80px] lg:max-w-none">${item.date || 'Sweet moment'}</span>
+          <span class="text-[#FA8072] truncate max-w-[70px] lg:max-w-[120px]">${item.location || 'Special place'}</span>
         </div>
       </div>
     `;

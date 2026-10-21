@@ -215,14 +215,16 @@ input[type="range"]:hover::-webkit-slider-thumb {
 .polaroid-tilt-subtle {
   transform: rotate(-0.8deg);
 }
-.polaroid-card-compact {
-  padding: 8px 8px 12px 8px;
-  border-radius: 6px;
-}
-.polaroid-card-compact .washi-tape {
-  width: 48px;
-  height: 14px;
-  top: -6px;
+@media (max-width: 1023px) {
+  .polaroid-card-compact {
+    padding: 8px 8px 12px 8px;
+    border-radius: 6px;
+  }
+  .polaroid-card-compact .washi-tape {
+    width: 48px;
+    height: 14px;
+    top: -6px;
+  }
 }
 
 /* Turntable Tonearm (Jarum Pemutar Vinyl Presisi) */

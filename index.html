@@ -460,9 +460,9 @@
           </div>
         </div>
 
-        <!-- Polaroid Gallery Cards Grid: Compact 2-row horizontal grid to save vertical space -->
+        <!-- Polaroid Gallery Cards Grid: 2-row horizontal on mobile, full grid on desktop (>=lg) -->
         <div id="polaroidGalleryGrid"
-          class="grid grid-rows-2 grid-flow-col auto-cols-[165px] sm:auto-cols-[195px] overflow-x-auto gap-3.5 p-2 pb-4 scroll-smooth scrollbar-thin">
+          class="grid grid-rows-2 grid-flow-col auto-cols-[165px] overflow-x-auto gap-3.5 p-2 pb-4 scroll-smooth scrollbar-thin lg:grid-rows-none lg:grid-flow-row lg:auto-cols-auto lg:overflow-x-visible lg:grid-cols-3 xl:grid-cols-4 lg:gap-6">
           <!-- Dynamically injected via renderPolaroidGallery() -->
         </div>
       </div>
