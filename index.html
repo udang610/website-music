@@ -1,0 +1,1720 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>✦ our melodies. — Music Workspace</title>
+
+  <!-- Tailwind CSS & Google Fonts & FontAwesome -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Caveat:wght@600;700&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+
+  <!-- Custom Aesthetics Stylesheet & YouTube IFrame API -->
+  <link rel="stylesheet" href="css/style.css" />
+  <script src="https://www.youtube.com/iframe_api"></script>
+</head>
+
+<body class="lg:h-screen lg:overflow-hidden flex flex-col select-none">
+
+  <!-- ================= PIN LOCK SCREEN MODAL (SIMPLE & PRIVATE) ================= -->
+  <div id="lockScreen"
+    class="fixed inset-0 z-[100] bg-[#FFF5F7]/95 backdrop-blur-xl flex items-center justify-center p-4 transition-all duration-500">
+    <div
+      class="bg-white border border-[#FFD2DC] rounded-3xl max-w-sm w-full p-7 shadow-2xl shadow-[#FA8072]/15 text-center relative overflow-hidden">
+      <!-- Heart Icon -->
+      <div
+        class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-[#FA8072] to-[#FFB3C1] text-white flex items-center justify-center mx-auto mb-4 shadow-lg shadow-[#FA8072]/30">
+        <i class="fa-solid fa-heart text-2xl"></i>
+      </div>
+
+      <!-- Title & Subtitle without PIN/badge pill -->
+      <h2 class="text-xl font-extrabold text-[#3B2328]">Private Music Space</h2>
+      <p class="text-xs text-[#9A737C] mt-1 mb-5">Masukkan tanggal spesial kita untuk membuka playlist 💕</p>
+
+      <!-- Clean Centered PIN Input (Style sebelumnya) -->
+      <div id="pinInputWrapper" class="flex justify-center gap-2.5 mb-4">
+        <input id="pinInput" type="password" maxlength="4" placeholder="••••" autofocus
+          class="w-44 text-center text-2xl tracking-[0.45em] font-bold py-2.5 px-4 rounded-2xl bg-[#FFF5F7] border-2 border-[#FFD2DC] text-[#E85D75] placeholder-[#FFB3C1] focus:outline-none focus:border-[#FA8072] transition" />
+      </div>
+
+      <!-- Error Text -->
+      <p id="pinError" class="text-xs text-rose-500 font-semibold mb-3 hidden">PIN belum tepat sayang, coba lagi yaa 🥺
+      </p>
+
+      <!-- Unlock Button -->
+      <button onclick="unlockApp()"
+        class="w-full py-3 rounded-2xl bg-gradient-to-r from-[#FA8072] to-[#E85D75] text-white font-bold text-sm shadow-md shadow-[#FA8072]/30 hover:opacity-95 active:scale-98 transition cursor-pointer">
+        Buka Playlist Kita ✨
+      </button>
+    </div>
+  </div>
+
+  <!-- ================= TOP NAVIGATION BAR (SPOTIFY HEADER) ================= -->
+  <header class="h-16 px-2.5 lg:px-3 flex items-center justify-between gap-3 shrink-0 bg-[#FFF5F7]">
+    <!-- Left Logo aligned with sidebar -->
+    <div class="flex items-center gap-2.5">
+      <div class="w-[74px] flex items-center justify-center shrink-0">
+        <div onclick="navigateTo('home')"
+          class="w-11 h-11 rounded-full bg-gradient-to-br from-[#FA8072] to-[#E85D75] flex items-center justify-center text-white shadow-md shadow-[#FA8072]/25 cursor-pointer hover:scale-105 transition"
+          title="Our Melodies">
+          <i class="fa-solid fa-heart-pulse text-lg"></i>
+        </div>
+      </div>
+
+      <!-- Search Bar ala Spotify -->
+      <div class="relative hidden sm:flex items-center w-64 md:w-80 lg:w-96">
+        <i class="fa-solid fa-magnifying-glass absolute left-3.5 text-[#9A737C] text-sm"></i>
+        <input id="globalSearchInput" oninput="renderTracklist()" type="text"
+          placeholder="What do you want to play, love?"
+          class="w-full pl-10 pr-10 py-2 rounded-full bg-white border border-[#FFD2DC] text-sm text-[#3B2328] placeholder-[#9A737C] focus:outline-none focus:border-[#FA8072] shadow-sm transition" />
+        <button onclick="openAddSongModal()"
+          class="absolute right-3 text-[#9A737C] hover:text-[#FA8072] border-l border-[#FFD2DC] pl-2.5"
+          title="Cari & Tambah Lagu Online">
+          <i class="fa-solid fa-compact-disc text-sm"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Right Actions: Love Letter & Profile Configuration -->
+    <div class="flex items-center gap-3">
+      <!-- Love Note Pill -->
+      <button onclick="openLoveNoteModal()"
+        class="px-3.5 py-1.5 rounded-full bg-white border border-[#FFD2DC] text-[#3B2328] hover:bg-[#FFE4E9]/60 text-xs font-bold flex items-center gap-1.5 shadow-sm transition">
+        <i class="fa-solid fa-envelope-open-text text-[#FA8072]"></i>
+        <span>Read Love Note</span>
+      </button>
+
+      <!-- Couple Dual Avatar (Profile & Settings Configuration) -->
+      <div onclick="openSettingsModal()"
+        class="flex items-center -space-x-2 cursor-pointer pl-1 hover:scale-105 transition"
+        title="Konfigurasi Profil & Pasangan">
+        <img id="navAvatarYou" src="images/spotify_covers/profile_nadeyy.jpg"
+          class="w-8 h-8 rounded-full object-cover border-2 border-white shadow" alt="You" />
+        <img id="navAvatarPartner"
+          src="https://images.unsplash.com/photo-1517841905240-472988babdf9?w=120&auto=format&fit=crop&q=80"
+          class="w-8 h-8 rounded-full object-cover border-2 border-[#FA8072] shadow" alt="Partner" />
+      </div>
+    </div>
+  </header>
+
+  <!-- ================= MAIN 3-COLUMN SPOTIFY WORKSPACE ================= -->
+  <div class="flex-1 flex flex-col lg:flex-row gap-2.5 px-2.5 lg:px-3 pb-2 overflow-hidden">
+
+    <!-- 1. LEFT MINI LIBRARY SIDEBAR -->
+    <aside
+      class="w-full lg:w-[74px] bg-white border border-[#FFD2DC] rounded-2xl p-2.5 flex lg:flex-col items-center justify-between lg:justify-start gap-3 shrink-0 shadow-sm overflow-x-auto lg:overflow-x-hidden lg:overflow-y-auto max-h-full">
+      <div class="flex lg:flex-col items-center gap-2.5">
+        <!-- Home Button -->
+        <button onclick="navigateTo('home')" id="sidebarBtnHome" data-title="Beranda" data-desc="Halaman Utama"
+          onmouseenter="showSidebarTooltip(this)" onmouseleave="hideSidebarTooltip()"
+          class="w-11 h-11 rounded-xl text-[#9A737C] hover:text-[#FA8072] hover:bg-[#FFF5F7] flex items-center justify-center transition">
+          <i class="fa-solid fa-house text-base"></i>
+        </button>
+
+        <!-- Buat Playlist Baru -->
+        <button onclick="openCreatePlaylistModal()" data-title="Buat Playlist Baru"
+          data-desc="Koleksi lagu kenangan kita" onmouseenter="showSidebarTooltip(this)"
+          onmouseleave="hideSidebarTooltip()"
+          class="w-10 h-10 rounded-full bg-[#FFF5F7] hover:bg-[#FFE4E9] text-[#FA8072] flex items-center justify-center border border-[#FFD2DC] transition">
+          <i class="fa-solid fa-folder-plus text-sm"></i>
+        </button>
+      </div>
+
+      <div class="hidden lg:block w-8 h-[1px] bg-[#FFD2DC] my-1"></div>
+
+      <!-- Playlists Shortcuts & Liked/Polaroid/Jam -->
+      <div class="flex lg:flex-col items-center gap-2.5">
+        <!-- Dynamic Playlists Shortcuts Container -->
+        <div id="sidebarPlaylistsContainer" class="flex lg:flex-col items-center gap-2.5">
+          <!-- Injected via JS with custom pink-bordered tooltips -->
+        </div>
+
+        <div class="hidden lg:block w-6 h-[1px] bg-[#FFE4E9] my-0.5"></div>
+
+        <!-- Liked Songs (Heart Box ala Spotify) -->
+        <button onclick="switchPlaylistFilter('liked')" id="libBtnLiked" data-title="Lagu Favorit Berdua"
+          data-desc="Kumpulan lagu yang disukai" onmouseenter="showSidebarTooltip(this)"
+          onmouseleave="hideSidebarTooltip()"
+          class="w-11 h-11 rounded-xl bg-gradient-to-br from-[#FA8072] via-[#FF8FA3] to-[#FFC2D1] flex items-center justify-center text-white shadow-sm border-2 border-transparent hover:scale-105 transition">
+          <i class="fa-solid fa-heart text-base drop-shadow"></i>
+        </button>
+
+        <!-- Dedicated Polaroid Gallery Menu -->
+        <button onclick="navigateTo('polaroid')" id="sidebarBtnPolaroid" data-title="Galeri Polaroid Memori"
+          data-desc="Foto kenangan manis berdua" onmouseenter="showSidebarTooltip(this)"
+          onmouseleave="hideSidebarTooltip()"
+          class="w-11 h-11 rounded-xl bg-[#FFF0F3] border border-[#FFD2DC] flex items-center justify-center text-[#E85D75] hover:bg-[#FFE4E9] hover:scale-105 transition">
+          <i class="fa-solid fa-camera-retro text-base"></i>
+        </button>
+
+        <!-- Dedicated Listening Together Menu -->
+        <button onclick="navigateTo('jam')" id="sidebarBtnJam" data-title="Listening Together"
+          data-desc="Dengerin musik bareng secara realtime" onmouseenter="showSidebarTooltip(this)"
+          onmouseleave="hideSidebarTooltip()"
+          class="w-11 h-11 rounded-xl bg-[#FFF0F3] border border-[#FFD2DC] flex items-center justify-center text-[#FA8072] hover:bg-[#FFE4E9] hover:scale-105 transition relative">
+          <i class="fa-solid fa-users-rays text-base"></i>
+          <span
+            class="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-emerald-400 border-2 border-white animate-pulse"></span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Custom Floating Card Tooltip for Sidebar (Pink Border, White Bg, Dark Text) -->
+    <div id="sidebarPlaylistTooltip"
+      class="fixed hidden opacity-0 transition-opacity duration-150 z-[9999] pointer-events-none flex items-center drop-shadow-md">
+      <div class="w-2.5 h-2.5 bg-white border-l-2 border-b-2 border-[#FFB6C1] transform rotate-45 -mr-1.5 z-10"></div>
+      <div class="bg-white border-2 border-[#FFB6C1] px-3.5 py-1.5 rounded-xl shadow-lg max-w-[260px]">
+        <p class="tooltip-title text-xs font-bold text-[#1F2937] leading-tight"></p>
+        <p class="tooltip-desc text-[10px] text-[#6B7280] mt-0.5 leading-snug hidden"></p>
+      </div>
+    </div>
+
+    <!-- 2. CENTER CONTENT VIEW (Simple Home Page OR Playlist View) -->
+    <main id="centerMain"
+      class="flex-1 bg-white border border-[#FFD2DC] rounded-2xl overflow-y-auto shadow-sm flex flex-col">
+
+      <!-- ================= A. SIMPLE HOME PAGE VIEW ================= -->
+      <div id="homeView" class="p-5 sm:p-7 flex flex-col gap-6">
+
+        <!-- Welcome Hero Greeting Banner -->
+        <div
+          class="relative p-6 sm:p-8 rounded-3xl bg-gradient-to-br from-[#FFF0F3] via-[#FFE4E9] to-[#FFF5F7] border border-[#FFD2DC] shadow-sm overflow-hidden">
+          <div
+            class="absolute -right-6 -bottom-6 w-44 h-44 rounded-full bg-gradient-to-tr from-[#FA8072]/20 to-[#FFB3C1]/30 blur-2xl pointer-events-none">
+          </div>
+
+          <div class="relative z-10">
+            <h1 id="homeGreetingTitle" class="text-2xl sm:text-4xl font-extrabold text-[#3B2328] tracking-tight">
+              Selamat Datang, sayang
+            </h1>
+            <p id="homeGreetingSubtitle"
+              class="text-xs sm:text-sm text-[#7A4E58] mt-2 max-w-xl font-medium leading-relaxed">
+              Tempat menyimpan seluruh lagu, melodi, dan kenangan indah kita berdua. Putar lagu favoritmu atau buat
+              playlist baru sekarang.
+            </p>
+          </div>
+        </div>
+
+        <!-- Sweet Quote Mini Card -->
+        <div
+          class="p-4 rounded-2xl bg-gradient-to-r from-[#FFF5F7] to-[#FFF0F3] border border-[#FFD2DC] flex items-center justify-between gap-4">
+          <div class="flex items-center gap-3">
+            <div
+              class="w-10 h-10 rounded-xl bg-white border border-[#FFD2DC] flex items-center justify-center text-[#FA8072] shrink-0 shadow-xs">
+              <i class="fa-solid fa-quote-left text-sm"></i>
+            </div>
+            <div>
+              <p class="font-handwriting text-xl text-[#3B2328] leading-tight">
+                "Music sounds so much sweeter when I'm listening to it with you."
+              </p>
+              <p class="text-[11px] text-[#9A737C] font-semibold mt-0.5">— our little melody notes</p>
+            </div>
+          </div>
+          <button onclick="switchRightPanelTab('jam')"
+            class="hidden sm:inline-flex px-3.5 py-1.5 rounded-xl bg-white text-[#E85D75] hover:bg-[#FA8072] hover:text-white border border-[#FFD2DC] text-xs font-bold transition items-center gap-1.5 shrink-0">
+            <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+            <span>Jam Session</span>
+          </button>
+        </div>
+
+        <!-- Section: Playlist Kita -->
+        <div>
+          <div class="flex items-center justify-between mb-3.5">
+            <div>
+              <h2 class="text-lg font-extrabold text-[#3B2328] flex items-center gap-2">
+                <i class="fa-solid fa-compact-disc text-[#FA8072]"></i>
+                <span>Playlist Kita</span>
+              </h2>
+              <p class="text-xs text-[#9A737C]">Pilih playlist untuk melihat dan mendengarkan seluruh lagunya</p>
+            </div>
+            <button onclick="openCreatePlaylistModal()"
+              class="text-xs font-bold text-[#FA8072] hover:text-[#E85D75] flex items-center gap-1 transition">
+              <i class="fa-solid fa-plus"></i> Tambah Playlist
+            </button>
+          </div>
+
+          <!-- Playlists Grid Container: 2 Kolom di Mobile, 3-4 di Desktop -->
+          <div id="homePlaylistsGrid"
+            class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+            <!-- Injected via JS -->
+          </div>
+        </div>
+
+        <!-- Section: Quick Favorites / Lagu Favorit Kita -->
+        <div class="pb-4">
+          <div class="flex items-center justify-between mb-3">
+            <div>
+              <h2 class="text-lg font-extrabold text-[#3B2328] flex items-center gap-2">
+                <i class="fa-solid fa-heart text-[#FA8072]"></i>
+                <span>Lagu Favorit Berdua</span>
+              </h2>
+              <p class="text-xs text-[#9A737C]">Lagu-lagu yang paling sering kita putar bareng</p>
+            </div>
+          </div>
+          <div id="homeFavoritesList" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            <!-- Injected via JS -->
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ================= B. PLAYLIST DETAIL VIEW ================= -->
+      <div id="playlistView" class="hidden flex-1 flex flex-col">
+        <!-- Back to Home Bar -->
+        <div
+          class="px-5 pt-3 pb-1 flex items-center justify-between bg-gradient-to-b from-[#FA8072]/90 to-[#FA8072]/90">
+          <button onclick="navigateTo('home')"
+            class="px-3 py-1.5 rounded-full bg-white/20 hover:bg-white text-white hover:text-[#3B2328] text-xs font-bold backdrop-blur-md flex items-center gap-1.5 transition">
+            <i class="fa-solid fa-arrow-left"></i>
+            <span>Kembali ke Home</span>
+          </button>
+          <div class="flex items-center gap-2">
+            <button onclick="deleteCurrentPlaylist()" id="btnDeletePlaylist"
+              class="px-3 py-1.5 rounded-full bg-black/20 hover:bg-rose-500 text-white text-xs font-bold backdrop-blur-md flex items-center gap-1.5 transition"
+              title="Hapus Playlist Ini">
+              <i class="fa-solid fa-trash-can text-[11px]"></i>
+              <span class="hidden sm:inline">Hapus Playlist</span>
+            </button>
+            <button onclick="openSettingsModal()"
+              class="px-3 py-1.5 rounded-full bg-white/80 hover:bg-white text-[#3B2328] text-xs font-bold shadow-sm flex items-center gap-1.5 backdrop-blur-md transition">
+              <i class="fa-solid fa-pen text-[#FA8072]"></i>
+              <span>Edit Playlist</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Top Hero Header Banner -->
+        <div
+          class="relative p-5 md:p-7 bg-gradient-to-b from-[#FA8072]/90 via-[#FF9EAB]/75 to-white flex flex-col md:flex-row items-center md:items-end gap-6">
+          <!-- Square Album Cover with Shadow -->
+          <div onclick="openSettingsModal()"
+            class="w-40 h-40 md:w-48 md:h-48 rounded-xl overflow-hidden shadow-2xl shadow-[#3B2328]/25 shrink-0 cursor-pointer group relative border-2 border-white/60">
+            <img id="heroPlaylistCover" src="images/spotify_covers/jakarta.jpg"
+              class="w-full h-full object-cover group-hover:scale-105 transition duration-500" alt="Playlist Cover" />
+            <div
+              class="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-xs font-bold transition">
+              <i class="fa-solid fa-camera mr-1.5"></i> Ganti Cover
+            </div>
+          </div>
+
+          <!-- Playlist Title & Metadata -->
+          <div class="flex-1 text-center md:text-left">
+            <span
+              class="text-xs font-bold uppercase tracking-wider text-[#3B2328]/80 bg-white/50 px-2.5 py-0.5 rounded-full backdrop-blur-sm">
+              Public Playlist
+            </span>
+            <h1 id="heroPlaylistTitle"
+              class="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-[#3B2328] tracking-tight mt-2 mb-2 drop-shadow-sm">
+              ✦ jakarta.
+            </h1>
+            <p id="heroPlaylistDesc" class="text-sm text-[#4A2C32] font-medium mb-3">
+              a special night over the city lights &lt;3 — curated by nadeyy
+            </p>
+            <div
+              class="flex flex-wrap items-center justify-center md:justify-start gap-2 text-xs font-bold text-[#3B2328]">
+              <img id="heroCuratorAvatar" src="images/spotify_covers/profile_nadeyy.jpg"
+                class="w-6 h-6 rounded-full object-cover border border-white shadow-sm" alt="Curator" />
+              <span id="heroCuratorName" class="hover:underline cursor-pointer">sayangmu ★</span>
+              <span>•</span>
+              <span id="heroStatsCount" class="font-semibold text-[#5E3A42]">61 songs, infinite love</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Action Bar (Big Play Button, Preview Thumb, Shuffle, Add, Filter) -->
+        <div class="px-6 py-4 flex items-center justify-between gap-4 bg-gradient-to-b from-white to-[#FFF9FA]">
+          <div class="flex items-center gap-4">
+            <!-- Big Salmon Play/Pause Button -->
+            <button onclick="togglePlay()"
+              class="w-14 h-14 rounded-full bg-[#FA8072] hover:bg-[#E85D75] hover:scale-105 text-white flex items-center justify-center shadow-lg shadow-[#FA8072]/40 transition">
+              <i id="heroPlayIcon" class="fa-solid fa-play text-xl ml-0.5"></i>
+            </button>
+
+            <!-- Small Rounded Track Preview -->
+            <div onclick="togglePolaroidModal()"
+              class="w-10 h-12 rounded-lg overflow-hidden border-2 border-[#FFD2DC] shadow-sm cursor-pointer hover:scale-105 transition"
+              title="Lihat Polaroid Memori">
+              <img id="actionMiniThumb" src="images/spotify_covers/jakarta.jpg" class="w-full h-full object-cover"
+                alt="Mini thumb" />
+            </div>
+
+            <!-- Shuffle -->
+            <button onclick="toggleShuffle()" id="btnShuffleTop"
+              class="text-xl text-[#9A737C] hover:text-[#FA8072] transition" title="Acak Lagu">
+              <i class="fa-solid fa-shuffle"></i>
+            </button>
+
+            <!-- Add Custom Song (+) -->
+            <button onclick="openAddSongModal()"
+              class="w-8 h-8 rounded-full border-2 border-[#9A737C] text-[#9A737C] hover:border-[#FA8072] hover:text-[#FA8072] flex items-center justify-center transition"
+              title="Tambah Lagu Baru">
+              <i class="fa-solid fa-plus text-sm"></i>
+            </button>
+
+            <!-- Invite / Share Jam Session -->
+            <button onclick="copyInviteLink()"
+              class="w-8 h-8 rounded-full border-2 border-[#9A737C] text-[#9A737C] hover:border-[#FA8072] hover:text-[#FA8072] flex items-center justify-center transition"
+              title="Salin Kode Undangan Listening Together">
+              <i class="fa-solid fa-user-plus text-xs"></i>
+            </button>
+          </div>
+
+          <!-- Right List Indicator -->
+          <div class="flex items-center gap-2 text-xs font-semibold text-[#9A737C]">
+            <span id="filterStatusLabel">Semua Lagu</span>
+            <i class="fa-solid fa-list-ul"></i>
+          </div>
+        </div>
+
+        <!-- Tracklist Table Header -->
+        <div
+          class="px-6 py-2 border-b border-[#FFE4E9] grid grid-cols-12 gap-3 text-xs font-bold uppercase tracking-wider text-[#9A737C]">
+          <div class="col-span-1 text-center">#</div>
+          <div class="col-span-6 sm:col-span-4">Title</div>
+          <div class="hidden sm:block sm:col-span-5 md:col-span-3">Sweet Memory / Note</div>
+          <div class="hidden md:block md:col-span-2">Date added</div>
+          <div class="col-span-5 sm:col-span-2 text-right pr-2"><i class="fa-regular fa-clock"></i></div>
+        </div>
+
+        <!-- Tracklist Rows Container -->
+        <div id="tracklistContainer" class="px-3 py-2 flex-1 divide-y divide-[#FFF5F7]">
+          <!-- Injected dynamically via JS -->
+        </div>
+      </div>
+
+      <!-- ================= C. DEDICATED POLAROID MEMORIES GALLERY VIEW ================= -->
+      <div id="polaroidView" class="hidden flex-1 flex flex-col p-5 sm:p-7 overflow-y-auto">
+        <!-- Polaroid Gallery Header -->
+        <div
+          class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-[#FFD2DC]">
+          <div>
+            <div class="flex items-center gap-2.5">
+              <span
+                class="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#FFF0F3] to-[#FFE4E9] text-[#E85D75] flex items-center justify-center border border-[#FFD2DC] shadow-xs">
+                <i class="fa-solid fa-camera-retro text-base"></i>
+              </span>
+              <div>
+                <h2 class="text-xl sm:text-2xl font-extrabold text-[#3B2328]">Galeri Polaroid Memori Kita 📷</h2>
+                <p class="text-xs text-[#9A737C] mt-0.5">Koleksi foto polaroid kenangan manis, momen tawa, dan cerita
+                  cinta kita berdua 💕</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <button onclick="clearAllPolaroids()" id="btnClearAllPolaroids"
+              class="px-3.5 py-2 rounded-xl bg-white border border-[#FFD2DC] text-[#9A737C] hover:text-rose-500 hover:border-rose-300 text-xs font-bold shadow-xs transition flex items-center gap-1.5"
+              title="Hapus Semua Foto">
+              <i class="fa-solid fa-trash-can text-xs"></i>
+              <span>Hapus Semua</span>
+            </button>
+            <button onclick="openAddPolaroidModal()"
+              class="px-4 py-2 rounded-xl bg-gradient-to-r from-[#FA8072] to-[#E85D75] text-white text-xs font-bold shadow-md shadow-[#FA8072]/30 hover:opacity-95 transition flex items-center gap-1.5">
+              <i class="fa-solid fa-plus"></i>
+              <span>Tambah</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Polaroid Gallery Cards Grid -->
+        <div id="polaroidGalleryGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 p-2">
+          <!-- Dynamically injected via renderPolaroidGallery() -->
+        </div>
+      </div>
+
+      <!-- ================= D. DEDICATED FULL LISTENING TOGETHER VIEW ================= -->
+      <div id="listeningTogetherView" class="hidden flex-1 flex flex-col p-4 sm:p-6 space-y-5">
+
+        <!-- Live Couple Jam Header Hero -->
+        <div
+          class="relative p-5 sm:p-6 rounded-3xl bg-gradient-to-br from-[#FA8072] via-[#FF8FA3] to-[#E85D75] text-white shadow-lg overflow-hidden">
+          <div class="absolute -right-8 -bottom-8 w-56 h-56 rounded-full bg-white/10 blur-2xl pointer-events-none">
+          </div>
+
+          <div class="relative z-10 flex flex-col md:flex-row items-center justify-between gap-5">
+            <div class="text-center md:text-left">
+              <span
+                class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 backdrop-blur-md text-[11px] font-extrabold uppercase tracking-wider mb-2">
+                <span class="w-2 h-2 rounded-full bg-emerald-300 animate-ping"></span>
+                Live Couple Listening Together
+              </span>
+              <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight">
+                Mendengarkan Bersama 💕
+              </h2>
+              <p class="text-xs sm:text-sm text-white/90 mt-1 max-w-md font-medium">
+                Kamu dan pasangan terhubung dalam sesi musik yang sama. Tersinkronisasi real-time!
+              </p>
+
+              <!-- Room Code & Quick Invite Bar -->
+              <div class="mt-4 flex flex-wrap items-center justify-center md:justify-start gap-2 text-xs">
+                <span class="text-white/80 text-[11px]">Kode Sesi:</span>
+                <span
+                  class="px-2.5 py-1 rounded-lg bg-white/25 font-mono font-bold tracking-wider text-white text-[11px]">LUV-2407</span>
+                <button onclick="copyInviteLink()"
+                  class="px-3 py-1 rounded-lg bg-white text-[#FA8072] font-bold hover:bg-[#FFF0F3] shadow-xs transition flex items-center gap-1.5 text-xs">
+                  <i class="fa-solid fa-copy"></i> Salin Link Jam
+                </button>
+              </div>
+            </div>
+
+            <!-- Dual Animated Avatar Bridge -->
+            <div
+              class="flex items-center gap-4 bg-white/15 backdrop-blur-md px-5 py-3.5 rounded-3xl border border-white/25 shadow-inner shrink-0">
+              <div class="text-center">
+                <div class="relative inline-block">
+                  <img id="mainJamAvatarYou" src="images/spotify_covers/profile_nadeyy.jpg"
+                    class="w-14 h-14 sm:w-16 sm:h-16 rounded-full object-cover border-2 border-white shadow-md"
+                    alt="You" />
+                  <span
+                    class="absolute bottom-0 right-0 w-5 h-5 rounded-full bg-emerald-400 border-2 border-white flex items-center justify-center text-[10px] text-white shadow">
+                    <i class="fa-solid fa-headphones"></i>
+                  </span>
+                </div>
+                <p id="mainJamNameYou" class="text-xs font-bold text-white mt-1 truncate max-w-[80px]">nadeyy ★</p>
+              </div>
+
+              <!-- Animated Soundwave Connector -->
+              <div class="flex flex-col items-center gap-1 px-1">
+                <div class="flex items-end gap-1 h-6">
+                  <span class="w-1 bg-white rounded-full animate-bounce h-4"></span>
+                  <span class="w-1 bg-white rounded-full animate-bounce h-6" style="animation-delay: 0.15s"></span>
+                  <span class="w-1 bg-white rounded-full animate-bounce h-3" style="animation-delay: 0.3s"></span>
+                  <span class="w-1 bg-white rounded-full animate-bounce h-5" style="animation-delay: 0.45s"></span>
+                </div>
+                <span class="text-[10px] font-extrabold text-white bg-white/25 px-2 py-0.5 rounded-full">
+                  100% Synced
+                </span>
+              </div>
+
+              <div class="text-center">
+                <div class="relative inline-block">
+                  <img id="mainJamAvatarPartner"
+                    src="https://images.unsplash.com/photo-1517841905240-472988babdf9?w=120&auto=format&fit=crop&q=80"
+                    class="w-14 h-14 sm:w-16 sm:h-16 rounded-full object-cover border-2 border-white shadow-md"
+                    alt="Partner" />
+                  <span
+                    class="absolute bottom-0 right-0 w-5 h-5 rounded-full bg-emerald-400 border-2 border-white flex items-center justify-center text-[10px] text-white shadow">
+                    <i class="fa-solid fa-heart"></i>
+                  </span>
+                </div>
+                <p id="mainJamNamePartner" class="text-xs font-bold text-white mt-1 truncate max-w-[80px]">sayang 💕</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Currently Playing Live Card -->
+        <div
+          class="p-4 sm:p-5 rounded-3xl bg-[#FFF9FA] border border-[#FFD2DC] shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
+          <div class="flex items-center gap-3.5 w-full md:w-auto">
+            <div
+              class="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl overflow-hidden border-2 border-[#FFD2DC] shadow-sm shrink-0">
+              <img id="mainJamCurrentCover" src="images/spotify_covers/jakarta.jpg" class="w-full h-full object-cover"
+                alt="Playing Now" />
+            </div>
+            <div class="min-w-0">
+              <span
+                class="text-[10px] font-extrabold uppercase tracking-wider text-[#FA8072] bg-[#FFE4E9] px-2.5 py-0.5 rounded-full">
+                Sedang Diputar Bersama
+              </span>
+              <h3 id="mainJamCurrentTitle"
+                class="text-base sm:text-lg font-extrabold text-[#3B2328] mt-1 truncate max-w-xs sm:max-w-md">
+                Those Eyes
+              </h3>
+              <p id="mainJamCurrentArtist" class="text-xs text-[#9A737C] font-semibold truncate max-w-xs sm:max-w-md">
+                New West
+              </p>
+            </div>
+          </div>
+
+          <!-- Controls inside Jam View -->
+          <div class="flex items-center gap-3 shrink-0">
+            <button onclick="prevTrack()"
+              class="w-10 h-10 rounded-full bg-white border border-[#FFD2DC] text-[#3B2328] hover:text-[#FA8072] flex items-center justify-center shadow-xs transition"
+              title="Sebelumnya">
+              <i class="fa-solid fa-backward-step"></i>
+            </button>
+            <button onclick="togglePlay()"
+              class="w-12 h-12 rounded-full bg-gradient-to-r from-[#FA8072] to-[#E85D75] hover:opacity-95 text-white flex items-center justify-center shadow-md shadow-[#FA8072]/30 hover:scale-105 transition"
+              title="Play/Pause">
+              <i id="mainJamPlayIcon" class="fa-solid fa-play text-lg ml-0.5"></i>
+            </button>
+            <button onclick="nextTrack()"
+              class="w-10 h-10 rounded-full bg-white border border-[#FFD2DC] text-[#3B2328] hover:text-[#FA8072] flex items-center justify-center shadow-xs transition"
+              title="Selanjutnya">
+              <i class="fa-solid fa-forward-step"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Side-by-Side Responsive Grid: Reactions & Couple Chat -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
+
+          <!-- Column 1: Real-Time Floating Reactions (5 Cols) -->
+          <div
+            class="lg:col-span-5 p-5 rounded-3xl bg-white border border-[#FFD2DC] shadow-sm flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between mb-3">
+                <div>
+                  <h3 class="text-sm font-extrabold text-[#3B2328] flex items-center gap-1.5">
+                    <i class="fa-solid fa-heart-pulse text-[#FA8072]"></i>
+                    <span>Reaksi Romantis Real-Time</span>
+                  </h3>
+                  <p class="text-[11px] text-[#9A737C]">Kirim reaksi melayang di layar</p>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-3 gap-2.5 my-2">
+                <button onclick="sendFloatingReaction('❤️', true)"
+                  class="p-3 rounded-2xl bg-[#FFF5F7] hover:bg-[#FFE4E9] border border-[#FFD2DC] flex flex-col items-center justify-center hover:scale-105 transition shadow-2xs group cursor-pointer">
+                  <span class="text-2xl group-hover:scale-125 transition">❤️</span>
+                  <span class="text-[11px] font-bold text-[#7A4E58] mt-1">Love</span>
+                </button>
+                <button onclick="sendFloatingReaction('🥰', true)"
+                  class="p-3 rounded-2xl bg-[#FFF5F7] hover:bg-[#FFE4E9] border border-[#FFD2DC] flex flex-col items-center justify-center hover:scale-105 transition shadow-2xs group cursor-pointer">
+                  <span class="text-2xl group-hover:scale-125 transition">🥰</span>
+                  <span class="text-[11px] font-bold text-[#7A4E58] mt-1">Sayang</span>
+                </button>
+                <button onclick="sendFloatingReaction('🥺', true)"
+                  class="p-3 rounded-2xl bg-[#FFF5F7] hover:bg-[#FFE4E9] border border-[#FFD2DC] flex flex-col items-center justify-center hover:scale-105 transition shadow-2xs group cursor-pointer">
+                  <span class="text-2xl group-hover:scale-125 transition">🥺</span>
+                  <span class="text-[11px] font-bold text-[#7A4E58] mt-1">Terharu</span>
+                </button>
+                <button onclick="sendFloatingReaction('🔥', true)"
+                  class="p-3 rounded-2xl bg-[#FFF5F7] hover:bg-[#FFE4E9] border border-[#FFD2DC] flex flex-col items-center justify-center hover:scale-105 transition shadow-2xs group cursor-pointer">
+                  <span class="text-2xl group-hover:scale-125 transition">🔥</span>
+                  <span class="text-[11px] font-bold text-[#7A4E58] mt-1">Keren</span>
+                </button>
+                <button onclick="sendFloatingReaction('🌸', true)"
+                  class="p-3 rounded-2xl bg-[#FFF5F7] hover:bg-[#FFE4E9] border border-[#FFD2DC] flex flex-col items-center justify-center hover:scale-105 transition shadow-2xs group cursor-pointer">
+                  <span class="text-2xl group-hover:scale-125 transition">🌸</span>
+                  <span class="text-[11px] font-bold text-[#7A4E58] mt-1">Cantik</span>
+                </button>
+                <button onclick="sendFloatingReaction('✨', true)"
+                  class="p-3 rounded-2xl bg-[#FFF5F7] hover:bg-[#FFE4E9] border border-[#FFD2DC] flex flex-col items-center justify-center hover:scale-105 transition shadow-2xs group cursor-pointer">
+                  <span class="text-2xl group-hover:scale-125 transition">✨</span>
+                  <span class="text-[11px] font-bold text-[#7A4E58] mt-1">Bintang</span>
+                </button>
+              </div>
+            </div>
+
+            <button onclick="simulatePartnerSweetAction()"
+              class="w-full mt-3 py-2 px-3 rounded-xl bg-[#FFF0F3] hover:bg-[#FFE4E9] text-[#E85D75] text-xs font-bold border border-[#FFD2DC] transition flex items-center justify-center gap-1.5 cursor-pointer">
+              <i class="fa-solid fa-wand-magic-sparkles text-[#FA8072]"></i>
+              <span>Simulasikan Balasan Pasangan</span>
+            </button>
+          </div>
+
+          <!-- Column 2: Couple Jam Sweet Chat Box (7 Cols) -->
+          <div class="lg:col-span-7 p-5 rounded-3xl bg-white border border-[#FFD2DC] shadow-sm flex flex-col h-[320px]">
+            <div class="flex items-center justify-between pb-2.5 border-b border-[#FFE4E9] mb-2.5">
+              <h3 class="text-sm font-extrabold text-[#3B2328] flex items-center gap-2">
+                <i class="fa-solid fa-comments text-[#FA8072]"></i>
+                <span>Pesan Manis Sambil Dengerin Musik</span>
+              </h3>
+              <span class="text-[10px] text-[#9A737C]">Tersimpan otomatis</span>
+            </div>
+
+            <div id="mainJamChatContainer" class="flex-1 overflow-y-auto space-y-2 pr-2">
+              <!-- Injected via renderJamChat() -->
+            </div>
+
+            <form onsubmit="sendMainJamChatMessage(event)"
+              class="pt-2.5 border-t border-[#FFE4E9] flex items-center gap-2">
+              <input id="mainJamChatInput" type="text" placeholder="Ketik pesan cinta untuk pasanganmu..."
+                class="flex-1 px-4 py-2 rounded-full bg-[#FFF5F7] border border-[#FFD2DC] text-xs text-[#3B2328] focus:outline-none focus:border-[#FA8072]" />
+              <button type="submit"
+                class="px-4 py-2 rounded-full bg-gradient-to-r from-[#FA8072] to-[#E85D75] hover:opacity-95 text-white text-xs font-bold shadow-md transition flex items-center gap-1.5 shrink-0">
+                <i class="fa-solid fa-paper-plane text-xs"></i>
+                <span>Kirim</span>
+              </button>
+            </form>
+          </div>
+        </div>
+
+      </div>
+    </main>
+
+    <!-- 3. RIGHT PANEL: NOW PLAYING VISUAL CARD & LISTENING TOGETHER (SPOTIFY JAM) -->
+    <aside
+      class="w-full lg:w-[350px] xl:w-[375px] bg-white border border-[#FFD2DC] rounded-2xl overflow-hidden shadow-sm flex flex-col shrink-0 relative">
+
+      <!-- Floating Reactions Container -->
+      <div id="reactionStage" class="pointer-events-none absolute inset-0 overflow-hidden z-50"></div>
+
+      <!-- Top Tab Switcher -->
+      <div class="p-2.5 bg-[#FFF9FA] border-b border-[#FFE4E9] flex items-center gap-1.5">
+        <button onclick="switchRightPanelTab('canvas')" id="tabBtnCanvas"
+          class="flex-1 py-2 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 bg-[#FA8072] text-white shadow-sm transition">
+          <i class="fa-solid fa-compact-disc"></i>
+          <span>Now Playing</span>
+        </button>
+        <button onclick="navigateTo('jam'); switchRightPanelTab('jam');" id="tabBtnJam"
+          class="flex-1 py-2 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 text-[#9A737C] hover:bg-[#FFE4E9]/50 transition">
+          <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+          <span>Listening Together</span>
+        </button>
+      </div>
+
+      <!-- TAB 1: SPOTIFY RIGHT CANVAS VIEW -->
+      <div id="panelCanvasView" class="flex-1 flex flex-col overflow-y-auto">
+        <!-- Full Bleed Visual Card -->
+        <div class="relative h-72 m-3 rounded-2xl overflow-hidden shadow-lg group">
+          <img id="rightCanvasImage"
+            src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=600&auto=format&fit=crop&q=80"
+            class="canvas-slide-image w-full h-full object-cover group-hover:scale-105 transition duration-700"
+            alt="Canvas Visual" />
+          <div
+            class="absolute inset-0 bg-gradient-to-t from-[#3B2328]/90 via-[#3B2328]/25 to-black/30 z-10 pointer-events-none">
+          </div>
+
+          <!-- Top Header inside Canvas (z-30 so always clickable above vinyl overlay) -->
+          <div class="absolute top-3.5 left-4 right-4 flex items-center justify-between text-white z-30">
+            <span id="rightCanvasPlaylistName" class="text-xs font-extrabold tracking-wide drop-shadow">✦ our
+              melodies.</span>
+          </div>
+
+          <!-- Spinning Vinyl Overlay (z-20) with Smooth Slide Transition -->
+          <div id="vinylOverlay"
+            class="vinyl-slide-layer vinyl-slide-inactive flex items-center justify-center bg-[#110e10] z-20 overflow-hidden">
+            <!-- Turntable Tonearm (Jarum Pemutar Vinyl Animasi) -->
+            <div id="vinylTonearm" class="vinyl-tonearm">
+              <div class="tonearm-rest"></div>
+              <div class="tonearm-pivot"></div>
+              <div class="tonearm-rod"></div>
+              <div class="tonearm-head">
+                <div class="tonearm-needle"></div>
+              </div>
+            </div>
+
+            <div id="vinylDisc" onclick="togglePlay()"
+              class="spin-vinyl w-44 h-44 rounded-full bg-gradient-to-tr from-neutral-950 via-neutral-900 to-neutral-950 border-4 border-white/20 shadow-2xl flex items-center justify-center relative cursor-pointer group/disc"
+              title="Klik vinyl untuk Play / Pause">
+              <!-- Concentric Grooves with Sheen -->
+              <div class="absolute inset-2.5 rounded-full border border-white/10 pointer-events-none"></div>
+              <div class="absolute inset-5 rounded-full border border-white/10 pointer-events-none"></div>
+              <div class="absolute inset-7.5 rounded-full border border-white/10 pointer-events-none"></div>
+              <div class="absolute inset-10 rounded-full border border-white/10 pointer-events-none"></div>
+              <div class="absolute inset-0 rounded-full vinyl-sheen pointer-events-none"></div>
+              <img id="vinylCenterArt" src=""
+                class="w-16 h-16 rounded-full object-cover border-2 border-[#FA8072] shadow-inner relative z-10 pointer-events-none"
+                alt="Center" />
+              <div
+                class="w-3.5 h-3.5 rounded-full bg-white border border-neutral-800 absolute z-20 pointer-events-none">
+              </div>
+            </div>
+          </div>
+
+          <!-- Bottom Track Title inside Canvas (z-30) -->
+          <div class="absolute bottom-4 left-4 right-4 text-white z-30">
+            <div class="flex items-center justify-between gap-2">
+              <div class="min-w-0 flex-1">
+                <h3 id="rightTrackTitle" class="text-xl font-extrabold leading-tight drop-shadow truncate">Those Eyes
+                </h3>
+                <p id="rightTrackArtist" class="text-xs text-white/85 font-medium truncate">New West</p>
+              </div>
+              <div class="flex items-center gap-1.5 shrink-0 relative">
+                <!-- Expandable Drawer to the left -->
+                <div id="moreActionsDrawer"
+                  class="flex items-center gap-1.5 transition-all duration-300 overflow-hidden max-w-0 opacity-0 pointer-events-none">
+                  <button onclick="openAddToPlaylistModalCurrent()"
+                    class="w-8 h-8 rounded-full bg-white/20 hover:bg-white/35 backdrop-blur-md flex items-center justify-center text-white hover:text-[#FA8072] transition shrink-0"
+                    title="Masukkan ke Playlist">
+                    <i class="fa-solid fa-folder-plus text-xs"></i>
+                  </button>
+                  <button onclick="openShareSongModalCurrent()"
+                    class="w-8 h-8 rounded-full bg-white/20 hover:bg-white/35 backdrop-blur-md flex items-center justify-center text-white hover:text-[#FA8072] transition shrink-0"
+                    title="Bagikan Lagu Ini">
+                    <i class="fa-solid fa-share-nodes text-xs"></i>
+                  </button>
+                  <button onclick="downloadCurrentTrack()" id="rightDownloadBtn"
+                    class="w-8 h-8 rounded-full bg-white/20 hover:bg-white/35 backdrop-blur-md flex items-center justify-center text-white hover:text-[#FA8072] transition shrink-0"
+                    title="Download MP3 Lagu Ini">
+                    <i class="fa-solid fa-download text-xs"></i>
+                  </button>
+                </div>
+
+                <!-- 3-Dots Toggle Button -->
+                <button onclick="toggleMoreActionsTrack(event)" id="btnMoreActionsTrack"
+                  class="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 backdrop-blur-md flex items-center justify-center text-white hover:text-[#FA8072] transition cursor-pointer shadow-sm shrink-0"
+                  title="Opsi Lainnya">
+                  <i id="iconMoreActionsTrack" class="fa-solid fa-ellipsis text-xs"></i>
+                </button>
+
+                <!-- Icon Button View (Canvas/Vinyl Toggle) -->
+                <button onclick="toggleVinylMode()" id="vinylToggleBtn"
+                  class="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 backdrop-blur-md flex items-center justify-center text-white hover:text-[#FA8072] transition cursor-pointer shadow-sm shrink-0"
+                  title="Beralih Tampilan Vinyl / Canvas">
+                  <i id="vinylToggleIcon" class="fa-solid fa-record-vinyl text-[#FA8072] text-xs"></i>
+                </button>
+
+                <!-- Like (Heart) Button -->
+                <button onclick="toggleLikeCurrent()" id="rightLikeBtn"
+                  class="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 backdrop-blur-md flex items-center justify-center text-white transition shrink-0"
+                  title="Suka">
+                  <i class="fa-solid fa-heart text-[#FF4D6D]"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sweet Memory Note Card -->
+        <div class="mx-3 mb-3 p-4 rounded-2xl bg-[#FFF5F7] border border-[#FFD2DC]">
+          <div class="flex items-center justify-between mb-1.5">
+            <span class="text-[11px] font-extrabold uppercase tracking-wider text-[#E85D75] flex items-center gap-1.5">
+              <i class="fa-solid fa-sparkles"></i> Sweet Memory Note
+            </span>
+            <button onclick="openEditCurrentMemory()"
+              class="text-[11px] text-[#9A737C] hover:text-[#FA8072] font-semibold">
+              <i class="fa-solid fa-pen"></i> Edit
+            </button>
+          </div>
+          <p id="rightTrackMemory" class="font-handwriting text-xl text-[#3B2328] leading-snug">
+            "Lagu waktu kita jalan berdua habis hujan sambil cerita masa depan 💕"
+          </p>
+        </div>
+
+        <!-- Mini Listening Together Status Card inside Canvas Tab -->
+        <div
+          class="mx-3 mb-3 p-3.5 rounded-2xl bg-gradient-to-r from-[#FFF0F3] to-[#FFE4E9]/70 border border-[#FFD2DC] flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="flex -space-x-2">
+              <img id="miniJamAvatar1" src="images/spotify_covers/profile_nadeyy.jpg"
+                class="w-8 h-8 rounded-full object-cover ring-2 ring-white" />
+              <img id="miniJamAvatar2"
+                src="https://images.unsplash.com/photo-1517841905240-472988babdf9?w=100&auto=format&fit=crop&q=80"
+                class="w-8 h-8 rounded-full object-cover ring-2 ring-[#FA8072] live-ring" />
+            </div>
+            <div>
+              <p class="text-xs font-bold text-[#3B2328] flex items-center gap-1.5">
+                <span id="miniPartnerStatusName">Alya</span> sedang mendengarkan
+              </p>
+              <p class="text-[11px] text-[#9A737C]">Sinkronisasi real-time aktif • 100% Match</p>
+            </div>
+          </div>
+          <button onclick="navigateTo('jam'); switchRightPanelTab('jam');"
+            class="px-2.5 py-1.5 rounded-xl bg-white text-[#E85D75] text-xs font-bold shadow-xs hover:bg-[#FA8072] hover:text-white transition">
+            Buka Jam
+          </button>
+        </div>
+      </div>
+
+      <!-- TAB 2: LISTENING TOGETHER (COUPLE JAM) -->
+      <div id="panelJamView" class="hidden flex-1 flex flex-col overflow-hidden">
+        <!-- Jam Session Header Box -->
+        <div class="p-3.5 m-3 rounded-2xl bg-gradient-to-br from-[#FA8072] to-[#E85D75] text-white shadow-md">
+          <div class="flex items-center justify-between mb-2">
+            <span
+              class="px-2 py-0.5 rounded-full bg-white/25 text-[10px] font-extrabold uppercase tracking-wider flex items-center gap-1.5">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-300 animate-ping"></span>
+              Couple Jam Session
+            </span>
+            <button onclick="copyInviteLink()"
+              class="text-xs bg-white/20 hover:bg-white/30 px-2.5 py-1 rounded-lg font-bold flex items-center gap-1 transition">
+              <i class="fa-solid fa-link"></i> <span id="jamRoomCode">LUV-2407</span>
+            </button>
+          </div>
+
+          <!-- Dual Synchronized Avatars -->
+          <div class="flex items-center justify-center gap-4 my-2">
+            <div class="text-center">
+              <div class="relative inline-block">
+                <img id="jamAvatarYou" src="images/spotify_covers/profile_nadeyy.jpg"
+                  class="w-12 h-12 rounded-full object-cover border-2 border-white shadow-md" />
+                <span
+                  class="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-emerald-400 border-2 border-white flex items-center justify-center text-[8px] text-white">
+                  <i class="fa-solid fa-headphones"></i>
+                </span>
+              </div>
+              <p id="jamNameYou" class="text-[11px] font-bold mt-1">Kamu</p>
+            </div>
+
+            <!-- Animated Soundwave Bridge -->
+            <div class="flex flex-col items-center">
+              <div class="flex items-end gap-1 h-4">
+                <span class="eq-bar !bg-white"></span>
+                <span class="eq-bar !bg-white"></span>
+                <span class="eq-bar !bg-white"></span>
+              </div>
+              <span class="text-[10px] text-white/90 font-semibold mt-1">Synced 💕</span>
+            </div>
+
+            <div class="text-center">
+              <div class="relative inline-block">
+                <img id="jamAvatarPartner"
+                  src="https://images.unsplash.com/photo-1517841905240-472988babdf9?w=120&auto=format&fit=crop&q=80"
+                  class="w-12 h-12 rounded-full object-cover border-2 border-white shadow-md" />
+                <span
+                  class="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-emerald-400 border-2 border-white flex items-center justify-center text-[8px] text-white">
+                  <i class="fa-solid fa-heart"></i>
+                </span>
+              </div>
+              <p id="jamNamePartner" class="text-[11px] font-bold mt-1">Sayang</p>
+            </div>
+          </div>
+
+          <!-- Sync Toggle & Partner Status -->
+          <div class="mt-2 pt-2 border-t border-white/20 flex items-center justify-between text-[11px]">
+            <span id="jamLiveActivityText" class="truncate">🎧 Mendengarkan di detik yang sama</span>
+            <label class="inline-flex items-center cursor-pointer">
+              <input type="checkbox" id="syncPlayToggle" checked onchange="toggleSyncMode()" class="sr-only peer">
+              <div
+                class="w-8 h-4 bg-white/30 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-3 after:w-3 after:transition-all relative">
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <!-- Quick Floating Emoji Reactions Bar -->
+        <div class="px-3 mb-2">
+          <div class="flex items-center justify-between bg-[#FFF5F7] border border-[#FFD2DC] rounded-xl px-3 py-1.5">
+            <span class="text-[11px] font-bold text-[#9A737C]">Kirim Reaksi:</span>
+            <div class="flex items-center gap-1.5">
+              <button onclick="sendFloatingReaction('❤️', true)"
+                class="hover:scale-125 transition text-base">❤️</button>
+              <button onclick="sendFloatingReaction('🥰', true)"
+                class="hover:scale-125 transition text-base">🥰</button>
+              <button onclick="sendFloatingReaction('😭', true)"
+                class="hover:scale-125 transition text-base">😭</button>
+              <button onclick="sendFloatingReaction('🔥', true)"
+                class="hover:scale-125 transition text-base">🔥</button>
+              <button onclick="sendFloatingReaction('🌸', true)"
+                class="hover:scale-125 transition text-base">🌸</button>
+              <button onclick="simulatePartnerSweetAction()"
+                class="ml-1 px-2 py-0.5 rounded-lg bg-[#FFE4E9] text-[#E85D75] text-[10px] font-bold hover:bg-[#FA8072] hover:text-white transition"
+                title="Simulasikan balasan pasangan">
+                Balas ✨
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Live Couple Chat Messages -->
+        <div id="jamChatContainer" class="flex-1 overflow-y-auto px-3 py-1 space-y-2.5 text-xs">
+          <!-- Injected via JS -->
+        </div>
+
+        <!-- Chat Input Form -->
+        <form onsubmit="sendJamChatMessage(event)"
+          class="p-3 border-t border-[#FFE4E9] bg-white flex items-center gap-2">
+          <input id="jamChatInput" type="text" placeholder="Ketik pesan sambil dengerin lagu..."
+            class="flex-1 px-3.5 py-2 rounded-full bg-[#FFF5F7] border border-[#FFD2DC] text-xs text-[#3B2328] focus:outline-none focus:border-[#FA8072]" />
+          <button type="submit"
+            class="w-8 h-8 rounded-full bg-[#FA8072] hover:bg-[#E85D75] text-white flex items-center justify-center shadow-sm transition">
+            <i class="fa-solid fa-paper-plane text-xs"></i>
+          </button>
+        </form>
+      </div>
+    </aside>
+  </div>
+
+  <!-- ================= BOTTOM STICKY NOW PLAYING BAR (SPOTIFY FOOTER) ================= -->
+  <footer class="h-20 px-4 bg-white border-t border-[#FFD2DC] flex items-center justify-between gap-4 shrink-0 z-40">
+
+    <!-- Left: Active Track Cover + Title + Artist + Add Heart + Download -->
+    <div class="flex items-center gap-3 w-1/4 min-w-[180px] max-w-[280px]">
+      <img id="bottomTrackCover" onclick="switchRightPanelTab('canvas')" src="images/spotify_covers/jakarta.jpg"
+        class="w-14 h-14 shrink-0 rounded-xl object-cover border border-[#FFD2DC] shadow-sm cursor-pointer hover:scale-105 transition"
+        alt="Now Playing" />
+      <div class="min-w-0 flex-1 truncate">
+        <h4 id="bottomTrackTitle" class="text-sm font-bold text-[#3B2328] truncate">Those Eyes</h4>
+        <p id="bottomTrackArtist" class="text-xs text-[#9A737C] truncate">New West</p>
+      </div>
+      <div class="flex items-center gap-2 shrink-0">
+        <button onclick="openAddToPlaylistModalCurrent()" id="bottomAddToPlaylistBtn"
+          class="text-[#9A737C] hover:text-[#FA8072] hover:scale-110 transition" title="Masukkan ke Playlist">
+          <i class="fa-solid fa-folder-plus text-sm"></i>
+        </button>
+        <button onclick="openShareSongModalCurrent()" id="bottomShareBtn"
+          class="text-[#9A737C] hover:text-[#FA8072] hover:scale-110 transition" title="Bagikan Lagu Ini">
+          <i class="fa-solid fa-share-nodes text-sm"></i>
+        </button>
+        <button onclick="toggleLikeCurrent()" id="bottomLikeBtn" class="text-[#FA8072] hover:scale-110 transition"
+          title="Simpan ke Favorit">
+          <i class="fa-solid fa-circle-plus text-base"></i>
+        </button>
+        <button onclick="downloadCurrentTrack()" id="bottomDownloadBtn"
+          class="text-[#9A737C] hover:text-[#FA8072] hover:scale-110 transition" title="Download Audio MP3">
+          <i class="fa-solid fa-download text-sm"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Center: Playback Controls & Timeline Scrubber -->
+    <div class="flex flex-col items-center max-w-xl w-2/4">
+      <div class="flex items-center gap-5 mb-1.5">
+        <button onclick="toggleShuffle()" id="btnShuffleBottom"
+          class="text-[#9A737C] hover:text-[#FA8072] text-sm transition" title="Shuffle">
+          <i class="fa-solid fa-shuffle"></i>
+        </button>
+        <button onclick="prevTrack()" class="text-[#3B2328] hover:text-[#FA8072] text-base transition" title="Previous">
+          <i class="fa-solid fa-backward-step"></i>
+        </button>
+        <button onclick="togglePlay()"
+          class="w-9 h-9 rounded-full bg-[#3B2328] hover:bg-[#FA8072] text-white flex items-center justify-center shadow-md transition transform hover:scale-105"
+          title="Play/Pause">
+          <i id="bottomPlayIcon" class="fa-solid fa-play text-xs ml-0.5"></i>
+        </button>
+        <button onclick="nextTrack()" class="text-[#3B2328] hover:text-[#FA8072] text-base transition" title="Next">
+          <i class="fa-solid fa-forward-step"></i>
+        </button>
+        <button onclick="toggleRepeat()" id="btnRepeatBottom"
+          class="text-[#9A737C] hover:text-[#FA8072] text-sm transition" title="Repeat">
+          <i class="fa-solid fa-repeat"></i>
+        </button>
+      </div>
+
+      <div class="w-full flex items-center gap-2.5">
+        <span id="currentTimeText" class="text-[11px] font-semibold text-[#9A737C] w-8 text-right">0:00</span>
+        <input id="progressSlider" type="range" min="0" max="100" value="0" oninput="seekAudio(this.value)"
+          class="flex-1" />
+        <span id="durationTimeText" class="text-[11px] font-semibold text-[#9A737C] w-8">0:30</span>
+      </div>
+    </div>
+
+    <!-- Right: Lyrics/Note, Listening Together Icon, Volume Slider -->
+    <div class="hidden sm:flex items-center justify-end gap-3.5 w-1/4 text-[#9A737C]">
+      <button onclick="openLoveNoteModal()" class="hover:text-[#FA8072] transition" title="Surat Cinta & Lirik">
+        <i class="fa-solid fa-microphone-lines text-sm"></i>
+      </button>
+      <button onclick="togglePolaroidModal()" class="hover:text-[#FA8072] transition" title="Kartu Polaroid">
+        <i class="fa-solid fa-image text-sm"></i>
+      </button>
+      <button onclick="switchRightPanelTab('jam')" class="hover:text-[#FA8072] relative transition"
+        title="Listening Together (Couple Jam)">
+        <i class="fa-solid fa-tower-broadcast text-sm text-[#FA8072]"></i>
+      </button>
+      <div class="flex items-center gap-2 w-24">
+        <i id="volumeIcon" onclick="toggleMute()"
+          class="fa-solid fa-volume-high text-xs cursor-pointer hover:text-[#FA8072]"></i>
+        <input id="volumeSlider" type="range" min="0" max="1" step="0.02" value="0.85"
+          oninput="changeVolume(this.value)" class="w-full" />
+      </div>
+    </div>
+  </footer>
+
+  <!-- Hidden HTML5 Audio Element -->
+  <audio id="audioPlayer" preload="metadata"></audio>
+
+  <!-- Hidden YouTube Official Audio Engine -->
+  <div id="ytAudioPlayerContainer"
+    style="position: fixed; bottom: -200px; right: -200px; width: 10px; height: 10px; opacity: 0.001; pointer-events: none; z-index: -99;">
+    <div id="ytPlayer"></div>
+  </div>
+
+  <!-- ================= MODAL 1: TAMBAH LAGU (AUTO-FETCH ITUNES API + CUSTOM) ================= -->
+  <div id="addSongModal" class="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs hidden items-center justify-center p-4">
+    <div
+      class="bg-white border border-[#FFD2DC] rounded-3xl max-w-lg w-full p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <h3 class="text-lg font-extrabold text-[#3B2328]">Tambah Lagu ke Playlist 💕</h3>
+          <p class="text-xs text-[#9A737C]">Cari lagu online otomatis lengkap dengan cover HD, atau masukkan link MP3
+            sendiri</p>
+        </div>
+        <button onclick="closeAddSongModal()"
+          class="w-8 h-8 rounded-full bg-[#FFF5F7] text-[#9A737C] hover:text-[#E85D75] flex items-center justify-center">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- 1. Primary Full MP3 File Upload Box (Recommended for 100% Full Duration) -->
+      <div onclick="document.getElementById('fullMp3FileInput').click()"
+        class="group p-4 rounded-2xl bg-gradient-to-r from-[#FFF0F3] to-[#FFE4E9]/60 border-2 border-dashed border-[#FA8072]/60 hover:border-[#FA8072] text-center cursor-pointer transition mb-3">
+        <input type="file" id="fullMp3FileInput" accept="audio/*" onchange="handleFullMp3Upload(event)"
+          class="hidden" />
+        <div
+          class="w-11 h-11 rounded-2xl bg-[#FA8072] text-white flex items-center justify-center mx-auto mb-2 shadow-sm group-hover:scale-105 transition">
+          <i class="fa-solid fa-file-audio text-xl"></i>
+        </div>
+        <p class="font-extrabold text-sm text-[#3B2328]">Pilih File MP3 Full dari Laptop / HP</p>
+        <p class="text-[11px] text-[#9A737C] mt-0.5">Lagu diputar 100% penuh tanpa batasan 30 detik (judul & cover
+          otomatis disesuaikan!)</p>
+        <div id="fullAudioSelectedBadge"
+          class="hidden mt-2.5 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-[11px] font-bold">
+          <i class="fa-solid fa-circle-check text-emerald-600"></i>
+          <span id="fullAudioFileName">File MP3 Terpilih</span>
+        </div>
+      </div>
+
+      <!-- 2. Auto-Fetch Online Search Box (HD Cover + Metadata) -->
+      <div class="p-3.5 rounded-2xl bg-[#FFF5F7] border border-[#FFD2DC] mb-3">
+        <label class="block text-xs font-bold text-[#E85D75] mb-1.5 flex items-center justify-between">
+          <span><i class="fa-solid fa-wand-magic-sparkles mr-1"></i> Atau Cari Cover HD & Data Online</span>
+          <span class="text-[10px] text-[#9A737C] font-normal">iTunes HD Metadata</span>
+        </label>
+        <div class="flex gap-2">
+          <input id="itunesSearchQuery" type="text"
+            placeholder="Ketik judul lagu / penyanyi (cth: Dewa 19, New West, Barasuara)..."
+            onkeydown="if(event.key==='Enter'){event.preventDefault(); searchItunesSong();}"
+            class="flex-1 px-3.5 py-2 rounded-xl bg-white border border-[#FFD2DC] text-xs focus:outline-none focus:border-[#FA8072]" />
+          <button type="button" onclick="searchItunesSong()"
+            class="px-4 py-2 rounded-xl bg-[#FA8072] hover:bg-[#E85D75] text-white text-xs font-bold transition">
+            Cari
+          </button>
+        </div>
+        <!-- Search Results Dropdown -->
+        <div id="itunesResultsList" class="mt-2 space-y-1.5 max-h-44 overflow-y-auto hidden"></div>
+      </div>
+
+      <!-- Form Input Detail Lagu -->
+      <form onsubmit="saveNewSong(event)" class="space-y-3 text-xs">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="font-bold text-[#3B2328] block mb-1">Judul Lagu *</label>
+            <input id="inputSongTitle" required type="text" placeholder="Contoh: Mistikus Cinta"
+              class="w-full px-3 py-2 rounded-xl bg-[#FFF5F7] border border-[#FFD2DC] focus:outline-none focus:border-[#FA8072]" />
+          </div>
+          <div>
+            <label class="font-bold text-[#3B2328] block mb-1">Nama Penyanyi / Artis *</label>
+            <input id="inputSongArtist" required type="text" placeholder="Contoh: Dewa 19"
+              class="w-full px-3 py-2 rounded-xl bg-[#FFF5F7] border border-[#FFD2DC] focus:outline-none focus:border-[#FA8072]" />
+          </div>
+        </div>
+
+        <div>
+          <label class="font-bold text-[#3B2328] block mb-1">Catatan Memori / Cerita Lagu Ini 💬</label>
+          <input id="inputSongMemory" type="text" placeholder="Contoh: Lagu favorit waktu kita jalan berdua 🌅"
+            class="w-full px-3 py-2 rounded-xl bg-[#FFF5F7] border border-[#FFD2DC] focus:outline-none focus:border-[#FA8072]" />
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="font-bold text-[#3B2328] block mb-1">Link Cover Album (URL / Upload Foto)</label>
+            <input id="inputSongCover" type="url" placeholder="https://..."
+              class="w-full px-3 py-2 rounded-xl bg-[#FFF5F7] border border-[#FFD2DC] focus:outline-none focus:border-[#FA8072]" />
+            <input type="file" accept="image/*" onchange="handleFileUpload(event, 'inputSongCover')"
+              class="mt-1 text-[10px] text-[#9A737C]" />
+          </div>
+          <div>
+            <label class="font-bold text-[#3B2328] block mb-1 flex items-center justify-between">
+              <span>Link YouTube / MP3 Audio *</span>
+              <button type="button" onclick="useDefaultFullAudioStream()"
+                class="text-[10px] text-[#FA8072] hover:underline font-bold">Gunakan Sample Full</button>
+            </label>
+            <input id="inputSongAudio" required type="text"
+              placeholder="Tempel link YouTube (https://youtu.be/...) atau link MP3"
+              class="w-full px-3 py-2 rounded-xl bg-[#FFF5F7] border border-[#FFD2DC] focus:outline-none focus:border-[#FA8072]" />
+            <input type="file" accept="audio/*" onchange="handleFileUpload(event, 'inputSongAudio')"
+              class="mt-1 text-[10px] text-[#9A737C]" />
+          </div>
+        </div>
+
+        <div class="pt-3 flex justify-end gap-2">
+          <button type="button" onclick="closeAddSongModal()"
+            class="px-4 py-2.5 rounded-xl bg-[#FFF5F7] text-[#9A737C] font-bold">Batal</button>
+          <button type="submit"
+            class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#FA8072] to-[#E85D75] text-white font-bold shadow-md">
+            Simpan ke Playlist ✨
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ================= MODAL: BUAT PLAYLIST BARU ================= -->
+  <div id="createPlaylistModal"
+    class="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs hidden items-center justify-center p-4">
+    <div class="bg-white border border-[#FFD2DC] rounded-3xl max-w-md w-full p-6 shadow-2xl">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <h3 class="text-lg font-extrabold text-[#3B2328]">Buat Playlist Baru 💕</h3>
+          <p class="text-xs text-[#9A737C]">Kumpulkan lagu-lagu dengan suasana dan cerita spesial kalian</p>
+        </div>
+        <button onclick="closeCreatePlaylistModal()"
+          class="w-8 h-8 rounded-full bg-[#FFF5F7] text-[#9A737C] hover:text-[#E85D75] flex items-center justify-center">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <form onsubmit="handleCreatePlaylistSubmit(event)" class="space-y-3.5 text-xs">
+        <div>
+          <label class="font-bold text-[#3B2328] block mb-1">Nama Playlist *</label>
+          <input id="newPlaylistTitle" required type="text" placeholder="Contoh: Late Night Acoustic, Roadtrip Bareng"
+            class="w-full px-3.5 py-2.5 rounded-xl bg-[#FFF5F7] border border-[#FFD2DC] focus:outline-none focus:border-[#FA8072]" />
+        </div>
+
+        <div>
+          <label class="font-bold text-[#3B2328] block mb-1">Deskripsi Playlist</label>
+          <input id="newPlaylistDesc" type="text"
+            placeholder="Contoh: Lagu pengantar tidur waktu kita telfonan berjam-jam 🌙"
+            class="w-full px-3.5 py-2.5 rounded-xl bg-[#FFF5F7] border border-[#FFD2DC] focus:outline-none focus:border-[#FA8072]" />
+        </div>
+
+        <div>
+          <label class="font-bold text-[#3B2328] block mb-1">Cover Playlist (URL atau Upload Foto)</label>
+          <input id="newPlaylistCover" type="url" placeholder="https://images.unsplash.com/..."
+            class="w-full px-3.5 py-2.5 rounded-xl bg-[#FFF5F7] border border-[#FFD2DC] focus:outline-none focus:border-[#FA8072]" />
+          <input type="file" accept="image/*" onchange="handleFileUpload(event, 'newPlaylistCover')"
+            class="mt-1.5 text-[11px] text-[#9A737C]" />
+        </div>
+
+        <div class="pt-2 flex justify-end gap-2">
+          <button type="button" onclick="closeCreatePlaylistModal()"
+            class="px-4 py-2.5 rounded-xl bg-[#FFF5F7] text-[#9A737C] font-bold">Batal</button>
+          <button type="submit"
+            class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#FA8072] to-[#E85D75] text-white font-bold shadow-md hover:opacity-95 transition">
+            Buat Playlist ✨
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ================= MODAL 2: PROFIL PASANGAN & KUSTOMISASI ================= -->
+  <div id="settingsModal"
+    class="fixed inset-0 z-50 bg-black/45 backdrop-blur-xs hidden items-center justify-center p-4">
+    <div
+      class="bg-white border border-[#FFD2DC] rounded-3xl max-w-lg w-full shadow-2xl max-h-[92vh] overflow-y-auto text-xs relative overflow-hidden"
+      onclick="event.stopPropagation()">
+
+      <!-- VIEW 1: ROMANTIC PROFILE SHOWCASE CARD (TAMPILAN PROFIL MENARIK & DATA TERSIMPAN) -->
+      <div id="profileShowcaseView" class="p-0">
+        <!-- Romantic Header Banner -->
+        <div
+          class="relative p-6 bg-gradient-to-br from-[#FFF0F3] via-[#FFE4E9] to-[#FFF5F7] border-b border-[#FFD2DC] overflow-hidden text-center">
+          <div
+            class="absolute -right-6 -bottom-6 w-36 h-36 rounded-full bg-gradient-to-tr from-[#FA8072]/20 to-[#FF8FA3]/25 blur-xl pointer-events-none">
+          </div>
+
+          <button onclick="closeSettingsModal()"
+            class="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/80 hover:bg-white text-[#9A737C] hover:text-[#FA8072] flex items-center justify-center transition shadow-xs z-20"
+            title="Tutup">
+            <i class="fa-solid fa-xmark text-sm"></i>
+          </button>
+
+          <span
+            class="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-white/80 border border-[#FFD2DC] text-[10px] font-extrabold uppercase tracking-wider text-[#E85D75] mb-3 shadow-2xs">
+            <i class="fa-solid fa-sparkles text-[#FA8072]"></i> Our Couple Profile Space
+          </span>
+
+          <!-- Dual Avatars Connected with Love Ring -->
+          <div class="flex items-center justify-center gap-4 my-2">
+            <!-- Your Avatar -->
+            <div class="flex flex-col items-center">
+              <div class="relative">
+                <img id="showcaseYourAvatar" src="images/spotify_covers/profile_nadeyy.jpg"
+                  class="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover border-4 border-white shadow-md"
+                  alt="You" />
+                <span
+                  class="absolute bottom-0 right-0 w-5 h-5 rounded-full bg-[#FA8072] border-2 border-white flex items-center justify-center text-[10px] text-white">
+                  <i class="fa-solid fa-music"></i>
+                </span>
+              </div>
+              <p id="showcaseYourName" class="text-xs font-extrabold text-[#3B2328] mt-1.5 truncate max-w-[100px]">
+                nadeyy ★</p>
+              <span class="text-[10px] text-[#9A737C]">Curator</span>
+            </div>
+
+            <!-- Glowing Connecting Heart -->
+            <div class="flex flex-col items-center justify-center gap-1 px-1">
+              <div
+                class="w-9 h-9 rounded-full bg-gradient-to-br from-[#FA8072] to-[#E85D75] text-white flex items-center justify-center shadow-md shadow-[#FA8072]/30 animate-pulse">
+                <i class="fa-solid fa-heart text-sm"></i>
+              </div>
+              <span
+                class="text-[9px] font-extrabold text-[#E85D75] bg-white px-2 py-0.5 rounded-full border border-[#FFD2DC]">Forever</span>
+            </div>
+
+            <!-- Partner Avatar -->
+            <div class="flex flex-col items-center">
+              <div class="relative">
+                <img id="showcasePartnerAvatar"
+                  src="https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150&auto=format&fit=crop&q=80"
+                  class="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover border-4 border-white shadow-md"
+                  alt="Partner" />
+                <span
+                  class="absolute bottom-0 right-0 w-5 h-5 rounded-full bg-[#E85D75] border-2 border-white flex items-center justify-center text-[10px] text-white">
+                  <i class="fa-solid fa-heart"></i>
+                </span>
+              </div>
+              <p id="showcasePartnerName" class="text-xs font-extrabold text-[#3B2328] mt-1.5 truncate max-w-[100px]">
+                sayang 💕</p>
+              <span class="text-[10px] text-[#9A737C]">Beloved</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Saved Data Showcase Details -->
+        <div class="p-5 space-y-4">
+          <!-- Active Playlist Info Card -->
+          <div class="p-3.5 rounded-2xl bg-[#FFF9FA] border border-[#FFD2DC] flex items-center gap-3.5">
+            <img id="showcasePlaylistCover" src="images/spotify_covers/jakarta.jpg"
+              class="w-14 h-14 rounded-xl object-cover border border-[#FFD2DC] shadow-xs shrink-0" alt="Playlist" />
+            <div class="min-w-0 flex-1">
+              <span class="text-[10px] font-extrabold uppercase tracking-wider text-[#FA8072]">Active Playlist</span>
+              <h4 id="showcasePlaylistTitle" class="text-sm font-extrabold text-[#3B2328] truncate mt-0.5">✦ jakarta.
+              </h4>
+              <p id="showcasePlaylistDesc" class="text-[11px] text-[#9A737C] truncate">after rain and lean with u &lt;3
+              </p>
+            </div>
+          </div>
+
+          <!-- Secret Love Note Card Preview -->
+          <div
+            class="p-4 rounded-2xl bg-gradient-to-br from-[#FFF5F7] to-[#FFE4E9]/30 border border-[#FFD2DC] relative">
+            <div class="flex items-center justify-between mb-2">
+              <span
+                class="text-[10px] font-extrabold uppercase tracking-wider text-[#E85D75] flex items-center gap-1.5">
+                <i class="fa-solid fa-envelope-open-text"></i> Surat Cinta Rahasia
+              </span>
+              <span class="text-[10px] text-[#9A737C] italic">Private Love Note</span>
+            </div>
+            <p id="showcaseLoveNote"
+              class="font-handwriting text-base sm:text-lg text-[#3B2328] leading-relaxed line-clamp-3">
+              "Hai sayang, setiap lagu di dalam playlist ini punya potongan cerita tentang kita..."
+            </p>
+          </div>
+
+          <!-- Security & PIN Status Badge -->
+          <div class="flex items-center justify-between p-3 rounded-xl bg-[#FFF5F7] border border-[#FFD2DC]">
+            <div class="flex items-center gap-2.5">
+              <div class="w-7 h-7 rounded-lg bg-[#FFE4E9] flex items-center justify-center text-[#FA8072]">
+                <i class="fa-solid fa-shield-heart text-xs"></i>
+              </div>
+              <div>
+                <p class="text-xs font-bold text-[#3B2328]">PIN Layar Kunci</p>
+                <p id="showcasePinDisplay" class="text-[11px] text-[#9A737C] font-mono font-semibold">•••• (Tersimpan
+                  Aman)</p>
+              </div>
+            </div>
+            <button type="button" onclick="toggleShowcasePin()" id="btnToggleShowcasePin"
+              class="px-2.5 py-1 rounded-lg bg-white border border-[#FFD2DC] text-[11px] font-bold text-[#7A4E58] hover:text-[#FA8072] transition flex items-center gap-1 cursor-pointer">
+              <i id="showcasePinIcon" class="fa-regular fa-eye"></i>
+              <span id="showcasePinActionText">Lihat</span>
+            </button>
+          </div>
+
+          <!-- Space Quick Stats -->
+          <div class="grid grid-cols-3 gap-2.5 text-center pt-1">
+            <div class="p-2.5 rounded-xl bg-[#FFF9FA] border border-[#FFD2DC]">
+              <p id="showcaseStatPlaylists" class="text-base font-extrabold text-[#FA8072]">2</p>
+              <p class="text-[10px] font-medium text-[#9A737C]">Playlist</p>
+            </div>
+            <div class="p-2.5 rounded-xl bg-[#FFF9FA] border border-[#FFD2DC]">
+              <p id="showcaseStatTracks" class="text-base font-extrabold text-[#FA8072]">6</p>
+              <p class="text-[10px] font-medium text-[#9A737C]">Lagu</p>
+            </div>
+            <div class="p-2.5 rounded-xl bg-[#FFF9FA] border border-[#FFD2DC]">
+              <p id="showcaseStatPolaroids" class="text-base font-extrabold text-[#FA8072]">8</p>
+              <p class="text-[10px] font-medium text-[#9A737C]">Foto Polaroid</p>
+            </div>
+          </div>
+
+          <!-- Bottom Action Buttons -->
+          <div class="pt-3 border-t border-[#FFE4E9] flex items-center justify-between gap-3">
+            <button type="button" onclick="closeSettingsModal()"
+              class="px-4 py-2.5 rounded-xl bg-[#FFF5F7] text-[#9A737C] font-bold hover:bg-[#FFE4E9] transition">
+              Tutup
+            </button>
+            <button type="button" onclick="switchToProfileEditMode()"
+              class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#FA8072] to-[#E85D75] text-white font-bold shadow-md shadow-[#FA8072]/30 hover:opacity-95 transition flex items-center gap-2">
+              <i class="fa-solid fa-pen-to-square"></i>
+              <span>Edit Profil & Konfigurasi</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- VIEW 2: PROFILE & CONFIGURATION EDIT FORM (FORM INPUT) -->
+      <div id="profileEditView" class="hidden p-6">
+        <div class="flex items-center justify-between pb-3 mb-4 border-b border-[#FFE4E9]">
+          <button type="button" onclick="switchToProfileShowcaseMode()"
+            class="text-xs font-bold text-[#FA8072] hover:text-[#E85D75] flex items-center gap-1.5 transition">
+            <i class="fa-solid fa-arrow-left"></i>
+            <span>Kembali ke Profil</span>
+          </button>
+          <h3 class="text-base font-extrabold text-[#3B2328]">Edit Konfigurasi 🎨</h3>
+          <button type="button" onclick="closeSettingsModal()"
+            class="w-7 h-7 rounded-full bg-[#FFF5F7] text-[#9A737C] flex items-center justify-center hover:bg-[#FFE4E9] transition"
+            title="Tutup">
+            <i class="fa-solid fa-xmark text-xs"></i>
+          </button>
+        </div>
+
+        <form id="profileEditForm" onsubmit="savePlaylistSettings(event); return false;" class="space-y-3">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="font-bold block mb-1">Judul Playlist (Header Besar)</label>
+              <input id="setPlaylistTitle" type="text"
+                class="w-full px-3 py-2 rounded-xl bg-[#FFF5F7] border border-[#FFD2DC]" />
+            </div>
+            <div>
+              <label class="font-bold block mb-1">PIN Layar Kunci (4 Digit)</label>
+              <input id="setPinCode" type="text" maxlength="4"
+                class="w-full px-3 py-2 rounded-xl bg-[#FFF5F7] border border-[#FFD2DC]" />
+            </div>
+          </div>
+
+          <div>
+            <label class="font-bold block mb-1">Deskripsi Subtitle Playlist</label>
+            <input id="setPlaylistDesc" type="text"
+              class="w-full px-3 py-2 rounded-xl bg-[#FFF5F7] border border-[#FFD2DC]" />
+          </div>
+
+          <div>
+            <label class="font-bold block mb-1">URL Foto Cover Utama Playlist</label>
+            <input id="setPlaylistCover" type="text"
+              class="w-full px-3 py-2 rounded-xl bg-[#FFF5F7] border border-[#FFD2DC]" />
+            <input type="file" accept="image/*" onchange="handleFileUpload(event, 'setPlaylistCover')"
+              class="mt-1 text-[10px] text-[#9A737C]" />
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+            <div>
+              <label class="font-bold block mb-1">Nama Kamu (Curator)</label>
+              <input id="setYourName" type="text"
+                class="w-full px-3 py-2 rounded-xl bg-[#FFF5F7] border border-[#FFD2DC]" />
+            </div>
+            <div>
+              <label class="font-bold block mb-1">Nama Pasanganmu</label>
+              <input id="setPartnerName" type="text"
+                class="w-full px-3 py-2 rounded-xl bg-[#FFF5F7] border border-[#FFD2DC]" />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="font-bold block mb-1">Foto Avatar Kamu (URL)</label>
+              <input id="setYourAvatar" type="text"
+                class="w-full px-3 py-2 rounded-xl bg-[#FFF5F7] border border-[#FFD2DC]" />
+              <input type="file" accept="image/*" onchange="handleFileUpload(event, 'setYourAvatar')"
+                class="mt-1 text-[10px] text-[#9A737C]" />
+            </div>
+            <div>
+              <label class="font-bold block mb-1">Foto Avatar Pasangan (URL)</label>
+              <input id="setPartnerAvatar" type="text"
+                class="w-full px-3 py-2 rounded-xl bg-[#FFF5F7] border border-[#FFD2DC]" />
+              <input type="file" accept="image/*" onchange="handleFileUpload(event, 'setPartnerAvatar')"
+                class="mt-1 text-[10px] text-[#9A737C]" />
+            </div>
+          </div>
+
+          <div>
+            <label class="font-bold block mb-1">Isi Surat Cinta Rahasia (Love Note) 💌</label>
+            <textarea id="setLoveNote" rows="3"
+              class="w-full px-3 py-2 rounded-xl bg-[#FFF5F7] border border-[#FFD2DC]"></textarea>
+          </div>
+
+          <div class="pt-3 flex items-center justify-between">
+            <button type="button" onclick="resetDefaultData()"
+              class="text-rose-500 hover:underline font-semibold cursor-pointer">Reset ke Awal</button>
+            <div class="flex gap-2">
+              <button type="button" onclick="switchToProfileShowcaseMode()"
+                class="px-4 py-2 rounded-xl bg-[#FFF5F7] text-[#9A737C] font-bold cursor-pointer">Batal</button>
+              <button id="btnSaveSettings" type="button" onclick="savePlaylistSettings(event)"
+                class="px-5 py-2 rounded-xl bg-gradient-to-r from-[#FA8072] to-[#E85D75] text-white font-bold shadow-md hover:scale-105 active:scale-95 transition cursor-pointer">Simpan
+                Perubahan</button>
+            </div>
+          </div>
+        </form>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ================= MODAL 3: SECRET LOVE NOTE / LETTER ================= -->
+  <div id="loveNoteModal"
+    class="fixed inset-0 z-50 bg-black/45 backdrop-blur-xs hidden items-center justify-center p-4">
+    <div class="bg-[#FFF9FA] border-2 border-[#FFD2DC] rounded-3xl max-w-md w-full p-7 shadow-2xl relative text-center">
+      <button onclick="closeLoveNoteModal()"
+        class="absolute top-4 right-4 w-8 h-8 rounded-full bg-white text-[#9A737C] flex items-center justify-center shadow-xs">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+      <div class="w-14 h-14 rounded-2xl bg-[#FFE4E9] text-[#E85D75] flex items-center justify-center mx-auto mb-3">
+        <i class="fa-solid fa-heart-circle-check text-2xl"></i>
+      </div>
+      <span class="text-[11px] font-extrabold uppercase tracking-widest text-[#FA8072]">A Little Note For You</span>
+      <h3 class="text-2xl font-extrabold text-[#3B2328] mt-1 mb-4">Untuk Orang Favoritku 💕</h3>
+      <div id="loveNoteDisplay"
+        class="font-handwriting text-2xl text-[#4A2C32] bg-white p-5 rounded-2xl border border-[#FFD2DC] shadow-inner leading-relaxed whitespace-pre-line">
+      </div>
+      <button onclick="closeLoveNoteModal()"
+        class="mt-5 px-6 py-2.5 rounded-full bg-[#FA8072] text-white text-xs font-bold shadow-md hover:bg-[#E85D75] transition">
+        Peluk Jauh 🤗
+      </button>
+    </div>
+  </div>
+
+  <!-- ================= MODAL 4: POLAROID MEMORY CARD (TRACK PREVIEW) ================= -->
+  <div id="polaroidModal" class="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs hidden items-center justify-center p-4"
+    onclick="togglePolaroidModal()">
+    <div onclick="event.stopPropagation()"
+      class="bg-white p-4 pb-7 rounded-2xl shadow-2xl max-w-xs w-full transform -rotate-1 border border-[#FFD2DC] relative">
+      <!-- Washi Tape -->
+      <div
+        class="w-28 h-6 bg-[#FFB3C1]/70 backdrop-blur-xs absolute -top-3 left-1/2 -translate-x-1/2 rotate-2 rounded-xs shadow-xs">
+      </div>
+      <img id="polaroidImg" src="" class="w-full h-64 object-cover rounded-lg mb-4" alt="Memory" />
+      <h4 id="polaroidTitle" class="text-base font-extrabold text-[#3B2328] text-center"></h4>
+      <p id="polaroidMemory" class="font-handwriting text-2xl text-[#E85D75] text-center mt-2 leading-snug"></p>
+    </div>
+  </div>
+
+  <!-- ================= MODAL 5: TAMBAH FOTO POLAROID MANUAL ================= -->
+  <div id="addPolaroidModal"
+    class="fixed inset-0 z-50 bg-black/45 backdrop-blur-xs hidden items-center justify-center p-4">
+    <div
+      class="bg-white border border-[#FFD2DC] rounded-3xl max-w-md w-full p-6 shadow-2xl relative max-h-[92vh] overflow-y-auto text-xs">
+      <div class="flex items-center justify-between mb-4 pb-3 border-b border-[#FFE4E9]">
+        <div class="flex items-center gap-2">
+          <div
+            class="w-8 h-8 rounded-xl bg-[#FFF0F3] text-[#E85D75] flex items-center justify-center border border-[#FFD2DC]">
+            <i class="fa-solid fa-camera-retro"></i>
+          </div>
+          <div>
+            <h3 class="text-base font-extrabold text-[#3B2328]">Tambah Foto Polaroid 📸</h3>
+            <p class="text-[11px] text-[#9A737C]">Simpan foto & memori manis kita berdua</p>
+          </div>
+        </div>
+        <button onclick="closeAddPolaroidModal()"
+          class="w-8 h-8 rounded-full bg-[#FFF5F7] text-[#9A737C] hover:text-[#FA8072] flex items-center justify-center transition">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <form onsubmit="saveNewPolaroid(event)" class="space-y-3.5">
+        <!-- Photo Input (URL or Upload) -->
+        <div>
+          <label class="font-bold text-[#3B2328] block mb-1">Foto Polaroid (Upload atau Masukkan URL)</label>
+          <div class="flex items-center gap-2">
+            <input id="newPolaroidUrl" type="url" placeholder="https://images.unsplash.com/... atau upload"
+              oninput="previewPolaroidImage(this.value)"
+              class="flex-1 px-3.5 py-2.5 rounded-xl bg-[#FFF5F7] border border-[#FFD2DC] text-xs text-[#3B2328] focus:outline-none focus:border-[#FA8072]" />
+            <label
+              class="px-3 py-2.5 rounded-xl bg-white border border-[#FFD2DC] hover:border-[#FA8072] text-[#E85D75] font-bold cursor-pointer transition shrink-0 flex items-center gap-1.5 shadow-2xs">
+              <i class="fa-solid fa-arrow-up-from-bracket"></i>
+              <span>Upload</span>
+              <input type="file" accept="image/*" onchange="handlePolaroidUpload(event)" class="hidden" />
+            </label>
+          </div>
+        </div>
+
+        <!-- Polaroid Realtime Miniature Preview -->
+        <div class="flex justify-center py-2">
+          <div class="polaroid-card w-48 text-center rotate-[-1deg] shadow-md border border-[#FFE4E9]">
+            <div class="washi-tape"></div>
+            <div
+              class="w-full h-40 bg-[#FFF5F7] rounded-sm overflow-hidden mb-2.5 border border-[#FFE4E9]/60 flex items-center justify-center">
+              <img id="polaroidPreviewThumb"
+                src="https://images.unsplash.com/photo-1518199266791-5375a83190b7?w=400&auto=format&fit=crop&q=80"
+                class="w-full h-full object-cover" alt="Preview" />
+            </div>
+            <p id="polaroidPreviewCaptionText"
+              class="font-handwriting text-lg text-[#3B2328] leading-tight px-1 truncate">
+              Cerita foto kita...
+            </p>
+            <p id="polaroidPreviewDateText" class="text-[10px] text-[#9A737C] font-semibold mt-1">
+              Hari ini
+            </p>
+          </div>
+        </div>
+
+        <!-- Caption / Memory Note -->
+        <div>
+          <label class="font-bold text-[#3B2328] block mb-1">Tulisan / Cerita Manis (Caption Polaroid)</label>
+          <input id="newPolaroidCaption" type="text" placeholder="Contoh: Waktu jalan sore berdua sehabis hujan 💕"
+            required
+            oninput="document.getElementById('polaroidPreviewCaptionText').textContent = this.value || 'Cerita foto kita...'"
+            class="w-full px-3.5 py-2.5 rounded-xl bg-[#FFF5F7] border border-[#FFD2DC] text-xs text-[#3B2328] focus:outline-none focus:border-[#FA8072]" />
+        </div>
+
+        <!-- Date & Location -->
+        <div class="grid grid-cols-2 gap-2.5">
+          <div>
+            <label class="font-bold text-[#3B2328] block mb-1">Tanggal</label>
+            <input id="newPolaroidDate" type="text" placeholder="Contoh: 14 Feb 2025"
+              oninput="document.getElementById('polaroidPreviewDateText').textContent = this.value || 'Hari ini'"
+              class="w-full px-3.5 py-2 rounded-xl bg-[#FFF5F7] border border-[#FFD2DC] text-xs text-[#3B2328] focus:outline-none focus:border-[#FA8072]" />
+          </div>
+          <div>
+            <label class="font-bold text-[#3B2328] block mb-1">Lokasi / Tempat</label>
+            <input id="newPolaroidLocation" type="text" placeholder="Contoh: Kafe Favorit"
+              class="w-full px-3.5 py-2 rounded-xl bg-[#FFF5F7] border border-[#FFD2DC] text-xs text-[#3B2328] focus:outline-none focus:border-[#FA8072]" />
+          </div>
+        </div>
+
+        <div class="pt-2 flex items-center justify-end gap-2 border-t border-[#FFE4E9]">
+          <button type="button" onclick="closeAddPolaroidModal()"
+            class="px-4 py-2.5 rounded-xl bg-[#FFF5F7] text-[#9A737C] font-bold hover:bg-[#FFE4E9] transition">
+            Batal
+          </button>
+          <button type="submit"
+            class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#FA8072] to-[#E85D75] text-white font-bold shadow-md shadow-[#FA8072]/30 hover:opacity-95 transition flex items-center gap-1.5">
+            <i class="fa-solid fa-heart"></i>
+            <span>Simpan ke Galeri</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ================= MODAL 6: ZOOM / DETAIL FOTO POLAROID ================= -->
+  <div id="polaroidDetailModal"
+    class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4"
+    onclick="closePolaroidDetailModal()">
+    <div onclick="event.stopPropagation()"
+      class="polaroid-card max-w-sm sm:max-w-md w-full transform -rotate-1 relative shadow-2xl p-4 sm:p-5 pb-8 sm:pb-9">
+      <div class="washi-tape"></div>
+      <button onclick="closePolaroidDetailModal()"
+        class="absolute -top-3 -right-3 w-8 h-8 rounded-full bg-white text-[#3B2328] hover:text-[#FA8072] shadow-md flex items-center justify-center font-bold z-30">
+        <i class="fa-solid fa-xmark text-sm"></i>
+      </button>
+
+      <div class="w-full h-80 sm:h-96 rounded-lg overflow-hidden bg-neutral-100 mb-4 border border-[#FFD2DC]/50">
+        <img id="detailPolaroidImg" src="" class="w-full h-full object-cover" alt="Detail Polaroid" />
+      </div>
+
+      <div class="text-center px-2">
+        <p id="detailPolaroidCaption" class="font-handwriting text-2xl sm:text-3xl text-[#3B2328] leading-tight"></p>
+        <div class="flex items-center justify-center gap-2 mt-2 text-xs font-semibold text-[#9A737C]">
+          <span id="detailPolaroidDate"></span>
+          <span>•</span>
+          <span id="detailPolaroidLocation"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL 7: BAGIKAN LAGU (SHARE SONG) ================= -->
+  <div id="shareSongModal"
+    class="fixed inset-0 z-50 bg-black/45 backdrop-blur-xs hidden items-center justify-center p-4">
+    <div class="bg-white rounded-3xl w-full max-w-md p-6 border border-[#FFD2DC] shadow-2xl relative overflow-hidden"
+      onclick="event.stopPropagation()">
+      <div class="flex items-center justify-between pb-3 mb-4 border-b border-[#FFE4E9]">
+        <div class="flex items-center gap-2.5">
+          <div
+            class="w-9 h-9 rounded-2xl bg-gradient-to-br from-[#FFE4E9] to-[#FFD2DC] flex items-center justify-center text-[#FA8072] shadow-xs">
+            <i class="fa-solid fa-share-nodes text-sm"></i>
+          </div>
+          <div>
+            <h3 class="font-extrabold text-[#3B2328] text-base leading-tight">Bagikan Lagu Ini</h3>
+            <p class="text-xs text-[#9A737C]">Kirim nada cinta ini ke orang tersayang 💕</p>
+          </div>
+        </div>
+        <button onclick="closeShareSongModal()"
+          class="w-8 h-8 rounded-full hover:bg-[#FFE4E9] text-[#9A737C] flex items-center justify-center transition">
+          <i class="fa-solid fa-xmark text-sm"></i>
+        </button>
+      </div>
+
+      <!-- Preview Song Card -->
+      <div
+        class="flex items-center gap-3.5 p-3.5 rounded-2xl bg-gradient-to-r from-[#FFF5F7] to-[#FFE4E9]/40 border border-[#FFD2DC] mb-4">
+        <img id="shareTrackCover" src=""
+          class="w-14 h-14 rounded-xl object-cover shadow-sm border border-white shrink-0" alt="Cover" />
+        <div class="min-w-0 flex-1">
+          <span
+            class="text-[10px] font-extrabold uppercase tracking-wider text-[#E85D75] bg-white/90 px-2 py-0.5 rounded-md border border-[#FFD2DC]">Couple
+            Song</span>
+          <h4 id="shareTrackTitle" class="text-base font-extrabold text-[#3B2328] truncate mt-0.5">Title</h4>
+          <p id="shareTrackArtist" class="text-xs text-[#9A737C] truncate">Artist</p>
+          <p id="shareTrackMemory" class="text-[11px] text-[#FA8072] italic truncate mt-0.5">"Memory note..."</p>
+        </div>
+      </div>
+
+      <!-- Share Button 1: WhatsApp -->
+      <a id="shareWhatsAppBtn" href="#" target="_blank"
+        class="w-full mb-3 py-3 px-4 rounded-xl bg-[#25D366] hover:bg-[#20ba5a] text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-sm transition">
+        <i class="fa-brands fa-whatsapp text-lg"></i>
+        <span>Kirim via WhatsApp ke Pasangan</span>
+      </a>
+
+      <!-- Share Button 2: Direct Play Link -->
+      <div class="mb-3">
+        <label class="block text-xs font-bold text-[#3B2328] mb-1.5 flex items-center justify-between">
+          <span>Link Langsung Putar:</span>
+          <span class="text-[10px] font-normal text-[#9A737C]">Lagu otomatis terputar saat dibuka</span>
+        </label>
+        <div class="flex gap-2">
+          <input id="shareLinkInput" type="text" readonly
+            class="flex-1 bg-[#FFF9FA] border border-[#FFD2DC] rounded-xl px-3 py-2 text-xs text-[#3B2328] font-mono select-all focus:outline-none" />
+          <button onclick="copyShareLink()"
+            class="px-4 py-2 rounded-xl bg-gradient-to-r from-[#FA8072] to-[#E85D75] hover:opacity-90 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm transition shrink-0">
+            <i class="fa-regular fa-copy"></i>
+            <span>Salin</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Share Button 3: Copy Romantic Quote -->
+      <button onclick="copyRomanticQuote()"
+        class="w-full py-2.5 px-4 rounded-xl border border-[#FFD2DC] hover:bg-[#FFF5F7] text-[#9A737C] hover:text-[#FA8072] text-xs font-bold flex items-center justify-center gap-2 transition">
+        <i class="fa-solid fa-quote-left text-xs text-[#FA8072]"></i>
+        <span>Salin Catatan Manis & Judul Lagu</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ================= MODAL 8: MASUKKAN LAGU KE PLAYLIST ================= -->
+  <div id="addToPlaylistModal"
+    class="fixed inset-0 z-50 bg-black/45 backdrop-blur-xs hidden items-center justify-center p-4">
+    <div class="bg-white rounded-3xl w-full max-w-md p-6 border border-[#FFD2DC] shadow-2xl relative overflow-hidden"
+      onclick="event.stopPropagation()">
+      <div class="flex items-center justify-between pb-3 mb-4 border-b border-[#FFE4E9]">
+        <div class="flex items-center gap-2.5">
+          <div
+            class="w-9 h-9 rounded-2xl bg-gradient-to-br from-[#FFE4E9] to-[#FFD2DC] flex items-center justify-center text-[#FA8072] shadow-xs">
+            <i class="fa-solid fa-folder-plus text-sm"></i>
+          </div>
+          <div>
+            <h3 class="font-extrabold text-[#3B2328] text-base leading-tight">Masukkan ke Playlist</h3>
+            <p class="text-xs text-[#9A737C]">Pilih playlist yang kamu inginkan</p>
+          </div>
+        </div>
+        <button onclick="closeAddToPlaylistModal()"
+          class="w-8 h-8 rounded-full hover:bg-[#FFE4E9] text-[#9A737C] flex items-center justify-center transition">
+          <i class="fa-solid fa-xmark text-sm"></i>
+        </button>
+      </div>
+
+      <!-- Selected Song Summary -->
+      <div class="flex items-center gap-3 p-3 rounded-2xl bg-[#FFF5F7] border border-[#FFD2DC] mb-4">
+        <img id="addToPlTrackCover" src="" class="w-12 h-12 rounded-xl object-cover border border-[#FFD2DC] shrink-0"
+          alt="Song" />
+        <div class="min-w-0 flex-1">
+          <h4 id="addToPlTrackTitle" class="text-sm font-extrabold text-[#3B2328] truncate">Track Title</h4>
+          <p id="addToPlTrackArtist" class="text-xs text-[#9A737C] truncate">Artist</p>
+        </div>
+      </div>
+
+      <!-- Playlist Selection List -->
+      <div class="mb-4">
+        <p class="text-xs font-bold text-[#9A737C] uppercase tracking-wider mb-2">Pilih Playlist Tujuan</p>
+        <div id="addToPlaylistItemsContainer" class="space-y-2 max-h-56 overflow-y-auto pr-1">
+          <!-- Rendered dynamically -->
+        </div>
+      </div>
+
+      <!-- Quick Action: Create New Playlist -->
+      <div class="pt-3 border-t border-[#FFE4E9] flex justify-between items-center">
+        <button onclick="openCreatePlaylistFromAddModal()"
+          class="text-xs font-bold text-[#FA8072] hover:text-[#E85D75] flex items-center gap-1.5 transition">
+          <i class="fa-solid fa-circle-plus"></i>
+          <span>+ Buat Playlist Baru</span>
+        </button>
+        <button onclick="closeAddToPlaylistModal()"
+          class="px-4 py-2 rounded-xl bg-[#FFF5F7] hover:bg-[#FFE4E9] text-xs font-bold text-[#3B2328] transition">
+          Selesai
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Floating Toast Notification System -->
+  <div id="toastNotification"
+    class="fixed top-5 right-5 z-[120] pointer-events-none transition-all duration-300 opacity-0 translate-y-[-12px] flex items-center gap-2.5 px-4 py-3 rounded-2xl bg-[#3B2328] text-white text-xs font-bold shadow-xl border border-white/20">
+    <i id="toastIcon" class="fa-solid fa-circle-check text-[#FA8072]"></i>
+    <span id="toastMsg">Notifikasi</span>
+  </div>
+
+  <!-- App Script -->
+  <script src="js/app.js?v=20261020_v11"></script>
+</body>
+
+</html>

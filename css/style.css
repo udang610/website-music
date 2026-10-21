@@ -1,0 +1,373 @@
+:root {
+  --bg-app: #FFF5F7;
+  --bg-panel: #FFFFFF;
+  --salmon-primary: #FA8072;
+  --salmon-dark: #E85D75;
+  --pink-soft: #FFE4E9;
+  --pink-border: #FFD2DC;
+  --text-main: #3B2328;
+  --text-muted: #9A737C;
+}
+
+* {
+  box-sizing: border-box;
+  user-select: none;
+}
+
+body {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  background-color: var(--bg-app);
+  color: var(--text-main);
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+}
+
+.font-handwriting {
+  font-family: 'Caveat', cursive;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(250, 128, 114, 0.28);
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(250, 128, 114, 0.55);
+}
+
+/* Spotify-like Range Slider */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+}
+input[type="range"]::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 999px;
+  background: #F7D6DE;
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #FA8072;
+  margin-top: -4px;
+  box-shadow: 0 2px 6px rgba(232, 93, 117, 0.45);
+  transition: transform 0.15s ease;
+}
+input[type="range"]:hover::-webkit-slider-thumb {
+  transform: scale(1.25);
+  background: #E85D75;
+}
+
+/* Equalizer Bars */
+@keyframes eqBounce {
+  0%, 100% { height: 4px; }
+  50% { height: 15px; }
+}
+.eq-bar {
+  width: 3px;
+  background: #FA8072;
+  border-radius: 2px;
+  display: inline-block;
+  animation: eqBounce 0.8s infinite ease-in-out;
+}
+.eq-bar:nth-child(2) { animation-delay: 0.2s; }
+.eq-bar:nth-child(3) { animation-delay: 0.4s; }
+
+/* Floating Reaction Animation */
+@keyframes floatUpReaction {
+  0% {
+    transform: translateY(0) scale(0.7);
+    opacity: 1;
+  }
+  70% {
+    opacity: 0.95;
+  }
+  100% {
+    transform: translateY(-210px) scale(1.35) rotate(8deg);
+    opacity: 0;
+  }
+}
+.floating-emoji {
+  position: absolute;
+  bottom: 80px;
+  right: 32px;
+  font-size: 1.75rem;
+  pointer-events: none;
+  z-index: 60;
+  animation: floatUpReaction 2.2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/* Pulse Ring for Listening Together */
+@keyframes pulseRing {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(250, 128, 114, 0.7); }
+  70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(250, 128, 114, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(250, 128, 114, 0); }
+}
+.live-ring {
+  animation: pulseRing 2s infinite;
+}
+
+/* Vinyl Spin Animation */
+@keyframes spinSlow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+.spin-vinyl {
+  animation: spinSlow 6s linear infinite;
+  animation-play-state: paused;
+  transform-origin: center center;
+  transition: box-shadow 0.3s ease;
+}
+.spin-vinyl.playing {
+  animation-play-state: running;
+  box-shadow: 0 0 25px rgba(250, 128, 114, 0.4), 0 20px 30px rgba(0, 0, 0, 0.6);
+}
+.vinyl-sheen {
+  background: conic-gradient(
+    from 45deg,
+    rgba(255, 255, 255, 0.12) 0deg,
+    transparent 60deg,
+    rgba(255, 255, 255, 0.08) 120deg,
+    transparent 180deg,
+    rgba(255, 255, 255, 0.12) 240deg,
+    transparent 300deg,
+    rgba(255, 255, 255, 0.12) 360deg
+  );
+}
+
+/* Track Row Hover */
+.track-row:hover .track-num-text {
+  display: none;
+}
+.track-row:hover .track-play-hover {
+  display: inline-flex !important;
+}
+
+/* Bottom Player Track Cover Protection */
+#bottomTrackCover {
+  width: 56px !important;
+  height: 56px !important;
+  min-width: 56px !important;
+  min-height: 56px !important;
+  max-width: 56px !important;
+  max-height: 56px !important;
+  object-fit: cover !important;
+  border-radius: 0.75rem !important;
+}
+
+/* Playlist Cards Hover */
+.playlist-card {
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.playlist-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 14px 28px -10px rgba(250, 128, 114, 0.22);
+}
+
+/* Polaroid Card & Board Styles */
+.polaroid-card {
+  background: #ffffff;
+  padding: 12px 12px 18px 12px;
+  box-shadow: 0 6px 18px rgba(232, 93, 117, 0.12), 0 2px 6px rgba(0, 0, 0, 0.05);
+  border-radius: 8px;
+  border: 1px solid #FFE4E9;
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+}
+.polaroid-card:hover {
+  transform: translateY(-8px) scale(1.03) rotate(0deg) !important;
+  box-shadow: 0 18px 32px rgba(250, 128, 114, 0.24), 0 8px 16px rgba(0, 0, 0, 0.08);
+  z-index: 20;
+}
+.washi-tape {
+  position: absolute;
+  top: -9px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 65px;
+  height: 20px;
+  background: rgba(255, 210, 220, 0.85);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  border-left: 2px dashed rgba(232, 93, 117, 0.45);
+  border-right: 2px dashed rgba(232, 93, 117, 0.45);
+  backdrop-filter: blur(2px);
+  z-index: 10;
+}
+.polaroid-tilt-left {
+  transform: rotate(-1.8deg);
+}
+.polaroid-tilt-right {
+  transform: rotate(2deg);
+}
+.polaroid-tilt-subtle {
+  transform: rotate(-0.8deg);
+}
+
+/* Turntable Tonearm (Jarum Pemutar Vinyl Presisi) */
+.vinyl-tonearm {
+  position: absolute;
+  top: 18px;
+  right: 28px;
+  width: 60px;
+  height: 165px;
+  transform-origin: 38px 14px;
+  transform: rotate(-4deg);
+  transition: transform 0.9s cubic-bezier(0.25, 1, 0.5, 1);
+  filter: drop-shadow(2px 8px 12px rgba(0, 0, 0, 0.75));
+  pointer-events: none;
+  z-index: 25;
+}
+.vinyl-tonearm.playing {
+  /* Jarum berayun ke kiri (arah vinyl) dan mendarat presisi di atas alur piringan hitam */
+  transform: rotate(28deg);
+}
+.tonearm-rest {
+  position: absolute;
+  top: 96px;
+  right: 14px;
+  width: 14px;
+  height: 8px;
+  border-radius: 2px 2px 4px 4px;
+  background: linear-gradient(to bottom, #94a3b8 0%, #475569 100%);
+  border: 1px solid rgba(255,255,255,0.4);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+}
+.tonearm-pivot {
+  position: absolute;
+  top: 2px;
+  right: 10px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #f8fafc 0%, #cbd5e1 45%, #475569 85%, #1e293b 100%);
+  border: 2px solid #e2e8f0;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.7);
+}
+.tonearm-pivot::after {
+  content: '';
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #0f172a;
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.9);
+}
+.tonearm-rod {
+  position: absolute;
+  top: 22px;
+  right: 20px;
+  width: 4px;
+  height: 114px;
+  background: linear-gradient(to right, #cbd5e1 0%, #ffffff 40%, #64748b 100%);
+  border-radius: 2px;
+  box-shadow: 1px 3px 6px rgba(0, 0, 0, 0.4);
+}
+.tonearm-head {
+  position: absolute;
+  top: 132px;
+  right: 14px;
+  width: 15px;
+  height: 26px;
+  background: linear-gradient(135deg, #FA8072 0%, #E85D75 100%);
+  border-radius: 4px;
+  transform: rotate(-18deg);
+  border: 1px solid rgba(255,255,255,0.7);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.6);
+}
+.tonearm-needle {
+  position: absolute;
+  bottom: -3px;
+  left: 5px;
+  width: 2.5px;
+  height: 6px;
+  background: #ffffff;
+  border-radius: 1px;
+  box-shadow: 0 0 6px #FA8072;
+}
+
+/* Sidebar Custom Scrollbar (Hidden scrollbar track to maintain pixel-perfect icon alignment) */
+aside {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+aside::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+  width: 0;
+  height: 0;
+}
+
+/* Smooth Simple View Transition Animations */
+.view-fade-enter {
+  animation: viewFadeIn 0.3s cubic-bezier(0.2, 0.9, 0.4, 1) forwards;
+}
+
+@keyframes viewFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.vinyl-fade-transition {
+  transition: opacity 0.35s ease, transform 0.35s cubic-bezier(0.2, 0.9, 0.4, 1);
+}
+
+/* Smooth Slide Transition for Canvas <-> Vinyl */
+.vinyl-slide-layer {
+  position: absolute;
+  inset: 0;
+  background: #110e10;
+  transition: transform 0.45s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.35s ease;
+  will-change: transform, opacity;
+}
+
+.vinyl-slide-active {
+  transform: translateX(0);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.vinyl-slide-inactive {
+  transform: translateX(100%);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.canvas-slide-image {
+  transition: filter 0.45s ease;
+  will-change: filter;
+}
+
+.canvas-slide-dimmed {
+  filter: brightness(0.5);
+}
+
+/* PIN Lock Screen Error Shake Animation */
+@keyframes shakeSoft {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-7px); }
+  40%, 80% { transform: translateX(7px); }
+}
+.animate-shake {
+  animation: shakeSoft 0.45s ease-in-out;
+}
+

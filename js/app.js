@@ -1,0 +1,4079 @@
+// ================= REAL AUDIO ENGINE & STATE =================
+const STORAGE_KEY = 'romantic_spotify_v15_all_covers_synced';
+
+// Verified Genuine Studio Audio Tracks stored locally
+const realAudioTracks = {
+  'those eyes': 'audio/new_west_those_eyes.m4a',
+  'atlantis': 'audio/seafret_atlantis.m4a',
+  'terbuang dalam waktu': 'audio/barasuara_terbuang_dalam_waktu.m4a',
+  'best part': 'audio/daniel_caesar_best_part.m4a',
+  'mistikus cinta': 'audio/dewa19_mistikus_cinta.m4a',
+  'dua sejoli': 'audio/dewa19_dua_sejoli.m4a',
+  'i wanna be yours': 'audio/arctic_monkeys_i_wanna_be_yours.m4a',
+  'sialan': 'audio/adrian_khalif_juicy_luicy_sialan.m4a',
+  'back to friends': 'audio/sombr_back_to_friends.m4a',
+  'alexandra': 'audio/reality_club_alexandra.m4a',
+  'obsessed': 'audio/zandros_limi_obsessed.m4a',
+  'untungnya, hidup harus tetap berjalan': 'audio/bernadya_untungnya_hidup_harus_tetap_berjalan.m4a',
+  'peradaban': 'audio/feast_peradaban.m4a'
+};
+
+// Official 1000x1000 HD Album Covers from Apple Music / iTunes
+const officialCovers = {
+  'those eyes': 'images/covers/those_eyes.jpg',
+  'atlantis': 'images/covers/atlantis.jpg',
+  'terbuang dalam waktu': 'images/covers/terbuang_dalam_waktu.jpg',
+  'best part': 'images/covers/best_part.jpg',
+  'mistikus cinta': 'images/covers/mistikus_cinta.jpg',
+  'dua sejoli': 'images/covers/dua_sejoli.jpg',
+  'i wanna be yours': 'images/covers/i_wanna_be_yours.jpg',
+  'sialan': 'images/covers/sialan.jpg',
+  'back to friends': 'images/covers/back_to_friends.jpg',
+  'alexandra': 'images/covers/alexandra.jpg',
+  'obsessed': 'images/covers/obsessed.jpg',
+  'untungnya, hidup harus tetap berjalan': 'images/covers/untungnya.jpg',
+  'peradaban': 'images/covers/peradaban.jpg'
+};
+
+const defaultState = {
+  pinCode: '1402',
+  yourName: 'nadeyy ★',
+  partnerName: 'sayang 💕',
+  yourAvatar: 'images/spotify_covers/profile_nadeyy.jpg',
+  partnerAvatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150&auto=format&fit=crop&q=80',
+  loveNote: "Hai sayang,\nSetiap lagu di dalam playlist ini punya potongan cerita tentang kita. Kapan pun kamu kangen atau lagi capek, putar lagu-lagu ini ya. Kita juga bisa nyalain fitur Listening Together biar berasa dengerin bareng terus! I love you more than words can say 🤍",
+  activePlaylistId: 'pl-ours',
+  playlists: [
+    {
+        "id": "pl-ours",
+        "title": "✦ our melodies.",
+        "desc": "after rain and lean with u <3 — lagu-lagu pengingat cerita kita berdua",
+        "cover": "images/spotify_covers/jakarta.jpg",
+        "tracks": [
+            {
+                "id": "t1",
+                "title": "Those Eyes",
+                "artist": "New West",
+                "album": "Those Eyes - Single",
+                "memory": "Tatapan pertama yang bikin aku langsung jatuh hati sama kamu 👀✨",
+                "dateAdded": "Feb 25, 2025",
+                "duration": "3:41",
+                "liked": true,
+                "cover": "images/covers/those_eyes.jpg",
+                "audioUrl": "audio/new_west_those_eyes.m4a",
+                "youtubeId": "1-xGerv5FOk"
+            },
+            {
+                "id": "t2",
+                "title": "Atlantis",
+                "artist": "Seafret",
+                "album": "Tell Me It's Real",
+                "memory": "Lagu yang selalu kita putar pas perjalanan malam di mobil 🌃",
+                "dateAdded": "Feb 25, 2025",
+                "duration": "4:02",
+                "liked": true,
+                "cover": "images/covers/atlantis.jpg",
+                "audioUrl": "audio/seafret_atlantis.m4a",
+                "youtubeId": "gVAy3IZiL0s"
+            },
+            {
+                "id": "t3",
+                "title": "Terbuang Dalam Waktu",
+                "artist": "Barasuara",
+                "album": "Pikiran dan Perjalanan",
+                "memory": "Lagu yang nemenin kita waktu saling cerita mimpi dan masa depan 💭",
+                "dateAdded": "Feb 25, 2025",
+                "duration": "4:32",
+                "liked": true,
+                "cover": "images/covers/terbuang_dalam_waktu.jpg",
+                "audioUrl": "audio/barasuara_terbuang_dalam_waktu.m4a",
+                "youtubeId": "J40iXb6D_24"
+            },
+            {
+                "id": "t4",
+                "title": "Best Part",
+                "artist": "Daniel Caesar ft. H.E.R.",
+                "album": "Freudian",
+                "memory": "If life is a movie, oh you're the best part 🤍",
+                "dateAdded": "Feb 25, 2025",
+                "duration": "3:29",
+                "liked": true,
+                "cover": "images/covers/best_part.jpg",
+                "audioUrl": "audio/daniel_caesar_best_part.m4a",
+                "youtubeId": "hKgl5-lkT8U"
+            },
+            {
+                "id": "t5",
+                "title": "Mistikus Cinta",
+                "artist": "Dewa 19",
+                "album": "Cintailah Cinta",
+                "memory": "Ketika rasa itu magis dan tak bisa dijelaskan kata-kata 🌌",
+                "dateAdded": "Feb 25, 2025",
+                "duration": "5:38",
+                "liked": true,
+                "cover": "images/covers/mistikus_cinta.jpg",
+                "audioUrl": "audio/dewa19_mistikus_cinta.m4a",
+                "youtubeId": "XQYm2t73Gv4"
+            },
+            {
+                "id": "t-dua-sejoli",
+                "title": "Dua Sejoli",
+                "artist": "Dewa 19",
+                "album": "Bintang Lima",
+                "memory": "Usaplah dahiku, genggamlah tanganku... Lagu cinta abadi kita berdua 💕",
+                "dateAdded": "Feb 25, 2025",
+                "duration": "5:26",
+                "liked": true,
+                "cover": "images/covers/dewa19_dua_sejoli.jpg",
+                "audioUrl": "audio/dewa19_dua_sejoli.m4a",
+                "youtubeId": "IU_v67PFnqk"
+            }
+        ]
+    },
+    {
+        "id": "pl-1",
+        "title": "✦ jakarta.",
+        "desc": "after rain and lean with u <3 — lagu-lagu pengingat cerita kita berdua di Jakarta",
+        "cover": "images/spotify_covers/jakarta.jpg",
+        "tracks": [
+            {
+                "id": "t1",
+                "title": "Those Eyes",
+                "artist": "New West",
+                "album": "Those Eyes - Single",
+                "memory": "Tatapan pertama yang bikin aku langsung jatuh hati sama kamu 👀✨",
+                "dateAdded": "Feb 25, 2025",
+                "duration": "3:41",
+                "liked": true,
+                "cover": "images/covers/those_eyes.jpg",
+                "audioUrl": "audio/new_west_those_eyes.m4a",
+                "youtubeId": "1-xGerv5FOk"
+            },
+            {
+                "id": "t2",
+                "title": "Atlantis",
+                "artist": "Seafret",
+                "album": "Tell Me It's Real",
+                "memory": "Lagu yang selalu kita putar pas perjalanan malam di mobil 🌃",
+                "dateAdded": "Feb 25, 2025",
+                "duration": "4:02",
+                "liked": true,
+                "cover": "images/covers/atlantis.jpg",
+                "audioUrl": "audio/seafret_atlantis.m4a",
+                "youtubeId": "gVAy3IZiL0s"
+            },
+            {
+                "id": "t3",
+                "title": "Terbuang Dalam Waktu",
+                "artist": "Barasuara",
+                "album": "Terbuang Dalam Waktu - Single",
+                "memory": "Lagu favorit kita waktu kehujanan bareng sambil ketawa-tawa ☔🤍",
+                "dateAdded": "Feb 25, 2025",
+                "duration": "4:59",
+                "liked": true,
+                "cover": "images/covers/terbuang_dalam_waktu.jpg",
+                "audioUrl": "audio/barasuara_terbuang_dalam_waktu.m4a",
+                "youtubeId": "pS-WJ7h_5k0"
+            },
+            {
+                "id": "t4",
+                "title": "Best Part",
+                "artist": "Daniel Caesar",
+                "album": "Freudian",
+                "memory": "You are literally the best part of my every single day ☕🌸",
+                "dateAdded": "Mar 14, 2025",
+                "duration": "3:30",
+                "liked": false,
+                "cover": "images/covers/best_part.jpg",
+                "audioUrl": "audio/daniel_caesar_best_part.m4a",
+                "youtubeId": "hKgl5-lkT8U"
+            },
+            {
+                "id": "t5",
+                "title": "Mistikus Cinta",
+                "artist": "Dewa 19",
+                "album": "Cintailah Cinta",
+                "memory": "lagu yang buat kecanduan 💕",
+                "dateAdded": "Oct 19, 2026",
+                "duration": "5:38",
+                "liked": true,
+                "cover": "images/covers/mistikus_cinta.jpg",
+                "audioUrl": "audio/dewa19_mistikus_cinta.m4a",
+                "youtubeId": "qZdYnlWJlPw"
+            },
+            {
+                "id": "pl-1-dua-sejoli",
+                "title": "Dua Sejoli",
+                "artist": "Dewa 19",
+                "album": "Bintang Lima",
+                "memory": "Usaplah dahiku, genggamlah tanganku... Lagu cinta abadi kita berdua 💕",
+                "dateAdded": "Feb 25, 2025",
+                "duration": "5:26",
+                "liked": true,
+                "cover": "images/covers/dewa19_dua_sejoli.jpg",
+                "audioUrl": "audio/dewa19_dua_sejoli.m4a",
+                "youtubeId": "IU_v67PFnqk"
+            },
+            {
+                "id": "pl-1-t3",
+                "title": "K.",
+                "artist": "Cigarettes After Sex",
+                "album": "✦ jakarta.",
+                "memory": "Suasana tenang dan damai tiap kali denger lagu ini bareng kamu ☕",
+                "dateAdded": "Oct 20, 2026",
+                "duration": "5:19",
+                "liked": false,
+                "cover": "images/covers/cigarettes_after_sex_k.jpg",
+                "audioUrl": "audio/cigarettes_after_sex_k.m4a",
+                "youtubeId": ""
+            },
+            {
+                "id": "pl-1-t4",
+                "title": "What Was I Made For? [From The Motion Picture \"Barbie\"]",
+                "artist": "Billie Eilish",
+                "album": "✦ jakarta.",
+                "memory": "Setiap liriknya berasa kayak cerita kita berdua 🤍",
+                "dateAdded": "Oct 20, 2026",
+                "duration": "3:42",
+                "liked": true,
+                "cover": "images/covers/billie_eilish_what_was_i_made_for.jpg",
+                "audioUrl": "audio/billie_eilish_what_was_i_made_for.m4a",
+                "youtubeId": ""
+            },
+            {
+                "id": "pl-1-t5",
+                "title": "It Will Rain",
+                "artist": "Bruno Mars",
+                "album": "✦ jakarta.",
+                "memory": "Ingat ga waktu lagu ini pertama kali kita putar di mobil? 🚗",
+                "dateAdded": "Oct 20, 2026",
+                "duration": "4:17",
+                "liked": false,
+                "cover": "images/covers/bruno_mars_it_will_rain.jpg",
+                "audioUrl": "audio/bruno_mars_it_will_rain.m4a",
+                "youtubeId": ""
+            },
+            {
+                "id": "pl-1-t6",
+                "title": "When I Was Your Man",
+                "artist": "Bruno Mars",
+                "album": "✦ jakarta.",
+                "memory": "Senyummu langsung kebayang tiap intro lagu ini mulai 🌸",
+                "dateAdded": "Oct 20, 2026",
+                "duration": "3:33",
+                "liked": false,
+                "cover": "images/covers/bruno_mars_when_i_was_your_man.jpg",
+                "audioUrl": "audio/bruno_mars_when_i_was_your_man.m4a",
+                "youtubeId": ""
+            },
+            {
+                "id": "pl-1-t7",
+                "title": "On Bended Knee",
+                "artist": "Boyz II Men",
+                "album": "✦ jakarta.",
+                "memory": "Melodi manis yang selalu ngingetin aku sama kamu 💕",
+                "dateAdded": "Oct 20, 2026",
+                "duration": "5:29",
+                "liked": true,
+                "cover": "images/covers/boyz_ii_men_on_bended_knee.jpg",
+                "audioUrl": "audio/boyz_ii_men_on_bended_knee.m4a",
+                "youtubeId": ""
+            },
+            {
+                "id": "pl-1-t8",
+                "title": "I Love You, I'm Sorry",
+                "artist": "Gracie Abrams",
+                "album": "✦ jakarta.",
+                "memory": "Lagu favorit waktu kita ngobrol berjam-jam tanpa bosen ✨",
+                "dateAdded": "Oct 20, 2026",
+                "duration": "2:37",
+                "liked": false,
+                "cover": "images/covers/gracie_abrams_i_love_you_im_sorry.jpg",
+                "audioUrl": "audio/gracie_abrams_i_love_you_im_sorry.m4a",
+                "youtubeId": ""
+            },
+            {
+                "id": "pl-1-t9",
+                "title": "End of Beginning",
+                "artist": "Djo",
+                "album": "✦ jakarta.",
+                "memory": "Suasana tenang dan damai tiap kali denger lagu ini bareng kamu ☕",
+                "dateAdded": "Oct 20, 2026",
+                "duration": "2:39",
+                "liked": false,
+                "cover": "images/covers/djo_end_of_beginning.jpg",
+                "audioUrl": "audio/djo_end_of_beginning.m4a",
+                "youtubeId": ""
+            },
+            {
+                "id": "pl-1-t10",
+                "title": "Walking Back Home",
+                "artist": "Vira Talisa",
+                "album": "✦ jakarta.",
+                "memory": "Setiap liriknya berasa kayak cerita kita berdua 🤍",
+                "dateAdded": "Oct 20, 2026",
+                "duration": "2:12",
+                "liked": true,
+                "cover": "images/covers/vira_talisa_walking_back_home.jpg",
+                "audioUrl": "audio/vira_talisa_walking_back_home.m4a",
+                "youtubeId": ""
+            },
+            {
+                "id": "pl-1-t11",
+                "title": "seasons",
+                "artist": "wave to earth",
+                "album": "✦ jakarta.",
+                "memory": "Ingat ga waktu lagu ini pertama kali kita putar di mobil? 🚗",
+                "dateAdded": "Oct 20, 2026",
+                "duration": "4:15",
+                "liked": false,
+                "cover": "images/covers/wave_to_earth_seasons.jpg",
+                "audioUrl": "audio/wave_to_earth_seasons.m4a",
+                "youtubeId": ""
+            },
+            {
+                "id": "pl-1-t12",
+                "title": "Summertime Sadness",
+                "artist": "Lana Del Rey",
+                "album": "✦ jakarta.",
+                "memory": "Senyummu langsung kebayang tiap intro lagu ini mulai 🌸",
+                "dateAdded": "Oct 20, 2026",
+                "duration": "4:25",
+                "liked": false,
+                "cover": "images/covers/lana_del_rey_summertime_sadness.jpg",
+                "audioUrl": "audio/lana_del_rey_summertime_sadness.m4a",
+                "youtubeId": ""
+            }
+        ]
+    },
+    {
+        "id": "pl-fallin-love",
+        "title": "y'll fallin' in love? ｡𖦹°‧.𖥔 ݁ ˖",
+        "desc": "the art of loving — saat hati kita saling jatuh cinta setiap detiknya ｡𖦹°‧.𖥔 ݁ ˖",
+        "cover": "images/spotify_covers/fallin_in_love.jpg",
+        "tracks": [
+            {
+                "id": "pl-fallin-love-t1",
+                "title": "That's What I Like",
+                "artist": "Bruno Mars",
+                "album": "y'll fallin' in love? ｡𖦹°‧.𖥔 ݁ ˖",
+                "memory": "Melodi manis yang selalu ngingetin aku sama kamu 💕",
+                "dateAdded": "Oct 20, 2026",
+                "duration": "3:26",
+                "liked": true,
+                "cover": "images/covers/bruno_mars_thats_what_i_like.jpg",
+                "audioUrl": "audio/bruno_mars_thats_what_i_like.m4a",
+                "youtubeId": ""
+            },
+            {
+                "id": "pl-fallin-love-t2",
+                "title": "Marry You",
+                "artist": "Bruno Mars",
+                "album": "y'll fallin' in love? ｡𖦹°‧.𖥔 ݁ ˖",
+                "memory": "Lagu favorit waktu kita ngobrol berjam-jam tanpa bosen ✨",
+                "dateAdded": "Oct 20, 2026",
+                "duration": "3:50",
+                "liked": false,
+                "cover": "images/covers/bruno_mars_marry_you.jpg",
+                "audioUrl": "audio/bruno_mars_marry_you.m4a",
+                "youtubeId": ""
+            },
+            {
+                "id": "pl-fallin-love-t3",
+                "title": "I Wanna Be Yours",
+                "artist": "Arctic Monkeys",
+                "album": "y'll fallin' in love? ｡𖦹°‧.𖥔 ݁ ˖",
+                "memory": "Suasana tenang dan damai tiap kali denger lagu ini bareng kamu ☕",
+                "dateAdded": "Oct 20, 2026",
+                "duration": "3:03",
+                "liked": false,
+                "cover": "images/covers/i_wanna_be_yours.jpg",
+                "audioUrl": "audio/arctic_monkeys_i_wanna_be_yours.m4a",
+                "youtubeId": ""
+            },
+            {
+                "id": "pl-fallin-love-t4",
+                "title": "\"Slut!\" (Taylor's Version) (From The Vault)",
+                "artist": "Taylor Swift",
+                "album": "y'll fallin' in love? ｡𖦹°‧.𖥔 ݁ ˖",
+                "memory": "Setiap liriknya berasa kayak cerita kita berdua 🤍",
+                "dateAdded": "Oct 20, 2026",
+                "duration": "3:00",
+                "liked": true,
+                "cover": "images/covers/taylor_swift_slut.jpg",
+                "audioUrl": "audio/taylor_swift_slut.m4a",
+                "youtubeId": ""
+            },
+            {
+                "id": "pl-fallin-love-t5",
+                "title": "lowkey",
+                "artist": "NIKI",
+                "album": "y'll fallin' in love? ｡𖦹°‧.𖥔 ݁ ˖",
+                "memory": "Ingat ga waktu lagu ini pertama kali kita putar di mobil? 🚗",
+                "dateAdded": "Oct 20, 2026",
+                "duration": "2:51",
+                "liked": false,
+                "cover": "images/covers/niki_lowkey.jpg",
+                "audioUrl": "audio/niki_lowkey.m4a",
+                "youtubeId": ""
+            },
+            {
+                "id": "pl-fallin-love-t6",
+                "title": "Falling In Love",
+                "artist": "Cigarettes After Sex",
+                "album": "y'll fallin' in love? ｡𖦹°‧.𖥔 ݁ ˖",
+                "memory": "Senyummu langsung kebayang tiap intro lagu ini mulai 🌸",
+                "dateAdded": "Oct 20, 2026",
+                "duration": "4:05",
+                "liked": false,
+                "cover": "images/covers/cigarettes_after_sex_falling_in_love.jpg",
+                "audioUrl": "audio/cigarettes_after_sex_falling_in_love.m4a",
+                "youtubeId": ""
+            },
+            {
+                "id": "pl-fallin-love-t7",
+                "title": "The Way I Loved You (Taylor’s Version)",
+                "artist": "Taylor Swift",
+                "album": "y'll fallin' in love? ｡𖦹°‧.𖥔 ݁ ˖",
+                "memory": "Melodi manis yang selalu ngingetin aku sama kamu 💕",
+                "dateAdded": "Oct 20, 2026",
+                "duration": "4:03",
+                "liked": true,
+                "cover": "images/covers/taylor_swift_the_way_i_loved_you.jpg",
+                "audioUrl": "audio/taylor_swift_the_way_i_loved_you.m4a",
+                "youtubeId": ""
+            },
+            {
+                "id": "pl-fallin-love-t8",
+                "title": "No. 1 Party Anthem",
+                "artist": "Arctic Monkeys",
+                "album": "y'll fallin' in love? ｡𖦹°‧.𖥔 ݁ ˖",
+                "memory": "Lagu favorit waktu kita ngobrol berjam-jam tanpa bosen ✨",
+                "dateAdded": "Oct 20, 2026",
+                "duration": "4:03",
+                "liked": false,
+                "cover": "images/covers/arctic_monkeys_no_1_party_anthem.jpg",
+                "audioUrl": "audio/arctic_monkeys_no_1_party_anthem.m4a",
+                "youtubeId": ""
+            },
+            {
+                "id": "pl-fallin-love-t9",
+                "title": "Fearless (Taylor’s Version)",
+                "artist": "Taylor Swift",
+                "album": "y'll fallin' in love? ｡𖦹°‧.𖥔 ݁ ˖",
+                "memory": "Suasana tenang dan damai tiap kali denger lagu ini bareng kamu ☕",
+                "dateAdded": "Oct 20, 2026",
+                "duration": "4:01",
+                "liked": false,
+                "cover": "images/covers/taylor_swift_fearless.jpg",
+                "audioUrl": "audio/taylor_swift_fearless.m4a",
+                "youtubeId": ""
+            },
+            {
+                "id": "pl-fallin-love-t10",
+                "title": "i wanna be your girlfriend",
+                "artist": "girl in red",
+                "album": "y'll fallin' in love? ｡𖦹°‧.𖥔 ݁ ˖",
+                "memory": "Setiap liriknya berasa kayak cerita kita berdua 🤍",
+                "dateAdded": "Oct 20, 2026",
+                "duration": "3:24",
+                "liked": true,
+                "cover": "images/covers/girl_in_red_i_wanna_be_your_girlfriend.jpg",
+                "audioUrl": "audio/girl_in_red_i_wanna_be_your_girlfriend.m4a",
+                "youtubeId": ""
+            },
+            {
+                "id": "pl-fallin-love-t11",
+                "title": "Alexandra",
+                "artist": "Reality Club",
+                "album": "y'll fallin' in love? ｡𖦹°‧.𖥔 ݁ ˖",
+                "memory": "Ingat ga waktu lagu ini pertama kali kita putar di mobil? 🚗",
+                "dateAdded": "Oct 20, 2026",
+                "duration": "3:58",
+                "liked": false,
+                "cover": "images/covers/alexandra.jpg",
+                "audioUrl": "audio/reality_club_alexandra.m4a",
+                "youtubeId": ""
+            },
+            {
+                "id": "pl-fallin-love-t12",
+                "title": "Sure Thing",
+                "artist": "Miguel",
+                "album": "y'll fallin' in love? ｡𖦹°‧.𖥔 ݁ ˖",
+                "memory": "Senyummu langsung kebayang tiap intro lagu ini mulai 🌸",
+                "dateAdded": "Oct 20, 2026",
+                "duration": "3:15",
+                "liked": false,
+                "cover": "images/covers/miguel_sure_thing.jpg",
+                "audioUrl": "audio/miguel_sure_thing.m4a",
+                "youtubeId": ""
+            }
+        ]
+    },
+    {
+        "id": "pl-candlelight",
+        "title": "candlelight🧘🏻‍♀️",
+        "desc": "warm vibes, candlelights, & sweet melodies buat nemenin hari santai kita 🧘🏻‍♀️",
+        "cover": "images/spotify_covers/candlelight.jpg",
+        "tracks": [
+            {
+                "id": "pl-candlelight-t1",
+                "title": "2002",
+                "artist": "Anne-Marie",
+                "album": "candlelight🧘🏻‍♀️",
+                "memory": "Melodi manis yang selalu ngingetin aku sama kamu 💕",
+                "dateAdded": "Oct 20, 2026",
+                "duration": "3:06",
+                "liked": true,
+                "cover": "images/covers/annemarie_2002.jpg",
+                "audioUrl": "audio/annemarie_2002.m4a",
+                "youtubeId": ""
+            },
+            {
+                "id": "pl-candlelight-t2",
+                "title": "Last Friday Night (T.G.I.F.)",
+                "artist": "Katy Perry",
+                "album": "candlelight🧘🏻‍♀️",
+                "memory": "Lagu favorit waktu kita ngobrol berjam-jam tanpa bosen ✨",
+                "dateAdded": "Oct 20, 2026",
+                "duration": "3:50",
+                "liked": false,
+                "cover": "images/covers/katy_perry_last_friday_night.jpg",
+                "audioUrl": "audio/katy_perry_last_friday_night.m4a",
+                "youtubeId": ""
+            },
+            {
+                "id": "pl-candlelight-t3",
+                "title": "34+35",
+                "artist": "Ariana Grande",
+                "album": "candlelight🧘🏻‍♀️",
+                "memory": "Suasana tenang dan damai tiap kali denger lagu ini bareng kamu ☕",
+                "dateAdded": "Oct 20, 2026",
+                "duration": "2:53",
+                "liked": false,
+                "cover": "images/covers/ariana_grande_3435.jpg",
+                "audioUrl": "audio/ariana_grande_3435.m4a",
+                "youtubeId": ""
+            },
+            {
+                "id": "pl-candlelight-t4",
+                "title": "supernatural",
+                "artist": "Ariana Grande",
+                "album": "candlelight🧘🏻‍♀️",
+                "memory": "Setiap liriknya berasa kayak cerita kita berdua 🤍",
+                "dateAdded": "Oct 20, 2026",
+                "duration": "2:43",
+                "liked": true,
+                "cover": "images/covers/ariana_grande_supernatural.jpg",
+                "audioUrl": "audio/ariana_grande_supernatural.m4a",
+                "youtubeId": ""
+            },
+            {
+                "id": "pl-candlelight-t5",
+                "title": "All Of The Girls You Loved Before",
+                "artist": "Taylor Swift",
+                "album": "candlelight🧘🏻‍♀️",
+                "memory": "Ingat ga waktu lagu ini pertama kali kita putar di mobil? 🚗",
+                "dateAdded": "Oct 20, 2026",
+                "duration": "3:41",
+                "liked": false,
+                "cover": "images/covers/taylor_swift_all_of_the_girls_you_loved_before.jpg",
+                "audioUrl": "audio/taylor_swift_all_of_the_girls_you_loved_before.m4a",
+                "youtubeId": ""
+            },
+            {
+                "id": "pl-candlelight-t6",
+                "title": "California Gurls - feat. Snoop Dogg",
+                "artist": "Katy Perry, Snoop Dogg",
+                "album": "candlelight🧘🏻‍♀️",
+                "memory": "Senyummu langsung kebayang tiap intro lagu ini mulai 🌸",
+                "dateAdded": "Oct 20, 2026",
+                "duration": "3:56",
+                "liked": false,
+                "cover": "images/covers/katy_perry_snoop_dogg_california_gurls_feat_snoop.jpg",
+                "audioUrl": "audio/katy_perry_snoop_dogg_california_gurls_feat_snoop.m4a",
+                "youtubeId": ""
+            },
+            {
+                "id": "pl-candlelight-t7",
+                "title": "Please Please Please",
+                "artist": "Sabrina Carpenter",
+                "album": "candlelight🧘🏻‍♀️",
+                "memory": "Melodi manis yang selalu ngingetin aku sama kamu 💕",
+                "dateAdded": "Oct 20, 2026",
+                "duration": "3:06",
+                "liked": true,
+                "cover": "images/covers/sabrina_carpenter_please_please_please.jpg",
+                "audioUrl": "audio/sabrina_carpenter_please_please_please.m4a",
+                "youtubeId": ""
+            },
+            {
+                "id": "pl-candlelight-t8",
+                "title": "obsessed",
+                "artist": "zandros, Limi",
+                "album": "candlelight🧘🏻‍♀️",
+                "memory": "Lagu favorit waktu kita ngobrol berjam-jam tanpa bosen ✨",
+                "dateAdded": "Oct 20, 2026",
+                "duration": "3:00",
+                "liked": false,
+                "cover": "images/covers/obsessed.jpg",
+                "audioUrl": "audio/zandros_limi_obsessed.m4a",
+                "youtubeId": ""
+            },
+            {
+                "id": "pl-candlelight-t9",
+                "title": "Last Friday Night (T.G.I.F.)",
+                "artist": "Katy Perry",
+                "album": "candlelight🧘🏻‍♀️",
+                "memory": "Suasana tenang dan damai tiap kali denger lagu ini bareng kamu ☕",
+                "dateAdded": "Oct 20, 2026",
+                "duration": "3:50",
+                "liked": false,
+                "cover": "images/covers/katy_perry_last_friday_night.jpg",
+                "audioUrl": "audio/katy_perry_last_friday_night.m4a",
+                "youtubeId": ""
+            },
+            {
+                "id": "pl-candlelight-t10",
+                "title": "Dangerous Woman",
+                "artist": "Ariana Grande",
+                "album": "candlelight🧘🏻‍♀️",
+                "memory": "Setiap liriknya berasa kayak cerita kita berdua 🤍",
+                "dateAdded": "Oct 20, 2026",
+                "duration": "3:55",
+                "liked": true,
+                "cover": "images/covers/ariana_grande_dangerous_woman.jpg",
+                "audioUrl": "audio/ariana_grande_dangerous_woman.m4a",
+                "youtubeId": ""
+            },
+            {
+                "id": "pl-candlelight-t11",
+                "title": "If I Ain't Got You",
+                "artist": "Alicia Keys",
+                "album": "candlelight🧘🏻‍♀️",
+                "memory": "Ingat ga waktu lagu ini pertama kali kita putar di mobil? 🚗",
+                "dateAdded": "Oct 20, 2026",
+                "duration": "3:48",
+                "liked": false,
+                "cover": "images/covers/alicia_keys_if_i_aint_got_you.jpg",
+                "audioUrl": "audio/alicia_keys_if_i_aint_got_you.m4a",
+                "youtubeId": ""
+            },
+            {
+                "id": "pl-candlelight-t12",
+                "title": "Water",
+                "artist": "Tyla",
+                "album": "candlelight🧘🏻‍♀️",
+                "memory": "Senyummu langsung kebayang tiap intro lagu ini mulai 🌸",
+                "dateAdded": "Oct 20, 2026",
+                "duration": "3:20",
+                "liked": false,
+                "cover": "images/covers/tyla_water.jpg",
+                "audioUrl": "audio/tyla_water.m4a",
+                "youtubeId": ""
+            }
+        ]
+    },
+    {
+        "id": "pl-cry-reboot",
+        "title": "cry, breathe, & reboot.",
+        "desc": "lagu-lagu pereda lelah, tenang, dan penyemangat saat butuh pelukan hangat 🤍",
+        "cover": "images/spotify_covers/cry_reboot.jpg",
+        "tracks": [
+            {
+                "id": "pl-cry-reboot-t1",
+                "title": "Nina",
+                "artist": ".Feast",
+                "album": "cry, breathe, & reboot.",
+                "memory": "Melodi manis yang selalu ngingetin aku sama kamu 💕",
+                "dateAdded": "Oct 20, 2026",
+                "duration": "4:37",
+                "liked": true,
+                "cover": "images/covers/feast_nina.jpg",
+                "audioUrl": "audio/feast_nina.m4a",
+                "youtubeId": ""
+            },
+            {
+                "id": "pl-cry-reboot-t2",
+                "title": "Evaluasi",
+                "artist": "Hindia",
+                "album": "cry, breathe, & reboot.",
+                "memory": "Lagu favorit waktu kita ngobrol berjam-jam tanpa bosen ✨",
+                "dateAdded": "Oct 20, 2026",
+                "duration": "3:14",
+                "liked": false,
+                "cover": "images/covers/hindia_evaluasi.jpg",
+                "audioUrl": "audio/hindia_evaluasi.m4a",
+                "youtubeId": ""
+            },
+            {
+                "id": "pl-cry-reboot-t3",
+                "title": "Bertaut",
+                "artist": "Nadin Amizah",
+                "album": "cry, breathe, & reboot.",
+                "memory": "Suasana tenang dan damai tiap kali denger lagu ini bareng kamu ☕",
+                "dateAdded": "Oct 20, 2026",
+                "duration": "5:15",
+                "liked": false,
+                "cover": "images/covers/nadin_amizah_bertaut.jpg",
+                "audioUrl": "audio/nadin_amizah_bertaut.m4a",
+                "youtubeId": ""
+            },
+            {
+                "id": "pl-cry-reboot-t4",
+                "title": "Sorai",
+                "artist": "Nadin Amizah",
+                "album": "cry, breathe, & reboot.",
+                "memory": "Setiap liriknya berasa kayak cerita kita berdua 🤍",
+                "dateAdded": "Oct 20, 2026",
+                "duration": "4:38",
+                "liked": true,
+                "cover": "images/covers/nadin_amizah_sorai.jpg",
+                "audioUrl": "audio/nadin_amizah_sorai.m4a",
+                "youtubeId": ""
+            },
+            {
+                "id": "pl-cry-reboot-t5",
+                "title": "Secukupnya",
+                "artist": "Hindia",
+                "album": "cry, breathe, & reboot.",
+                "memory": "Ingat ga waktu lagu ini pertama kali kita putar di mobil? 🚗",
+                "dateAdded": "Oct 20, 2026",
+                "duration": "3:25",
+                "liked": false,
+                "cover": "images/covers/hindia_secukupnya.jpg",
+                "audioUrl": "audio/hindia_secukupnya.m4a",
+                "youtubeId": ""
+            },
+            {
+                "id": "pl-cry-reboot-t6",
+                "title": "Untungnya, Hidup Harus Tetap Berjalan",
+                "artist": "Bernadya",
+                "album": "cry, breathe, & reboot.",
+                "memory": "Senyummu langsung kebayang tiap intro lagu ini mulai 🌸",
+                "dateAdded": "Oct 20, 2026",
+                "duration": "3:02",
+                "liked": false,
+                "cover": "images/covers/untungnya.jpg",
+                "audioUrl": "audio/bernadya_untungnya_hidup_harus_tetap_berjalan.m4a",
+                "youtubeId": ""
+            },
+            {
+                "id": "pl-cry-reboot-t7",
+                "title": "Peradaban",
+                "artist": ".Feast",
+                "album": "cry, breathe, & reboot.",
+                "memory": "Melodi manis yang selalu ngingetin aku sama kamu 💕",
+                "dateAdded": "Oct 20, 2026",
+                "duration": "5:39",
+                "liked": true,
+                "cover": "images/covers/peradaban.jpg",
+                "audioUrl": "audio/feast_peradaban.m4a",
+                "youtubeId": ""
+            },
+            {
+                "id": "pl-cry-reboot-t8",
+                "title": "You're On Your Own, Kid",
+                "artist": "Taylor Swift",
+                "album": "cry, breathe, & reboot.",
+                "memory": "Lagu favorit waktu kita ngobrol berjam-jam tanpa bosen ✨",
+                "dateAdded": "Oct 20, 2026",
+                "duration": "3:14",
+                "liked": false,
+                "cover": "images/covers/taylor_swift_youre_on_your_own_kid.jpg",
+                "audioUrl": "audio/taylor_swift_youre_on_your_own_kid.m4a",
+                "youtubeId": ""
+            },
+            {
+                "id": "pl-cry-reboot-t9",
+                "title": "Matilda",
+                "artist": "Harry Styles",
+                "album": "cry, breathe, & reboot.",
+                "memory": "Suasana tenang dan damai tiap kali denger lagu ini bareng kamu ☕",
+                "dateAdded": "Oct 20, 2026",
+                "duration": "4:05",
+                "liked": false,
+                "cover": "images/covers/harry_styles_matilda.jpg",
+                "audioUrl": "audio/harry_styles_matilda.m4a",
+                "youtubeId": ""
+            },
+            {
+                "id": "pl-cry-reboot-t10",
+                "title": "Kata Mereka Ini Berlebihan",
+                "artist": "Bernadya",
+                "album": "cry, breathe, & reboot.",
+                "memory": "Setiap liriknya berasa kayak cerita kita berdua 🤍",
+                "dateAdded": "Oct 20, 2026",
+                "duration": "3:11",
+                "liked": true,
+                "cover": "images/covers/bernadya_kata_mereka_ini_berlebihan.jpg",
+                "audioUrl": "audio/bernadya_kata_mereka_ini_berlebihan.m4a",
+                "youtubeId": ""
+            },
+            {
+                "id": "pl-cry-reboot-t11",
+                "title": "Sialan",
+                "artist": "Adrian Khalif, Juicy Luicy",
+                "album": "cry, breathe, & reboot.",
+                "memory": "Ingat ga waktu lagu ini pertama kali kita putar di mobil? 🚗",
+                "dateAdded": "Oct 20, 2026",
+                "duration": "4:01",
+                "liked": false,
+                "cover": "images/covers/sialan.jpg",
+                "audioUrl": "audio/adrian_khalif_juicy_luicy_sialan.m4a",
+                "youtubeId": ""
+            },
+            {
+                "id": "pl-cry-reboot-t12",
+                "title": "Untuk Perempuan Yang Sedang Di Pelukan",
+                "artist": "Payung Teduh",
+                "album": "cry, breathe, & reboot.",
+                "memory": "Senyummu langsung kebayang tiap intro lagu ini mulai 🌸",
+                "dateAdded": "Oct 20, 2026",
+                "duration": "5:42",
+                "liked": false,
+                "cover": "images/covers/payung_teduh_untuk_perempuan_yang_sedang_di_peluka.jpg",
+                "audioUrl": "audio/payung_teduh_untuk_perempuan_yang_sedang_di_peluka.m4a",
+                "youtubeId": ""
+            }
+        ]
+    },
+    {
+        "id": "pl-shes-a-racer",
+        "title": "shes a racer.",
+        "desc": "late night drive playlist, vibes keren & banger hits sambil keliling kota 🏎️",
+        "cover": "images/spotify_covers/shes_a_racer.jpg",
+        "tracks": [
+            {
+                "id": "pl-shes-a-racer-t1",
+                "title": "Reminder",
+                "artist": "The Weeknd",
+                "album": "shes a racer.",
+                "memory": "Melodi manis yang selalu ngingetin aku sama kamu 💕",
+                "dateAdded": "Oct 20, 2026",
+                "duration": "3:38",
+                "liked": true,
+                "cover": "images/covers/the_weeknd_reminder.jpg",
+                "audioUrl": "audio/the_weeknd_reminder.m4a",
+                "youtubeId": ""
+            },
+            {
+                "id": "pl-shes-a-racer-t2",
+                "title": "Sure Thing",
+                "artist": "Miguel",
+                "album": "shes a racer.",
+                "memory": "Lagu favorit waktu kita ngobrol berjam-jam tanpa bosen ✨",
+                "dateAdded": "Oct 20, 2026",
+                "duration": "3:15",
+                "liked": false,
+                "cover": "images/covers/miguel_sure_thing.jpg",
+                "audioUrl": "audio/miguel_sure_thing.m4a",
+                "youtubeId": ""
+            },
+            {
+                "id": "pl-shes-a-racer-t3",
+                "title": "Swim",
+                "artist": "Chase Atlantic",
+                "album": "shes a racer.",
+                "memory": "Suasana tenang dan damai tiap kali denger lagu ini bareng kamu ☕",
+                "dateAdded": "Oct 20, 2026",
+                "duration": "3:48",
+                "liked": false,
+                "cover": "images/covers/chase_atlantic_swim.jpg",
+                "audioUrl": "audio/chase_atlantic_swim.m4a",
+                "youtubeId": ""
+            },
+            {
+                "id": "pl-shes-a-racer-t4",
+                "title": "Kiss It Better",
+                "artist": "Rihanna",
+                "album": "shes a racer.",
+                "memory": "Setiap liriknya berasa kayak cerita kita berdua 🤍",
+                "dateAdded": "Oct 20, 2026",
+                "duration": "4:13",
+                "liked": true,
+                "cover": "images/covers/rihanna_kiss_it_better.jpg",
+                "audioUrl": "audio/rihanna_kiss_it_better.m4a",
+                "youtubeId": ""
+            },
+            {
+                "id": "pl-shes-a-racer-t5",
+                "title": "Collide (Sped Up Remix)",
+                "artist": "Justine Skye, Tyga",
+                "album": "shes a racer.",
+                "memory": "Ingat ga waktu lagu ini pertama kali kita putar di mobil? 🚗",
+                "dateAdded": "Oct 20, 2026",
+                "duration": "3:41",
+                "liked": false,
+                "cover": "images/covers/justine_skye_tyga_collide.jpg",
+                "audioUrl": "audio/justine_skye_tyga_collide.m4a",
+                "youtubeId": ""
+            },
+            {
+                "id": "pl-shes-a-racer-t6",
+                "title": "Die With A Smile",
+                "artist": "Lady Gaga, Bruno Mars",
+                "album": "shes a racer.",
+                "memory": "Senyummu langsung kebayang tiap intro lagu ini mulai 🌸",
+                "dateAdded": "Oct 20, 2026",
+                "duration": "4:11",
+                "liked": false,
+                "cover": "images/covers/lady_gaga_bruno_mars_die_with_a_smile.jpg",
+                "audioUrl": "audio/lady_gaga_bruno_mars_die_with_a_smile.m4a",
+                "youtubeId": ""
+            },
+            {
+                "id": "pl-shes-a-racer-t7",
+                "title": "Aku Milikmu",
+                "artist": "Dewa 19",
+                "album": "shes a racer.",
+                "memory": "Melodi manis yang selalu ngingetin aku sama kamu 💕",
+                "dateAdded": "Oct 20, 2026",
+                "duration": "5:32",
+                "liked": true,
+                "cover": "images/covers/dewa_19_aku_milikmu.jpg",
+                "audioUrl": "audio/dewa_19_aku_milikmu.m4a",
+                "youtubeId": ""
+            },
+            {
+                "id": "pl-shes-a-racer-t8",
+                "title": "Cry",
+                "artist": "Cigarettes After Sex",
+                "album": "shes a racer.",
+                "memory": "Lagu favorit waktu kita ngobrol berjam-jam tanpa bosen ✨",
+                "dateAdded": "Oct 20, 2026",
+                "duration": "4:16",
+                "liked": false,
+                "cover": "images/covers/cigarettes_after_sex_cry.jpg",
+                "audioUrl": "audio/cigarettes_after_sex_cry.m4a",
+                "youtubeId": ""
+            },
+            {
+                "id": "pl-shes-a-racer-t9",
+                "title": "Falling In Love",
+                "artist": "Cigarettes After Sex",
+                "album": "shes a racer.",
+                "memory": "Suasana tenang dan damai tiap kali denger lagu ini bareng kamu ☕",
+                "dateAdded": "Oct 20, 2026",
+                "duration": "4:05",
+                "liked": false,
+                "cover": "images/covers/cigarettes_after_sex_falling_in_love.jpg",
+                "audioUrl": "audio/cigarettes_after_sex_falling_in_love.m4a",
+                "youtubeId": ""
+            },
+            {
+                "id": "pl-shes-a-racer-t10",
+                "title": "Sunsetz",
+                "artist": "Cigarettes After Sex",
+                "album": "shes a racer.",
+                "memory": "Setiap liriknya berasa kayak cerita kita berdua 🤍",
+                "dateAdded": "Oct 20, 2026",
+                "duration": "3:34",
+                "liked": true,
+                "cover": "images/covers/cigarettes_after_sex_sunsetz.jpg",
+                "audioUrl": "audio/cigarettes_after_sex_sunsetz.m4a",
+                "youtubeId": ""
+            },
+            {
+                "id": "pl-shes-a-racer-t11",
+                "title": "welcome and goodbye",
+                "artist": "Dream, Ivory",
+                "album": "shes a racer.",
+                "memory": "Ingat ga waktu lagu ini pertama kali kita putar di mobil? 🚗",
+                "dateAdded": "Oct 20, 2026",
+                "duration": "2:20",
+                "liked": false,
+                "cover": "images/covers/dream_ivory_welcome_and_goodbye.jpg",
+                "audioUrl": "audio/dream_ivory_welcome_and_goodbye.m4a",
+                "youtubeId": ""
+            },
+            {
+                "id": "pl-shes-a-racer-t12",
+                "title": "Tokyo Drift (Fast & Furious) - From \"The Fast And The Furious: Tokyo Drift\" Soundtrack",
+                "artist": "Teriyaki Boyz",
+                "album": "shes a racer.",
+                "memory": "Senyummu langsung kebayang tiap intro lagu ini mulai 🌸",
+                "dateAdded": "Oct 20, 2026",
+                "duration": "4:15",
+                "liked": false,
+                "cover": "images/covers/teriyaki_boyz_tokyo_drift_from_the_fast_and_the_fu.jpg",
+                "audioUrl": "audio/teriyaki_boyz_tokyo_drift_from_the_fast_and_the_fu.m4a",
+                "youtubeId": ""
+            }
+        ]
+    },
+    {
+        "id": "pl-cocktails",
+        "title": "🍸 cocktails",
+        "desc": "moody R&B, smooth basslines, and chill evening talks 🍸",
+        "cover": "images/spotify_covers/cocktails.jpg",
+        "tracks": [
+            {
+                "id": "pl-cocktails-t1",
+                "title": "B.E.D.",
+                "artist": "Jacquees",
+                "album": "🍸 cocktails",
+                "memory": "Melodi manis yang selalu ngingetin aku sama kamu 💕",
+                "dateAdded": "Oct 20, 2026",
+                "duration": "3:56",
+                "liked": true,
+                "cover": "images/covers/jacquees_bed.jpg",
+                "audioUrl": "audio/jacquees_bed.m4a",
+                "youtubeId": ""
+            },
+            {
+                "id": "pl-cocktails-t2",
+                "title": "Long Way 2 Go",
+                "artist": "Cassie",
+                "album": "🍸 cocktails",
+                "memory": "Lagu favorit waktu kita ngobrol berjam-jam tanpa bosen ✨",
+                "dateAdded": "Oct 20, 2026",
+                "duration": "3:40",
+                "liked": false,
+                "cover": "images/covers/cassie_long_way_2_go.jpg",
+                "audioUrl": "audio/cassie_long_way_2_go.m4a",
+                "youtubeId": ""
+            },
+            {
+                "id": "pl-cocktails-t3",
+                "title": "2 On (feat. ScHoolboy Q)",
+                "artist": "Tinashe, ScHoolboy Q",
+                "album": "🍸 cocktails",
+                "memory": "Suasana tenang dan damai tiap kali denger lagu ini bareng kamu ☕",
+                "dateAdded": "Oct 20, 2026",
+                "duration": "3:47",
+                "liked": false,
+                "cover": "images/covers/tinashe_schoolboy_q_2_on.jpg",
+                "audioUrl": "audio/tinashe_schoolboy_q_2_on.m4a",
+                "youtubeId": ""
+            },
+            {
+                "id": "pl-cocktails-t4",
+                "title": "Or Nah (feat. The Weeknd, Wiz Khalifa & DJ Mustard) - Remix",
+                "artist": "Ty Dolla $ign, The Weeknd, Wiz Khalifa, Mustard",
+                "album": "🍸 cocktails",
+                "memory": "Setiap liriknya berasa kayak cerita kita berdua 🤍",
+                "dateAdded": "Oct 20, 2026",
+                "duration": "4:02",
+                "liked": true,
+                "cover": "images/covers/ty_dolla_ign_the_weeknd_wiz_khalifa_mustard_or_nah.jpg",
+                "audioUrl": "audio/ty_dolla_ign_the_weeknd_wiz_khalifa_mustard_or_nah.m4a",
+                "youtubeId": ""
+            },
+            {
+                "id": "pl-cocktails-t5",
+                "title": "Flashing Lights",
+                "artist": "Kanye West, Dwele",
+                "album": "🍸 cocktails",
+                "memory": "Ingat ga waktu lagu ini pertama kali kita putar di mobil? 🚗",
+                "dateAdded": "Oct 20, 2026",
+                "duration": "3:57",
+                "liked": false,
+                "cover": "images/covers/kanye_west_dwele_flashing_lights.jpg",
+                "audioUrl": "audio/kanye_west_dwele_flashing_lights.m4a",
+                "youtubeId": ""
+            },
+            {
+                "id": "pl-cocktails-t6",
+                "title": "Fair Trade (with Travis Scott)",
+                "artist": "Drake, Travis Scott",
+                "album": "🍸 cocktails",
+                "memory": "Senyummu langsung kebayang tiap intro lagu ini mulai 🌸",
+                "dateAdded": "Oct 20, 2026",
+                "duration": "4:51",
+                "liked": false,
+                "cover": "images/covers/drake_travis_scott_fair_trade.jpg",
+                "audioUrl": "audio/drake_travis_scott_fair_trade.m4a",
+                "youtubeId": ""
+            },
+            {
+                "id": "pl-cocktails-t7",
+                "title": "No Role Modelz",
+                "artist": "J. Cole",
+                "album": "🍸 cocktails",
+                "memory": "Melodi manis yang selalu ngingetin aku sama kamu 💕",
+                "dateAdded": "Oct 20, 2026",
+                "duration": "4:52",
+                "liked": true,
+                "cover": "images/covers/j_cole_no_role_modelz.jpg",
+                "audioUrl": "audio/j_cole_no_role_modelz.m4a",
+                "youtubeId": ""
+            },
+            {
+                "id": "pl-cocktails-t8",
+                "title": "Bitches Love Me",
+                "artist": "Lil Wayne, Future, Drake",
+                "album": "🍸 cocktails",
+                "memory": "Lagu favorit waktu kita ngobrol berjam-jam tanpa bosen ✨",
+                "dateAdded": "Oct 20, 2026",
+                "duration": "4:11",
+                "liked": false,
+                "cover": "images/covers/lil_wayne_future_drake_bitches_love_me.jpg",
+                "audioUrl": "audio/lil_wayne_future_drake_bitches_love_me.m4a",
+                "youtubeId": ""
+            },
+            {
+                "id": "pl-cocktails-t9",
+                "title": "P power (feat. Drake)",
+                "artist": "Gunna, Drake",
+                "album": "🍸 cocktails",
+                "memory": "Suasana tenang dan damai tiap kali denger lagu ini bareng kamu ☕",
+                "dateAdded": "Oct 20, 2026",
+                "duration": "3:13",
+                "liked": false,
+                "cover": "images/covers/gunna_drake_p_power.jpg",
+                "audioUrl": "audio/gunna_drake_p_power.m4a",
+                "youtubeId": ""
+            },
+            {
+                "id": "pl-cocktails-t10",
+                "title": "God's Plan",
+                "artist": "Drake",
+                "album": "🍸 cocktails",
+                "memory": "Setiap liriknya berasa kayak cerita kita berdua 🤍",
+                "dateAdded": "Oct 20, 2026",
+                "duration": "3:18",
+                "liked": true,
+                "cover": "images/covers/drake_gods_plan.jpg",
+                "audioUrl": "audio/drake_gods_plan.m4a",
+                "youtubeId": ""
+            },
+            {
+                "id": "pl-cocktails-t11",
+                "title": "Teenage Fever",
+                "artist": "Drake",
+                "album": "🍸 cocktails",
+                "memory": "Ingat ga waktu lagu ini pertama kali kita putar di mobil? 🚗",
+                "dateAdded": "Oct 20, 2026",
+                "duration": "3:39",
+                "liked": false,
+                "cover": "images/covers/drake_teenage_fever.jpg",
+                "audioUrl": "audio/drake_teenage_fever.m4a",
+                "youtubeId": ""
+            },
+            {
+                "id": "pl-cocktails-t12",
+                "title": "Time Flies",
+                "artist": "Drake",
+                "album": "🍸 cocktails",
+                "memory": "Senyummu langsung kebayang tiap intro lagu ini mulai 🌸",
+                "dateAdded": "Oct 20, 2026",
+                "duration": "3:12",
+                "liked": false,
+                "cover": "images/covers/drake_time_flies.jpg",
+                "audioUrl": "audio/drake_time_flies.m4a",
+                "youtubeId": ""
+            }
+        ]
+    },
+    {
+        "id": "pl-jj-remix",
+        "title": "in 🇮🇩 we said jj remix",
+        "desc": "jedag jedug vibes Indonesia yang seru & bikin ketawa bareng kamu 🇮🇩🔥",
+        "cover": "images/spotify_covers/jj_remix.jpg",
+        "tracks": [
+            {
+                "id": "pl-jj-remix-t1",
+                "title": "Culik Aku Dong",
+                "artist": "Kharis Sopan, DJ Likin Breat",
+                "album": "in 🇮🇩 we said jj remix",
+                "memory": "Melodi manis yang selalu ngingetin aku sama kamu 💕",
+                "dateAdded": "Oct 20, 2026",
+                "duration": "4:18",
+                "liked": true,
+                "cover": "images/covers/kharis_sopan_dj_likin_breat_culik_aku_dong.jpg",
+                "audioUrl": "audio/kharis_sopan_dj_likin_breat_culik_aku_dong.m4a",
+                "youtubeId": ""
+            },
+            {
+                "id": "pl-jj-remix-t2",
+                "title": "DITINGGAL BANG DIKA",
+                "artist": "Dika",
+                "album": "in 🇮🇩 we said jj remix",
+                "memory": "Lagu favorit waktu kita ngobrol berjam-jam tanpa bosen ✨",
+                "dateAdded": "Oct 20, 2026",
+                "duration": "5:30",
+                "liked": false,
+                "cover": "images/covers/dika_ditinggal_bang_dika.jpg",
+                "audioUrl": "audio/dika_ditinggal_bang_dika.m4a",
+                "youtubeId": ""
+            },
+            {
+                "id": "pl-jj-remix-t3",
+                "title": "DJ Hilang Harapan x Rutinitas Randong",
+                "artist": "DJ BUDOTS",
+                "album": "in 🇮🇩 we said jj remix",
+                "memory": "Suasana tenang dan damai tiap kali denger lagu ini bareng kamu ☕",
+                "dateAdded": "Oct 20, 2026",
+                "duration": "4:00",
+                "liked": false,
+                "cover": "images/covers/dj_budots_dj_hilang_harapan_extended.jpg",
+                "audioUrl": "audio/dj_budots_dj_hilang_harapan_x_rutinitas_randong.m4a",
+                "youtubeId": ""
+            },
+            {
+                "id": "pl-jj-remix-t4",
+                "title": "Karena Kamu Cantik",
+                "artist": "Komang Rimex",
+                "album": "in 🇮🇩 we said jj remix",
+                "memory": "Setiap liriknya berasa kayak cerita kita berdua 🤍",
+                "dateAdded": "Oct 20, 2026",
+                "duration": "3:36",
+                "liked": true,
+                "cover": "images/covers/komang_rimex_karena_kamu_cantik.jpg",
+                "audioUrl": "audio/komang_rimex_karena_kamu_cantik.m4a",
+                "youtubeId": ""
+            },
+            {
+                "id": "pl-jj-remix-t5",
+                "title": "SUNGGUH KETAMVANAN INI",
+                "artist": "Maman Fvndy, DJ Donall, RPH Remix",
+                "album": "in 🇮🇩 we said jj remix",
+                "memory": "Ingat ga waktu lagu ini pertama kali kita putar di mobil? 🚗",
+                "dateAdded": "Oct 20, 2026",
+                "duration": "4:40",
+                "liked": false,
+                "cover": "images/covers/maman_fvndy_seratus_persen_cintaku.jpg",
+                "audioUrl": "audio/maman_fvndy_dj_donall_rph_remix_sungguh_ketamvanan.m4a",
+                "youtubeId": ""
+            },
+            {
+                "id": "pl-jj-remix-t6",
+                "title": "DJ MALAM MINGGU AKU TAK PUNYA PACAR",
+                "artist": "DJ MANAY",
+                "album": "in 🇮🇩 we said jj remix",
+                "memory": "Senyummu langsung kebayang tiap intro lagu ini mulai 🌸",
+                "dateAdded": "Oct 20, 2026",
+                "duration": "5:55",
+                "liked": false,
+                "cover": "images/spotify_covers/jj_remix.jpg",
+                "audioUrl": "audio/dj_manay_dj_malam_minggu_aku_tak_punya_pacar.m4a",
+                "youtubeId": ""
+            },
+            {
+                "id": "pl-jj-remix-t7",
+                "title": "Sakitnya Luar Dalam",
+                "artist": "DJ Haning",
+                "album": "in 🇮🇩 we said jj remix",
+                "memory": "Melodi manis yang selalu ngingetin aku sama kamu 💕",
+                "dateAdded": "Oct 20, 2026",
+                "duration": "4:22",
+                "liked": true,
+                "cover": "images/covers/dj_haning_sakitnya_luar_dalam.jpg",
+                "audioUrl": "audio/dj_haning_sakitnya_luar_dalam.m4a",
+                "youtubeId": ""
+            },
+            {
+                "id": "pl-jj-remix-t8",
+                "title": "Seratus Persen Cintaku",
+                "artist": "Maman Fvndy",
+                "album": "in 🇮🇩 we said jj remix",
+                "memory": "Lagu favorit waktu kita ngobrol berjam-jam tanpa bosen ✨",
+                "dateAdded": "Oct 20, 2026",
+                "duration": "4:49",
+                "liked": false,
+                "cover": "images/covers/maman_fvndy_seratus_persen_cintaku.jpg",
+                "audioUrl": "audio/maman_fvndy_seratus_persen_cintaku.m4a",
+                "youtubeId": ""
+            },
+            {
+                "id": "pl-jj-remix-t9",
+                "title": "DJ JANGAN SALAH PASANGAN X BONFIRE",
+                "artist": "DJ ManikCi",
+                "album": "in 🇮🇩 we said jj remix",
+                "memory": "Suasana tenang dan damai tiap kali denger lagu ini bareng kamu ☕",
+                "dateAdded": "Oct 20, 2026",
+                "duration": "3:55",
+                "liked": false,
+                "cover": "images/spotify_covers/jj_remix.jpg",
+                "audioUrl": "audio/dj_manikci_dj_jangan_salah_pasangan_x_bonfire.m4a",
+                "youtubeId": ""
+            },
+            {
+                "id": "pl-jj-remix-t10",
+                "title": "DJ HILANG HARAPAN EXTENDED",
+                "artist": "DJ BUDOTS",
+                "album": "in 🇮🇩 we said jj remix",
+                "memory": "Setiap liriknya berasa kayak cerita kita berdua 🤍",
+                "dateAdded": "Oct 20, 2026",
+                "duration": "4:43",
+                "liked": true,
+                "cover": "images/covers/dj_budots_dj_hilang_harapan_extended.jpg",
+                "audioUrl": "audio/dj_budots_dj_hilang_harapan_extended.m4a",
+                "youtubeId": ""
+            },
+            {
+                "id": "pl-jj-remix-t11",
+                "title": "Laguku Dubstep",
+                "artist": "DJ Cantika",
+                "album": "in 🇮🇩 we said jj remix",
+                "memory": "Ingat ga waktu lagu ini pertama kali kita putar di mobil? 🚗",
+                "dateAdded": "Oct 20, 2026",
+                "duration": "3:58",
+                "liked": false,
+                "cover": "images/covers/dj_cantika_laguku_dubstep.jpg",
+                "audioUrl": "audio/dj_cantika_laguku_dubstep.m4a",
+                "youtubeId": ""
+            },
+            {
+                "id": "pl-jj-remix-t12",
+                "title": "DJ GOYANG DAYUNG Instrumental",
+                "artist": "Maman Fvndy",
+                "album": "in 🇮🇩 we said jj remix",
+                "memory": "Senyummu langsung kebayang tiap intro lagu ini mulai 🌸",
+                "dateAdded": "Oct 20, 2026",
+                "duration": "3:51",
+                "liked": false,
+                "cover": "images/covers/maman_fvndy_dj_goyang_dayung_instrumental.jpg",
+                "audioUrl": "audio/maman_fvndy_dj_goyang_dayung_instrumental.m4a",
+                "youtubeId": ""
+            }
+        ]
+    },
+    {
+        "id": "pl-midnight-cry",
+        "title": "⋆˙⟡ midnight cry",
+        "desc": "lagu-lagu mellow tengah malam, saat hening dan rindu menyapa ⋆˙⟡",
+        "cover": "images/spotify_covers/midnight_cry.jpg",
+        "tracks": [
+            {
+                "id": "pl-midnight-cry-t1",
+                "title": "Fix You",
+                "artist": "Coldplay",
+                "album": "⋆˙⟡ midnight cry",
+                "memory": "Melodi manis yang selalu ngingetin aku sama kamu 💕",
+                "dateAdded": "Oct 20, 2026",
+                "duration": "4:55",
+                "liked": true,
+                "cover": "images/covers/coldplay_fix_you.jpg",
+                "audioUrl": "audio/coldplay_fix_you.m4a",
+                "youtubeId": ""
+            },
+            {
+                "id": "pl-midnight-cry-t2",
+                "title": "Somewhere Only We Know",
+                "artist": "Keane",
+                "album": "⋆˙⟡ midnight cry",
+                "memory": "Lagu favorit waktu kita ngobrol berjam-jam tanpa bosen ✨",
+                "dateAdded": "Oct 20, 2026",
+                "duration": "3:57",
+                "liked": false,
+                "cover": "images/covers/keane_somewhere_only_we_know.jpg",
+                "audioUrl": "audio/keane_somewhere_only_we_know.m4a",
+                "youtubeId": ""
+            },
+            {
+                "id": "pl-midnight-cry-t3",
+                "title": "When I Was Your Man",
+                "artist": "Bruno Mars",
+                "album": "⋆˙⟡ midnight cry",
+                "memory": "Suasana tenang dan damai tiap kali denger lagu ini bareng kamu ☕",
+                "dateAdded": "Oct 20, 2026",
+                "duration": "3:33",
+                "liked": false,
+                "cover": "images/covers/bruno_mars_when_i_was_your_man.jpg",
+                "audioUrl": "audio/bruno_mars_when_i_was_your_man.m4a",
+                "youtubeId": ""
+            },
+            {
+                "id": "pl-midnight-cry-t4",
+                "title": "'Cause You Have To",
+                "artist": "LANY",
+                "album": "⋆˙⟡ midnight cry",
+                "memory": "Setiap liriknya berasa kayak cerita kita berdua 🤍",
+                "dateAdded": "Oct 20, 2026",
+                "duration": "4:10",
+                "liked": true,
+                "cover": "images/covers/lany_cause_you_have_to.jpg",
+                "audioUrl": "audio/lany_cause_you_have_to.m4a",
+                "youtubeId": ""
+            },
+            {
+                "id": "pl-midnight-cry-t5",
+                "title": "The Man Who Can't Be Moved",
+                "artist": "The Script",
+                "album": "⋆˙⟡ midnight cry",
+                "memory": "Ingat ga waktu lagu ini pertama kali kita putar di mobil? 🚗",
+                "dateAdded": "Oct 20, 2026",
+                "duration": "4:01",
+                "liked": false,
+                "cover": "images/covers/the_script_the_man_who_cant_be_moved.jpg",
+                "audioUrl": "audio/the_script_the_man_who_cant_be_moved.m4a",
+                "youtubeId": ""
+            },
+            {
+                "id": "pl-midnight-cry-t6",
+                "title": "If Ever You're in My Arms Again",
+                "artist": "Peabo Bryson",
+                "album": "⋆˙⟡ midnight cry",
+                "memory": "Senyummu langsung kebayang tiap intro lagu ini mulai 🌸",
+                "dateAdded": "Oct 20, 2026",
+                "duration": "4:11",
+                "liked": false,
+                "cover": "images/covers/peabo_bryson_if_ever_youre_in_my_arms_again.jpg",
+                "audioUrl": "audio/peabo_bryson_if_ever_youre_in_my_arms_again.m4a",
+                "youtubeId": ""
+            },
+            {
+                "id": "pl-midnight-cry-t7",
+                "title": "It Will Rain",
+                "artist": "Bruno Mars",
+                "album": "⋆˙⟡ midnight cry",
+                "memory": "Melodi manis yang selalu ngingetin aku sama kamu 💕",
+                "dateAdded": "Oct 20, 2026",
+                "duration": "4:17",
+                "liked": true,
+                "cover": "images/covers/bruno_mars_it_will_rain.jpg",
+                "audioUrl": "audio/bruno_mars_it_will_rain.m4a",
+                "youtubeId": ""
+            },
+            {
+                "id": "pl-midnight-cry-t8",
+                "title": "Thru These Tears",
+                "artist": "LANY",
+                "album": "⋆˙⟡ midnight cry",
+                "memory": "Lagu favorit waktu kita ngobrol berjam-jam tanpa bosen ✨",
+                "dateAdded": "Oct 20, 2026",
+                "duration": "3:24",
+                "liked": false,
+                "cover": "images/covers/lany_thru_these_tears.jpg",
+                "audioUrl": "audio/lany_thru_these_tears.m4a",
+                "youtubeId": ""
+            },
+            {
+                "id": "pl-midnight-cry-t9",
+                "title": "back to friends",
+                "artist": "sombr",
+                "album": "⋆˙⟡ midnight cry",
+                "memory": "Suasana tenang dan damai tiap kali denger lagu ini bareng kamu ☕",
+                "dateAdded": "Oct 20, 2026",
+                "duration": "3:19",
+                "liked": false,
+                "cover": "images/covers/back_to_friends.jpg",
+                "audioUrl": "audio/sombr_back_to_friends.m4a",
+                "youtubeId": ""
+            },
+            {
+                "id": "pl-midnight-cry-t10",
+                "title": "Glimpse of Us",
+                "artist": "Joji",
+                "album": "⋆˙⟡ midnight cry",
+                "memory": "Setiap liriknya berasa kayak cerita kita berdua 🤍",
+                "dateAdded": "Oct 20, 2026",
+                "duration": "3:53",
+                "liked": true,
+                "cover": "images/covers/joji_glimpse_of_us.jpg",
+                "audioUrl": "audio/joji_glimpse_of_us.m4a",
+                "youtubeId": ""
+            },
+            {
+                "id": "pl-midnight-cry-t11",
+                "title": "Slipping Through My Fingers",
+                "artist": "ABBA",
+                "album": "⋆˙⟡ midnight cry",
+                "memory": "Ingat ga waktu lagu ini pertama kali kita putar di mobil? 🚗",
+                "dateAdded": "Oct 20, 2026",
+                "duration": "3:53",
+                "liked": false,
+                "cover": "images/covers/abba_slipping_through_my_fingers.jpg",
+                "audioUrl": "audio/abba_slipping_through_my_fingers.m4a",
+                "youtubeId": ""
+            },
+            {
+                "id": "pl-midnight-cry-t12",
+                "title": "Atlantis",
+                "artist": "Seafret",
+                "album": "⋆˙⟡ midnight cry",
+                "memory": "Senyummu langsung kebayang tiap intro lagu ini mulai 🌸",
+                "dateAdded": "Oct 20, 2026",
+                "duration": "3:49",
+                "liked": false,
+                "cover": "images/covers/atlantis.jpg",
+                "audioUrl": "audio/seafret_atlantis.m4a",
+                "youtubeId": "gVAy3IZiL0s"
+            }
+        ]
+    }
+],
+  jamMessages: [
+    { sender: 'partner', text: 'Sayang, lagunya sekarang pakai cover album official dan lagunya asli semua 🥺💕 Cantik banget!', time: '19:42' },
+    { sender: 'you', text: 'Iyaa! Tampilannya jadi berasa kayak Spotify Premium asli ✨', time: '19:43' }
+  ],
+  polaroidMemories: [
+    {
+      id: 'pol-1',
+      imageUrl: 'https://images.unsplash.com/photo-1518199266791-5375a83190b7?w=600&auto=format&fit=crop&q=80',
+      caption: 'Malam penuh bintang & lampu hati kita ✨💕',
+      date: '14 Feb 2025',
+      location: 'Under the Stars'
+    },
+    {
+      id: 'pol-2',
+      imageUrl: 'https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?w=600&auto=format&fit=crop&q=80',
+      caption: 'Tanganmu yang selalu menghangatkan tanganku 🤍',
+      date: '28 Mei 2025',
+      location: 'Sunset Walk'
+    },
+    {
+      id: 'pol-3',
+      imageUrl: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=600&auto=format&fit=crop&q=80',
+      caption: 'Suara ombak dan cerita tanpa akhir bareng kamu 🌊',
+      date: '10 Juli 2025',
+      location: 'Pantai Indah'
+    },
+    {
+      id: 'pol-4',
+      imageUrl: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=600&auto=format&fit=crop&q=80',
+      caption: 'Senyum tercantik yang selalu bikin hari-hariku cerah 🌸',
+      date: '24 Sep 2025',
+      location: 'Little Cafe'
+    }
+  ]
+};
+
+let state = loadState();
+let currentView = 'home';
+let currentIndex = 0;
+let currentPlayingPlaylistId = state.activePlaylistId || 'pl-ours';
+let currentPlayingIndex = 0;
+let currentPlayingTrack = null;
+let isPlaying = false;
+let isShuffle = false;
+let isRepeat = false;
+let currentFilter = 'all';
+let vinylVisible = false;
+let syncModeActive = true;
+
+// Player Dual Engines
+const audio = document.getElementById('audioPlayer');
+let currentEngine = 'youtube'; // 'youtube' or 'html5'
+let ytPlayer = null;
+let isYtReady = false;
+let ytScrubTimer = null;
+
+// ================= YOUTUBE REAL AUDIO ENGINE =================
+window.onYouTubeIframeAPIReady = function() {
+  ytPlayer = new YT.Player('ytPlayer', {
+    height: '10',
+    width: '10',
+    videoId: '1-xGerv5FOk',
+    playerVars: {
+      playsinline: 1,
+      controls: 0,
+      disablekb: 1,
+      fs: 0,
+      rel: 0,
+      modestbranding: 1
+    },
+    events: {
+      onReady: () => {
+        isYtReady = true;
+        console.log('YouTube Real Audio Engine ready');
+      },
+      onStateChange: (event) => {
+        if (event.data === YT.PlayerState.PLAYING) {
+          isPlaying = true;
+          updatePlayButtons();
+          startYtScrubber();
+          if (currentView === 'playlist') renderTracklist();
+        } else if (event.data === YT.PlayerState.PAUSED) {
+          isPlaying = false;
+          updatePlayButtons();
+          stopYtScrubber();
+          if (currentView === 'playlist') renderTracklist();
+        } else if (event.data === YT.PlayerState.ENDED) {
+          stopYtScrubber();
+          if (isRepeat) {
+            ytPlayer.seekTo(0, true);
+            ytPlayer.playVideo();
+          } else {
+            nextTrack();
+          }
+        }
+      },
+      onError: (err) => {
+        console.warn('YouTube notice, falling back to direct stream:', err);
+        const t = getActiveTracks()[currentIndex];
+        if (t && t.audioUrl) {
+          currentEngine = 'html5';
+          audio.src = t.audioUrl;
+          playAudio();
+        }
+      }
+    }
+  });
+};
+
+function startYtScrubber() {
+  stopYtScrubber();
+  ytScrubTimer = setInterval(() => {
+    if (isYtReady && ytPlayer && ytPlayer.getCurrentTime && isPlaying) {
+      const cur = ytPlayer.getCurrentTime();
+      const dur = ytPlayer.getDuration();
+      if (dur && isFinite(dur) && dur > 0) {
+        const pct = (cur / dur) * 100;
+        document.getElementById('progressSlider').value = pct;
+        document.getElementById('currentTimeText').textContent = formatTime(cur);
+        document.getElementById('durationTimeText').textContent = formatTime(dur);
+
+        const tracks = getActiveTracks();
+        if (tracks[currentIndex] && (!tracks[currentIndex].duration || tracks[currentIndex].duration === 'Full')) {
+          tracks[currentIndex].duration = formatTime(dur);
+          saveState();
+          if (currentView === 'playlist') renderTracklist();
+        }
+      }
+    }
+  }, 300);
+}
+
+function stopYtScrubber() {
+  if (ytScrubTimer) {
+    clearInterval(ytScrubTimer);
+    ytScrubTimer = null;
+  }
+}
+
+// ================= STATE HELPERS & STORAGE =================
+function loadState() {
+  try {
+    let saved = localStorage.getItem(STORAGE_KEY);
+
+    // If current key is not yet populated, automatically migrate from previous saved state in localStorage!
+    if (!saved) {
+      const candidateKeys = [
+        'romantic_spotify_v14_all_studio_audio_synced',
+        'romantic_spotify_v13_all_studio_audio_synced',
+        'romantic_spotify_v12_official_spotify_synced',
+        'romantic_spotify_v11_real_studio_audio',
+        'romantic_spotify_v10_real_studio_audio',
+        'romantic_spotify_v9_real_studio_audio',
+        'romantic_spotify_v8_real_audio'
+      ];
+      for (const k of candidateKeys) {
+        const val = localStorage.getItem(k);
+        if (val) {
+          saved = val;
+          console.log('Migrated custom user data from key:', k);
+          break;
+        }
+      }
+      if (!saved) {
+        for (let i = 0; i < localStorage.length; i++) {
+          const k = localStorage.key(i);
+          if (k && k.startsWith('romantic_spotify_') && !k.endsWith('_pin') && !k.endsWith('_memories')) {
+            const val = localStorage.getItem(k);
+            if (val) {
+              saved = val;
+              console.log('Restored user data from:', k);
+              break;
+            }
+          }
+        }
+      }
+    }
+
+    // Retrieve dedicated user profile customizations
+    let savedProfileConfig = null;
+    const rawProfile = localStorage.getItem('romantic_music_profile_config');
+    if (rawProfile) {
+      try {
+        savedProfileConfig = JSON.parse(rawProfile);
+      } catch (e) {}
+    }
+
+    let parsed = null;
+    if (saved) {
+      try {
+        parsed = JSON.parse(saved);
+      } catch (e) {
+        parsed = null;
+      }
+    }
+    if (!parsed) {
+      parsed = JSON.parse(JSON.stringify(defaultState));
+    }
+
+    // Restore custom PIN if user changed it
+    const savedPin = localStorage.getItem('romantic_music_custom_pin');
+    if (savedPin) {
+      parsed.pinCode = savedPin;
+    }
+
+    // Restore user profile customizations if present
+    if (savedProfileConfig) {
+      if (savedProfileConfig.yourName) parsed.yourName = savedProfileConfig.yourName;
+      if (savedProfileConfig.partnerName) parsed.partnerName = savedProfileConfig.partnerName;
+      if (savedProfileConfig.yourAvatar) parsed.yourAvatar = savedProfileConfig.yourAvatar;
+      if (savedProfileConfig.partnerAvatar) parsed.partnerAvatar = savedProfileConfig.partnerAvatar;
+      if (savedProfileConfig.loveNote) parsed.loveNote = savedProfileConfig.loveNote;
+    }
+
+    // Restore dedicated polaroid memories if user added or deleted any
+    const savedPolaroids = localStorage.getItem('romantic_music_polaroid_memories');
+    if (savedPolaroids !== null) {
+      try {
+        parsed.polaroidMemories = JSON.parse(savedPolaroids);
+      } catch (e) {
+        parsed.polaroidMemories = [];
+      }
+    } else if (parsed.polaroidMemories === undefined || parsed.polaroidMemories === null) {
+      parsed.polaroidMemories = defaultState.polaroidMemories;
+    }
+
+    // Ensure real studio audio files & official covers are mapped to tracks
+    if (parsed.playlists) {
+      parsed.playlists.forEach(pl => {
+        if (['pl-ours', 'pl-1'].includes(pl.id)) {
+          const hasDua = pl.tracks.some(t => (t.title || '').toLowerCase().includes('dua sejoli') || t.id === 't-dua-sejoli');
+          if (!hasDua) {
+            pl.tracks.push({
+              id: 't-dua-sejoli',
+              title: 'Dua Sejoli',
+              artist: 'Dewa 19',
+              album: 'Bintang Lima',
+              memory: 'Usaplah dahiku, genggamlah tanganku... Lagu cinta abadi kita berdua 💕',
+              dateAdded: 'Feb 25, 2025',
+              duration: '5:26',
+              liked: true,
+              cover: 'images/covers/dua_sejoli.jpg',
+              audioUrl: 'audio/dewa19_dua_sejoli.m4a',
+              youtubeId: 'IU_v67PFnqk'
+            });
+          }
+        }
+
+        pl.tracks.forEach(t => {
+          const lowTitle = (t.title || '').toLowerCase().trim();
+          for (const [key, localPath] of Object.entries(realAudioTracks)) {
+            if (lowTitle.includes(key)) {
+              t.audioUrl = localPath;
+            }
+          }
+          for (const [key, covPath] of Object.entries(officialCovers)) {
+            if (lowTitle.includes(key)) {
+              t.cover = covPath;
+            }
+          }
+          if (lowTitle.includes('atlantis')) {
+            t.youtubeId = 'gVAy3IZiL0s';
+            t.audioUrl = 'audio/seafret_atlantis.m4a';
+            t.duration = '4:18';
+          }
+        });
+      });
+    }
+
+    const mergedState = { ...defaultState, ...parsed };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(mergedState));
+    return mergedState;
+  } catch (e) {
+    console.warn('Error loading state:', e);
+  }
+  const initState = JSON.parse(JSON.stringify(defaultState));
+  const savedPin = localStorage.getItem('romantic_music_custom_pin');
+  if (savedPin) initState.pinCode = savedPin;
+  return initState;
+}
+
+function saveState() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  } catch (err) {
+    console.warn('Quota exceeded in saveState, cleaning older keys:', err);
+    try {
+      for (let i = localStorage.length - 1; i >= 0; i--) {
+        const k = localStorage.key(i);
+        if (k && k.startsWith('romantic_spotify_v') && k !== STORAGE_KEY) {
+          localStorage.removeItem(k);
+        }
+      }
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } catch (e2) {
+      console.warn('Could not save full state to localStorage:', e2);
+    }
+  }
+
+  try {
+    const profileConfig = {
+      yourName: state.yourName,
+      partnerName: state.partnerName,
+      yourAvatar: state.yourAvatar,
+      partnerAvatar: state.partnerAvatar,
+      loveNote: state.loveNote
+    };
+    localStorage.setItem('romantic_music_profile_config', JSON.stringify(profileConfig));
+  } catch (err) {
+    console.warn('Could not save profile config:', err);
+  }
+}
+
+function getActivePlaylist() {
+  const pl = state.playlists.find(p => p.id === state.activePlaylistId);
+  return pl || state.playlists[0] || defaultState.playlists[0];
+}
+
+function getActiveTracks() {
+  const pl = getActivePlaylist();
+  return pl && pl.tracks ? pl.tracks : [];
+}
+
+function getPlayingPlaylist() {
+  const pl = state.playlists.find(p => p.id === currentPlayingPlaylistId);
+  return pl || getActivePlaylist();
+}
+
+function getPlayingTracks() {
+  const pl = getPlayingPlaylist();
+  return pl && pl.tracks ? pl.tracks : [];
+}
+
+function getPlayingTrack() {
+  if (currentPlayingTrack) return currentPlayingTrack;
+  const tracks = getPlayingTracks();
+  return tracks[currentPlayingIndex] || getActiveTracks()[0] || null;
+}
+
+// ================= INITIALIZATION =================
+window.addEventListener('DOMContentLoaded', () => {
+  hydrateUI();
+  navigateTo('home');
+  loadTrack(0, false);
+  renderJamChat();
+  hydrateItunesCovers();
+  checkUrlPlayParam();
+});
+
+// Fetch HD album covers without touching audio streams
+async function hydrateItunesCovers() {
+  const tracks = getActiveTracks();
+  for (let i = 0; i < tracks.length; i++) {
+    const t = tracks[i];
+    // If already has official local cover, preserve it
+    if (t.cover && t.cover.startsWith('images/covers/')) continue;
+
+    if (!t.cover || t.cover.includes('images.unsplash.com')) {
+      try {
+        const q = encodeURIComponent(`${t.title} ${t.artist}`);
+        const res = await fetch(`https://itunes.apple.com/search?term=${q}&entity=song&limit=1`);
+        const data = await res.json();
+        if (data.results && data.results.length > 0) {
+          const hit = data.results[0];
+          t.cover = hit.artworkUrl100.replace('100x100bb', '1000x1000bb');
+        }
+      } catch (err) {
+        // Fallback remains intact
+      }
+    }
+  }
+  saveState();
+  if (currentView === 'playlist') renderTracklist();
+  updateActiveTrackUI();
+}
+
+function hydrateUI() {
+  const activePl = getActivePlaylist();
+  document.getElementById('heroPlaylistTitle').textContent = activePl.title;
+  document.getElementById('rightCanvasPlaylistName').textContent = activePl.title;
+  document.getElementById('heroPlaylistDesc').textContent = activePl.desc;
+  document.getElementById('heroPlaylistCover').src = activePl.cover;
+
+  document.getElementById('heroCuratorName').textContent = state.yourName;
+  document.getElementById('heroCuratorAvatar').src = state.yourAvatar;
+  document.getElementById('navAvatarYou').src = state.yourAvatar;
+  document.getElementById('navAvatarPartner').src = state.partnerAvatar;
+
+  document.getElementById('jamAvatarYou').src = state.yourAvatar;
+  document.getElementById('jamAvatarPartner').src = state.partnerAvatar;
+  document.getElementById('miniJamAvatar1').src = state.yourAvatar;
+  document.getElementById('miniJamAvatar2').src = state.partnerAvatar;
+
+  document.getElementById('jamNameYou').textContent = state.yourName;
+  document.getElementById('jamNamePartner').textContent = state.partnerName;
+  document.getElementById('miniPartnerStatusName').textContent = state.partnerName;
+  document.getElementById('loveNoteDisplay').textContent = state.loveNote;
+
+  const trackCount = (activePl && activePl.tracks) ? activePl.tracks.length : 0;
+  document.getElementById('heroStatsCount').textContent = `${trackCount} songs, about infinite love`;
+
+  renderSidebarPlaylists();
+}
+
+// ================= NAVIGATION: HOME <-> PLAYLIST <-> POLAROID =================
+function navigateTo(view, playlistId = null) {
+  currentView = view;
+  if (playlistId) {
+    state.activePlaylistId = playlistId;
+    saveState();
+  }
+
+  const homeView = document.getElementById('homeView');
+  const playlistView = document.getElementById('playlistView');
+  const polaroidView = document.getElementById('polaroidView');
+  const listeningTogetherView = document.getElementById('listeningTogetherView');
+
+  // Sidebar buttons active state
+  const btnHome = document.getElementById('sidebarBtnHome');
+  const btnPolaroid = document.getElementById('sidebarBtnPolaroid');
+  const btnJam = document.getElementById('sidebarBtnJam');
+
+  if (btnHome) {
+    if (view === 'home') {
+      btnHome.className = 'w-11 h-11 rounded-xl bg-[#FFF0F3] text-[#FA8072] border border-[#FFD2DC] flex items-center justify-center shadow-xs transition';
+    } else {
+      btnHome.className = 'w-11 h-11 rounded-xl text-[#9A737C] hover:text-[#FA8072] hover:bg-[#FFF5F7] flex items-center justify-center transition';
+    }
+  }
+
+  if (btnPolaroid) {
+    if (view === 'polaroid') {
+      btnPolaroid.className = 'w-11 h-11 rounded-xl bg-gradient-to-br from-[#FA8072] to-[#E85D75] text-white flex items-center justify-center shadow-md shadow-[#FA8072]/30 scale-105 transition';
+    } else {
+      btnPolaroid.className = 'w-11 h-11 rounded-xl bg-[#FFF0F3] border border-[#FFD2DC] flex items-center justify-center text-[#E85D75] hover:bg-[#FFE4E9] hover:scale-105 transition';
+    }
+  }
+
+  if (btnJam) {
+    if (view === 'jam') {
+      btnJam.className = 'w-11 h-11 rounded-xl bg-gradient-to-br from-[#FA8072] to-[#E85D75] text-white flex items-center justify-center shadow-md shadow-[#FA8072]/30 scale-105 transition relative';
+    } else {
+      btnJam.className = 'w-11 h-11 rounded-xl bg-[#FFF0F3] border border-[#FFD2DC] flex items-center justify-center text-[#FA8072] hover:bg-[#FFE4E9] hover:scale-105 transition relative';
+    }
+  }
+
+  const allViews = [homeView, playlistView, polaroidView, listeningTogetherView].filter(Boolean);
+  allViews.forEach(v => {
+    v.classList.add('hidden');
+    v.classList.remove('view-fade-enter');
+  });
+
+  let activeViewEl = null;
+  if (view === 'home') {
+    activeViewEl = homeView;
+    renderHomeView();
+  } else if (view === 'polaroid') {
+    activeViewEl = polaroidView;
+    renderPolaroidGallery();
+  } else if (view === 'jam') {
+    activeViewEl = listeningTogetherView;
+    updateMainJamView();
+  } else {
+    activeViewEl = playlistView;
+    hydrateUI();
+    renderTracklist();
+  }
+
+  if (activeViewEl) {
+    activeViewEl.classList.remove('hidden');
+    activeViewEl.classList.add('view-fade-enter');
+  }
+
+  const centerMain = document.getElementById('centerMain');
+  if (centerMain) centerMain.scrollTop = 0;
+
+  renderSidebarPlaylists();
+}
+
+// ================= RENDER HOME VIEW =================
+function renderHomeView() {
+  const hr = new Date().getHours();
+  let greet = 'Selamat Malam';
+  if (hr >= 4 && hr < 11) greet = 'Selamat Pagi';
+  else if (hr >= 11 && hr < 15) greet = 'Selamat Siang';
+  else if (hr >= 15 && hr < 19) greet = 'Selamat Sore';
+
+  const greetingEl = document.getElementById('homeGreetingTitle');
+  if (greetingEl) {
+    greetingEl.textContent = `${greet}, ${state.partnerName}`;
+  }
+
+  renderHomePlaylistsGrid();
+  renderHomeFavoritesList();
+}
+
+function renderHomePlaylistsGrid() {
+  const container = document.getElementById('homePlaylistsGrid');
+  if (!container) return;
+
+  const htmlCards = state.playlists.map(pl => {
+    const isCurrent = pl.id === state.activePlaylistId;
+    return `
+      <div onclick="navigateTo('playlist', '${pl.id}')"
+        class="playlist-card group bg-white border ${isCurrent ? 'border-[#FA8072] ring-2 ring-[#FA8072]/20' : 'border-[#FFD2DC]'} rounded-2xl p-2.5 sm:p-4 shadow-sm hover:shadow-md cursor-pointer transition relative flex flex-col justify-between">
+        
+        <div>
+          <!-- Thumbnail with hover play overlay -->
+          <div class="relative w-full aspect-square rounded-xl overflow-hidden mb-2 sm:mb-3 bg-[#FFF5F7]">
+            <img src="${pl.cover}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500" alt="${pl.title}" />
+            <div class="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 flex items-center justify-center transition">
+              <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[#FA8072] text-white flex items-center justify-center shadow-lg transform group-hover:scale-110 transition">
+                <i class="fa-solid fa-play ml-0.5 text-xs sm:text-base"></i>
+              </div>
+            </div>
+          </div>
+
+          <!-- Metadata -->
+          <div class="flex items-center justify-between gap-1 mb-1">
+            <h3 class="font-extrabold text-[#3B2328] text-xs sm:text-sm md:text-base group-hover:text-[#FA8072] transition truncate">${pl.title}</h3>
+            <span class="text-[9px] sm:text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-[#FFF0F3] text-[#E85D75] shrink-0 border border-[#FFD2DC]">
+              ${pl.tracks.length}
+            </span>
+          </div>
+          <p class="text-[11px] sm:text-xs text-[#9A737C] line-clamp-2 leading-relaxed">${pl.desc || 'Playlist kenangan berdua'}</p>
+        </div>
+
+        <div class="mt-2.5 sm:mt-4 pt-2 sm:pt-3 border-t border-[#FFF0F3] flex items-center justify-between text-xs">
+          <span class="text-[10px] sm:text-[11px] font-semibold text-[#FA8072] flex items-center gap-1">
+            <i class="fa-solid fa-headphones text-[10px]"></i> <span class="hidden sm:inline">Buka & </span>Putar
+          </span>
+          <i class="fa-solid fa-arrow-right text-[#9A737C] group-hover:translate-x-1 transition text-[10px]"></i>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  // Dashed "+ Buat Playlist Baru" Card
+  const createCard = `
+    <div onclick="openCreatePlaylistModal()"
+      class="group border-2 border-dashed border-[#FFD2DC] hover:border-[#FA8072] rounded-2xl p-3 sm:p-6 bg-[#FFF9FA] hover:bg-[#FFF0F3]/60 cursor-pointer transition flex flex-col items-center justify-center text-center min-h-[160px] sm:min-h-[220px]">
+      <div class="w-10 h-10 sm:w-14 sm:h-14 rounded-2xl bg-white border border-[#FFD2DC] text-[#FA8072] group-hover:bg-[#FA8072] group-hover:text-white flex items-center justify-center mb-2 sm:mb-3 shadow-xs group-hover:scale-110 transition">
+        <i class="fa-solid fa-plus text-base sm:text-xl"></i>
+      </div>
+      <h4 class="font-extrabold text-[#3B2328] text-xs sm:text-sm group-hover:text-[#FA8072] transition">Buat Playlist Baru</h4>
+      <p class="text-[10px] sm:text-xs text-[#9A737C] mt-0.5 sm:mt-1 max-w-[180px] line-clamp-2">Koleksi lagu baru kita</p>
+    </div>
+  `;
+
+  container.innerHTML = htmlCards + createCard;
+}
+
+function renderHomeFavoritesList() {
+  const container = document.getElementById('homeFavoritesList');
+  if (!container) return;
+
+  const allLiked = [];
+  state.playlists.forEach(pl => {
+    pl.tracks.forEach(t => {
+      if (t.liked) allLiked.push({ ...t, playlistId: pl.id });
+    });
+  });
+
+  if (allLiked.length === 0) {
+    container.innerHTML = `
+      <div class="col-span-full p-6 text-center rounded-2xl bg-[#FFF5F7] border border-[#FFD2DC] text-[#9A737C] text-xs">
+        <i class="fa-solid fa-heart text-[#FA8072] text-xl mb-1.5"></i>
+        <p class="font-bold">Belum ada lagu yang ditandai favorit</p>
+        <p class="text-[11px] mt-0.5">Klik ikon hati pada lagu apa saja untuk menambahkannya ke sini!</p>
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = allLiked.slice(0, 6).map(track => `
+    <div class="p-2.5 rounded-2xl bg-[#FFF5F7] border border-[#FFD2DC] flex items-center justify-between gap-3 hover:bg-[#FFE4E9]/60 transition">
+      <div class="flex items-center gap-3 min-w-0">
+        <img src="${track.cover}" class="w-11 h-11 rounded-xl object-cover border border-[#FFD2DC] shrink-0" alt="${track.title}" />
+        <div class="min-w-0">
+          <p class="text-xs font-bold text-[#3B2328] truncate">${track.title}</p>
+          <p class="text-[11px] text-[#9A737C] truncate">${track.artist} • <span class="text-[#FA8072] font-semibold">${track.duration || 'Full'}</span></p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2 shrink-0">
+        <button onclick="downloadDirectSong('${track.title}', '${track.artist}', '${track.audioUrl || ''}')" class="w-7 h-7 rounded-full bg-white text-[#9A737C] hover:text-[#FA8072] flex items-center justify-center shadow-xs transition" title="Download MP3">
+          <i class="fa-solid fa-download text-[11px]"></i>
+        </button>
+        <button onclick="playTrackByObject(${JSON.stringify(track).replace(/"/g, '&quot;')})" class="w-7 h-7 rounded-full bg-[#FA8072] text-white flex items-center justify-center shadow-xs hover:scale-105 transition" title="Putar">
+          <i class="fa-solid fa-play text-[10px] ml-0.5"></i>
+        </button>
+      </div>
+    </div>
+  `).join('');
+}
+
+// Custom Sidebar Tooltip System (Pink-bordered Card with Dark Text)
+function showSidebarTooltip(el) {
+  const tooltip = document.getElementById('sidebarPlaylistTooltip');
+  if (!tooltip || !el) return;
+  const title = el.getAttribute('data-title') || '';
+  const desc = el.getAttribute('data-desc') || '';
+  if (!title) return;
+
+  const titleEl = tooltip.querySelector('.tooltip-title');
+  const descEl = tooltip.querySelector('.tooltip-desc');
+  if (titleEl) titleEl.textContent = title;
+  if (descEl) {
+    if (desc) {
+      descEl.textContent = desc;
+      descEl.classList.remove('hidden');
+    } else {
+      descEl.classList.add('hidden');
+    }
+  }
+
+  // Calculate position relative to sidebar icon
+  const rect = el.getBoundingClientRect();
+  tooltip.style.visibility = 'hidden';
+  tooltip.classList.remove('hidden');
+  const tooltipHeight = tooltip.offsetHeight || 32;
+  const top = rect.top + (rect.height / 2) - (tooltipHeight / 2);
+  const left = rect.right + 12;
+
+  tooltip.style.top = `${Math.max(10, top)}px`;
+  tooltip.style.left = `${left}px`;
+  tooltip.style.visibility = 'visible';
+
+  requestAnimationFrame(() => {
+    tooltip.classList.remove('opacity-0');
+  });
+}
+
+function hideSidebarTooltip() {
+  const tooltip = document.getElementById('sidebarPlaylistTooltip');
+  if (!tooltip) return;
+  tooltip.classList.add('opacity-0');
+  setTimeout(() => {
+    if (tooltip.classList.contains('opacity-0')) {
+      tooltip.classList.add('hidden');
+    }
+  }, 150);
+}
+
+function renderSidebarPlaylists() {
+  const container = document.getElementById('sidebarPlaylistsContainer');
+  if (!container) return;
+
+  container.innerHTML = state.playlists.map(pl => {
+    const isCurrent = pl.id === state.activePlaylistId && currentView === 'playlist';
+    const safeTitle = (pl.title || 'Playlist').replace(/"/g, '&quot;');
+    const safeDesc = pl.desc ? pl.desc.replace(/"/g, '&quot;') : (pl.tracks ? pl.tracks.length + ' lagu' : '');
+    return `
+      <button onclick="navigateTo('playlist', '${pl.id}')"
+        data-title="${safeTitle}"
+        data-desc="${safeDesc}"
+        onmouseenter="showSidebarTooltip(this)"
+        onmouseleave="hideSidebarTooltip()"
+        class="relative group w-11 h-11 rounded-xl overflow-hidden border-2 ${isCurrent ? 'border-[#FA8072] ring-2 ring-[#FA8072]/30 scale-105' : 'border-[#FFD2DC]'} shadow-xs transition transform hover:scale-105">
+        <img src="${pl.cover}" class="w-full h-full object-cover" alt="${safeTitle}" />
+      </button>
+    `;
+  }).join('');
+}
+
+// ================= CREATE & DELETE PLAYLIST =================
+function openCreatePlaylistModal() {
+  document.getElementById('newPlaylistTitle').value = '';
+  document.getElementById('newPlaylistDesc').value = '';
+  document.getElementById('newPlaylistCover').value = '';
+  document.getElementById('createPlaylistModal').classList.remove('hidden');
+  document.getElementById('createPlaylistModal').classList.add('flex');
+}
+
+function closeCreatePlaylistModal() {
+  document.getElementById('createPlaylistModal').classList.add('hidden');
+  document.getElementById('createPlaylistModal').classList.remove('flex');
+}
+
+function handleCreatePlaylistSubmit(e) {
+  e.preventDefault();
+  const title = document.getElementById('newPlaylistTitle').value.trim();
+  const desc = document.getElementById('newPlaylistDesc').value.trim() || 'Playlist kenangan kita berdua 💕';
+  const cover = document.getElementById('newPlaylistCover').value.trim() || 'https://images.unsplash.com/photo-1518199266791-5375a83190b7?w=600&auto=format&fit=crop&q=80';
+
+  const newId = 'pl_' + Date.now();
+  const newPl = {
+    id: newId,
+    title,
+    desc,
+    cover,
+    tracks: []
+  };
+
+  state.playlists.push(newPl);
+  state.activePlaylistId = newId;
+  saveState();
+  closeCreatePlaylistModal();
+
+  showToastNotification(`Playlist "${title}" berhasil dibuat! ✨`, 'success');
+  navigateTo('playlist', newId);
+}
+
+function deleteCurrentPlaylist() {
+  if (state.playlists.length <= 1) {
+    showToastNotification('Minimal harus ada 1 playlist ya sayang!', 'error');
+    return;
+  }
+  const currentPl = getActivePlaylist();
+  if (confirm(`Yakin ingin menghapus playlist "${currentPl.title}"? Seluruh lagu di dalamnya akan terhapus.`)) {
+    state.playlists = state.playlists.filter(p => p.id !== currentPl.id);
+    state.activePlaylistId = state.playlists[0].id;
+    saveState();
+    showToastNotification(`Playlist "${currentPl.title}" telah dihapus`, 'info');
+    navigateTo('home');
+  }
+}
+
+// ================= LOCK SCREEN (SIMPLE & CLEAN) =================
+function unlockApp() {
+  const input = document.getElementById('pinInput');
+  const val = (input?.value || '').trim();
+  const validPin = localStorage.getItem('romantic_music_custom_pin') || state.pinCode || '1402';
+
+  if (val === validPin) {
+    const lock = document.getElementById('lockScreen');
+    if (lock) {
+      lock.classList.add('opacity-0', 'pointer-events-none');
+      setTimeout(() => lock.classList.add('hidden'), 450);
+    }
+  } else {
+    const err = document.getElementById('pinError');
+    if (err) err.classList.remove('hidden');
+
+    const wrapper = document.getElementById('pinInputWrapper');
+    if (wrapper) {
+      wrapper.classList.add('animate-shake');
+      if (input) {
+        input.classList.add('border-rose-400');
+        input.classList.remove('border-[#FFD2DC]');
+      }
+      setTimeout(() => {
+        wrapper.classList.remove('animate-shake');
+        if (input) {
+          input.classList.remove('border-rose-400');
+          input.classList.add('border-[#FFD2DC]');
+          input.value = '';
+          input.focus();
+        }
+      }, 650);
+    }
+  }
+}
+
+// Auto-submit on 4 digits or Enter key
+document.getElementById('pinInput')?.addEventListener('input', (e) => {
+  const err = document.getElementById('pinError');
+  if (err && !err.classList.contains('hidden')) {
+    err.classList.add('hidden');
+  }
+  if (e.target.value.length === 4) {
+    setTimeout(unlockApp, 150);
+  }
+});
+
+document.getElementById('pinInput')?.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') unlockApp();
+});
+
+// ================= RENDER TRACKLIST =================
+function renderTracklist() {
+  const container = document.getElementById('tracklistContainer');
+  const query = (document.getElementById('globalSearchInput')?.value || '').toLowerCase();
+  const tracks = getActiveTracks();
+
+  const filtered = tracks
+    .map((track, idx) => ({ ...track, originalIndex: idx }))
+    .filter(item => {
+      if (currentFilter === 'liked' && !item.liked) return false;
+      if (query && !item.title.toLowerCase().includes(query) && !item.artist.toLowerCase().includes(query) && !(item.memory || '').toLowerCase().includes(query)) {
+        return false;
+      }
+      return true;
+    });
+
+  if (filtered.length === 0) {
+    container.innerHTML = `
+      <div class="py-12 text-center text-[#9A737C]">
+        <i class="fa-solid fa-music text-2xl mb-2 text-[#FA8072]"></i>
+        <p class="text-sm font-bold">Belum ada lagu di playlist ini</p>
+        <button onclick="openAddSongModal()" class="mt-3 px-4 py-2 rounded-full bg-[#FFE4E9] text-[#E85D75] text-xs font-bold hover:bg-[#FA8072] hover:text-white transition shadow-xs">
+          + Tambah Lagu Baru
+        </button>
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = filtered.map((track, displayIdx) => {
+    const currentPlaying = getPlayingTrack();
+    const isPlayingThisPlaylist = currentPlayingPlaylistId === state.activePlaylistId;
+    const isCurrent = isPlayingThisPlaylist && (
+      (currentPlaying && (currentPlaying.id === track.id || currentPlaying.title.toLowerCase() === track.title.toLowerCase())) ||
+      track.originalIndex === currentPlayingIndex
+    );
+    return `
+      <div onclick="selectTrackFromList(${track.originalIndex})"
+        class="track-row group grid grid-cols-12 gap-3 items-center px-3 py-2.5 rounded-xl cursor-pointer transition ${isCurrent ? 'bg-[#FFE4E9]/70 text-[#E85D75]' : 'hover:bg-[#FFF5F7]'}">
+        
+        <!-- # Column / Equalizer -->
+        <div class="col-span-1 text-center text-xs font-bold text-[#9A737C]">
+          ${isCurrent && isPlaying ? `
+            <div class="inline-flex items-end gap-0.5 h-3.5">
+              <span class="eq-bar"></span>
+              <span class="eq-bar"></span>
+              <span class="eq-bar"></span>
+            </div>
+          ` : `
+            <span class="track-num-text ${isCurrent ? 'text-[#E85D75] font-extrabold' : ''}">${displayIdx + 1}</span>
+            <span class="track-play-hover hidden items-center justify-center text-[#FA8072]">
+              <i class="fa-solid fa-play text-xs"></i>
+            </span>
+          `}
+        </div>
+
+        <!-- Title + Thumbnail + Artist -->
+        <div class="col-span-6 sm:col-span-4 flex items-center gap-3 min-w-0">
+          <img src="${track.cover}" class="w-10 h-10 rounded-lg object-cover border border-[#FFD2DC] shrink-0" alt="${track.title}" />
+          <div class="min-w-0">
+            <p class="text-sm font-bold truncate ${isCurrent ? 'text-[#E85D75]' : 'text-[#3B2328]'}">${track.title}</p>
+            <p class="text-xs text-[#9A737C] truncate">${track.artist} ${track.youtubeId ? '• <span class="text-[10px] text-[#FA8072] font-semibold">Official Audio</span>' : ''}</p>
+          </div>
+        </div>
+
+        <!-- Sweet Memory Note Column -->
+        <div class="hidden sm:block sm:col-span-5 md:col-span-3 min-w-0">
+          <p class="text-xs text-[#9A737C] truncate italic" title="${track.memory || ''}">
+            ${track.memory || track.album || 'Our special track 💕'}
+          </p>
+        </div>
+
+        <!-- Date Added -->
+        <div class="hidden md:block md:col-span-2 text-xs text-[#9A737C]">
+          ${track.dateAdded || 'Recently'}
+        </div>
+
+        <!-- Duration + Add to Playlist + Share + Download + Like + Delete -->
+        <div class="col-span-5 sm:col-span-2 flex items-center justify-end gap-1.5 text-xs text-[#9A737C]" onclick="event.stopPropagation()">
+          <button onclick="openAddToPlaylistModal('${track.id || track.originalIndex}')" class="opacity-0 group-hover:opacity-100 text-[#9A737C] hover:text-[#FA8072] hover:scale-110 transition p-1" title="Masukkan ke Playlist">
+            <i class="fa-solid fa-folder-plus text-xs"></i>
+          </button>
+          <button onclick="openShareSongModal('${track.id || track.originalIndex}')" class="opacity-0 group-hover:opacity-100 text-[#9A737C] hover:text-[#FA8072] hover:scale-110 transition p-1" title="Bagikan Lagu">
+            <i class="fa-solid fa-share-nodes text-xs"></i>
+          </button>
+          <button onclick="downloadTrackByIdx(${track.originalIndex})" class="opacity-0 group-hover:opacity-100 text-[#9A737C] hover:text-[#FA8072] hover:scale-110 transition p-1" title="Download Audio MP3">
+            <i class="fa-solid fa-download text-xs"></i>
+          </button>
+          <button onclick="toggleLikeTrack(${track.originalIndex})" class="hover:scale-110 transition ${track.liked ? 'text-[#FA8072]' : 'opacity-0 group-hover:opacity-100 text-[#9A737C]'} p-1" title="Suka">
+            <i class="${track.liked ? 'fa-solid' : 'fa-regular'} fa-heart"></i>
+          </button>
+          <span class="w-8 text-right font-medium text-[11px]">${track.duration || 'Full'}</span>
+          <button onclick="deleteTrack(${track.originalIndex})" class="opacity-0 group-hover:opacity-100 text-[#9A737C] hover:text-rose-500 transition p-1" title="Hapus lagu">
+            <i class="fa-solid fa-trash-can text-[11px]"></i>
+          </button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+// ================= DUAL ENGINE PLAYBACK (YOUTUBE REAL AUDIO + HTML5 AUDIO) =================
+function loadTrack(index, autoPlay = true, playlistId = null) {
+  if (playlistId) {
+    currentPlayingPlaylistId = playlistId;
+  }
+  const tracks = getPlayingTracks();
+  if (!tracks.length) return;
+  currentPlayingIndex = (index + tracks.length) % tracks.length;
+  currentIndex = currentPlayingIndex;
+  const track = tracks[currentPlayingIndex];
+  currentPlayingTrack = track;
+
+  updateActiveTrackUI();
+  if (currentView === 'playlist') renderTracklist();
+
+  // If track has direct studio audio (local file, uploaded blob, or MP3 link) -> use HTML5 audio engine
+  if (track.audioUrl) {
+    currentEngine = 'html5';
+    if (isYtReady && ytPlayer && ytPlayer.pauseVideo) {
+      ytPlayer.pauseVideo();
+    }
+    stopYtScrubber();
+    audio.src = track.audioUrl;
+    if (autoPlay) {
+      playAudio();
+    }
+  } else if (track.youtubeId) {
+    // Fallback to YouTube engine if only YouTube ID is present
+    currentEngine = 'youtube';
+    audio.pause();
+    if (isYtReady && ytPlayer && ytPlayer.loadVideoById) {
+      if (autoPlay) {
+        ytPlayer.loadVideoById(track.youtubeId);
+      } else {
+        ytPlayer.cueVideoById(track.youtubeId);
+      }
+    }
+  }
+}
+
+function playTrackByObject(trackObj) {
+  const tracks = getActiveTracks();
+  const foundIdx = tracks.findIndex(t => t.id === trackObj.id);
+  if (foundIdx !== -1) {
+    loadTrack(foundIdx, true);
+  } else {
+    // Fallback direct play
+    if (trackObj.audioUrl) {
+      currentEngine = 'html5';
+      if (ytPlayer && ytPlayer.pauseVideo) ytPlayer.pauseVideo();
+      stopYtScrubber();
+      audio.src = trackObj.audioUrl;
+      playAudio();
+    } else if (trackObj.youtubeId && isYtReady && ytPlayer) {
+      currentEngine = 'youtube';
+      audio.pause();
+      ytPlayer.loadVideoById(trackObj.youtubeId);
+    }
+  }
+}
+
+function updateActiveTrackUI() {
+  const track = getPlayingTrack();
+  if (!track) return;
+
+  const playingPl = getPlayingPlaylist();
+  const canvasPlName = document.getElementById('rightCanvasPlaylistName');
+  if (canvasPlName && playingPl) {
+    canvasPlName.textContent = playingPl.title;
+  }
+
+  // Bottom Player Bar
+  document.getElementById('bottomTrackCover').src = track.cover;
+  document.getElementById('bottomTrackTitle').textContent = track.title;
+  document.getElementById('bottomTrackArtist').textContent = track.artist;
+
+  // Action bar mini preview thumb
+  const miniThumb = document.getElementById('actionMiniThumb');
+  if (miniThumb) miniThumb.src = track.cover;
+
+  // Right Canvas Panel
+  document.getElementById('rightCanvasImage').src = track.cover;
+  document.getElementById('vinylCenterArt').src = track.cover;
+  document.getElementById('rightTrackTitle').textContent = track.title;
+  document.getElementById('rightTrackArtist').textContent = track.artist;
+  document.getElementById('rightTrackMemory').textContent = `"${track.memory || 'Lagu spesial buat kita berdua 💕'}"`;
+
+  // Polaroid Modal
+  document.getElementById('polaroidImg').src = track.cover;
+  document.getElementById('polaroidTitle').textContent = `${track.title} — ${track.artist}`;
+  document.getElementById('polaroidMemory').textContent = `"${track.memory || 'Every beat reminds me of you 💕'}"`;
+
+  // Like status
+  const likeIcon = track.liked ? '<i class="fa-solid fa-heart text-[#FF4D6D]"></i>' : '<i class="fa-regular fa-heart text-white"></i>';
+  document.getElementById('rightLikeBtn').innerHTML = likeIcon;
+}
+
+function selectTrackFromList(index) {
+  const isPlayingThisPlaylist = currentPlayingPlaylistId === state.activePlaylistId;
+  if (isPlayingThisPlaylist && index === currentPlayingIndex) {
+    togglePlay();
+  } else {
+    loadTrack(index, true, state.activePlaylistId);
+    const tracks = getActiveTracks();
+    if (syncModeActive && tracks[index]) {
+      broadcastJamSystemNote(`🎧 Kamu memutar "${tracks[index].title}" untuk didengarkan berdua`);
+    }
+  }
+}
+
+function playAudio() {
+  audio.play().then(() => {
+    isPlaying = true;
+    updatePlayButtons();
+    if (currentView === 'playlist') renderTracklist();
+  }).catch(err => {
+    console.warn('Playback notice:', err);
+  });
+}
+
+function pauseAudio() {
+  audio.pause();
+  isPlaying = false;
+  updatePlayButtons();
+  if (currentView === 'playlist') renderTracklist();
+}
+
+function togglePlay() {
+  const tracks = getActiveTracks();
+  if (!tracks.length) return;
+
+  if (currentEngine === 'youtube' && isYtReady && ytPlayer) {
+    if (isPlaying) {
+      ytPlayer.pauseVideo();
+    } else {
+      ytPlayer.playVideo();
+    }
+  } else {
+    if (isPlaying) {
+      pauseAudio();
+    } else {
+      playAudio();
+    }
+  }
+}
+
+function updatePlayButtons() {
+  const heroIcon = document.getElementById('heroPlayIcon');
+  const bottomIcon = document.getElementById('bottomPlayIcon');
+  const vinylDisc = document.getElementById('vinylDisc');
+  const vinylTonearm = document.getElementById('vinylTonearm');
+  const mainJamPlayIcon = document.getElementById('mainJamPlayIcon');
+
+  if (isPlaying) {
+    if (heroIcon) heroIcon.className = 'fa-solid fa-pause text-xl';
+    bottomIcon.className = 'fa-solid fa-pause text-xs';
+    if (vinylDisc) vinylDisc.classList.add('playing');
+    if (vinylTonearm) vinylTonearm.classList.add('playing');
+    if (mainJamPlayIcon) mainJamPlayIcon.className = 'fa-solid fa-pause text-xl';
+  } else {
+    if (heroIcon) heroIcon.className = 'fa-solid fa-play text-xl ml-0.5';
+    bottomIcon.className = 'fa-solid fa-play text-xs ml-0.5';
+    if (vinylDisc) vinylDisc.classList.remove('playing');
+    if (vinylTonearm) vinylTonearm.classList.remove('playing');
+    if (mainJamPlayIcon) mainJamPlayIcon.className = 'fa-solid fa-play text-xl ml-0.5';
+  }
+}
+
+function nextTrack() {
+  const tracks = getPlayingTracks();
+  if (!tracks.length) return;
+  if (isShuffle) {
+    const rand = Math.floor(Math.random() * tracks.length);
+    loadTrack(rand, true, currentPlayingPlaylistId);
+  } else {
+    loadTrack(currentPlayingIndex + 1, true, currentPlayingPlaylistId);
+  }
+}
+
+function prevTrack() {
+  if (currentEngine === 'youtube' && isYtReady && ytPlayer) {
+    if (ytPlayer.getCurrentTime() > 3) {
+      ytPlayer.seekTo(0, true);
+    } else {
+      loadTrack(currentPlayingIndex - 1, true, currentPlayingPlaylistId);
+    }
+  } else {
+    if (audio.currentTime > 3) {
+      audio.currentTime = 0;
+    } else {
+      loadTrack(currentPlayingIndex - 1, true, currentPlayingPlaylistId);
+    }
+  }
+}
+
+function toggleShuffle() {
+  isShuffle = !isShuffle;
+  const btnTop = document.getElementById('btnShuffleTop');
+  if (btnTop) btnTop.classList.toggle('text-[#FA8072]', isShuffle);
+  document.getElementById('btnShuffleBottom').classList.toggle('text-[#FA8072]', isShuffle);
+}
+
+function toggleRepeat() {
+  isRepeat = !isRepeat;
+  document.getElementById('btnRepeatBottom').classList.toggle('text-[#FA8072]', isRepeat);
+}
+
+// HTML5 Audio Time & Metadata Updates
+audio.addEventListener('timeupdate', () => {
+  if (currentEngine === 'html5' && audio.duration && isFinite(audio.duration)) {
+    const pct = (audio.currentTime / audio.duration) * 100;
+    document.getElementById('progressSlider').value = pct;
+    document.getElementById('currentTimeText').textContent = formatTime(audio.currentTime);
+    document.getElementById('durationTimeText').textContent = formatTime(audio.duration);
+  }
+});
+
+audio.addEventListener('loadedmetadata', () => {
+  if (currentEngine === 'html5' && audio.duration && isFinite(audio.duration)) {
+    const dur = formatTime(audio.duration);
+    document.getElementById('durationTimeText').textContent = dur;
+    const tracks = getActiveTracks();
+    if (tracks[currentIndex]) {
+      tracks[currentIndex].duration = dur;
+      saveState();
+      if (currentView === 'playlist') renderTracklist();
+    }
+  }
+});
+
+audio.addEventListener('ended', () => {
+  if (currentEngine === 'html5') {
+    if (isRepeat) {
+      audio.currentTime = 0;
+      playAudio();
+    } else {
+      nextTrack();
+    }
+  }
+});
+
+function seekAudio(val) {
+  if (currentEngine === 'youtube' && isYtReady && ytPlayer && ytPlayer.getDuration) {
+    const dur = ytPlayer.getDuration();
+    if (dur && isFinite(dur)) {
+      const targetSec = (val / 100) * dur;
+      ytPlayer.seekTo(targetSec, true);
+    }
+  } else if (audio.duration) {
+    audio.currentTime = (val / 100) * audio.duration;
+  }
+}
+
+function changeVolume(val) {
+  audio.volume = parseFloat(val);
+  if (isYtReady && ytPlayer && ytPlayer.setVolume) {
+    ytPlayer.setVolume(parseFloat(val) * 100);
+  }
+}
+
+function toggleMute() {
+  audio.muted = !audio.muted;
+  if (isYtReady && ytPlayer && ytPlayer.isMuted) {
+    if (audio.muted) ytPlayer.mute();
+    else ytPlayer.unMute();
+  }
+  document.getElementById('volumeIcon').className = audio.muted
+    ? 'fa-solid fa-volume-xmark text-xs cursor-pointer text-rose-500'
+    : 'fa-solid fa-volume-high text-xs cursor-pointer hover:text-[#FA8072]';
+}
+
+function formatTime(sec) {
+  if (isNaN(sec) || !isFinite(sec)) return '0:00';
+  const mins = Math.floor(sec / 60);
+  const secs = Math.floor(sec % 60);
+  return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+}
+
+// Extract YouTube ID from various YouTube URL formats
+function extractYouTubeId(url) {
+  if (!url) return null;
+  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+  const match = url.match(regExp);
+  return (match && match[2].length === 11) ? match[2] : null;
+}
+
+// ================= LIKE & DELETE ACTIONS =================
+function toggleLikeTrack(idx) {
+  const tracks = getActiveTracks();
+  if (!tracks[idx]) return;
+  tracks[idx].liked = !tracks[idx].liked;
+  saveState();
+  if (currentView === 'playlist') renderTracklist();
+  if (idx === currentIndex) updateActiveTrackUI();
+  renderHomeFavoritesList();
+}
+
+function toggleLikeCurrent() {
+  const tracks = getActiveTracks();
+  if (!tracks[currentIndex]) return;
+  toggleLikeTrack(currentIndex);
+  sendFloatingReaction('❤️', false);
+}
+
+function deleteTrack(idx) {
+  const tracks = getActiveTracks();
+  if (tracks.length <= 1) {
+    showToastNotification('Minimal harus ada 1 lagu di dalam playlist ya!', 'error');
+    return;
+  }
+  const deleted = tracks.splice(idx, 1);
+  if (currentIndex >= tracks.length) currentIndex = 0;
+  saveState();
+  hydrateUI();
+  loadTrack(currentIndex, isPlaying);
+  showToastNotification(`Lagu "${deleted[0]?.title}" dihapus`, 'info');
+}
+
+function switchPlaylistFilter(mode) {
+  currentFilter = mode;
+  const label = document.getElementById('filterStatusLabel');
+  if (label) label.textContent = mode === 'liked' ? 'Lagu Favorit ❤️' : 'Semua Lagu';
+  const libBtnLiked = document.getElementById('libBtnLiked');
+  if (libBtnLiked) libBtnLiked.classList.toggle('border-[#3B2328]', mode === 'liked');
+  if (currentView !== 'playlist') navigateTo('playlist');
+  renderTracklist();
+}
+
+function openEditCurrentMemory() {
+  const tracks = getActiveTracks();
+  const current = tracks[currentIndex];
+  if (!current) return;
+  const newMemory = prompt(`Edit Sweet Memory untuk lagu "${current.title}":`, current.memory || '');
+  if (newMemory !== null) {
+    current.memory = newMemory.trim();
+    saveState();
+    updateActiveTrackUI();
+    if (currentView === 'playlist') renderTracklist();
+  }
+}
+
+// ================= RIGHT PANEL CONTROLS =================
+function switchRightPanelTab(tab) {
+  const canvasView = document.getElementById('panelCanvasView');
+  const jamView = document.getElementById('panelJamView');
+  const tabBtnCanvas = document.getElementById('tabBtnCanvas');
+  const tabBtnJam = document.getElementById('tabBtnJam');
+
+  if (tab === 'canvas') {
+    canvasView.classList.remove('hidden');
+    jamView.classList.add('hidden');
+    tabBtnCanvas.className = 'flex-1 py-2 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 bg-[#FA8072] text-white shadow-sm transition';
+    tabBtnJam.className = 'flex-1 py-2 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 text-[#9A737C] hover:bg-[#FFE4E9]/50 transition';
+  } else {
+    canvasView.classList.add('hidden');
+    jamView.classList.remove('hidden');
+    tabBtnCanvas.className = 'flex-1 py-2 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 text-[#9A737C] hover:bg-[#FFE4E9]/50 transition';
+    tabBtnJam.className = 'flex-1 py-2 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 bg-[#FA8072] text-white shadow-sm transition';
+  }
+}
+
+function toggleVinylMode() {
+  vinylVisible = !vinylVisible;
+  const overlay = document.getElementById('vinylOverlay');
+  const canvasImg = document.getElementById('rightCanvasImage');
+  const btn = document.getElementById('vinylToggleBtn');
+  const icon = document.getElementById('vinylToggleIcon');
+  const vinylDisc = document.getElementById('vinylDisc');
+  const vinylTonearm = document.getElementById('vinylTonearm');
+
+  if (vinylVisible) {
+    if (overlay) {
+      overlay.classList.remove('vinyl-slide-inactive');
+      overlay.classList.add('vinyl-slide-active');
+    }
+    if (canvasImg) {
+      canvasImg.classList.add('canvas-slide-dimmed');
+    }
+    if (icon) icon.className = 'fa-solid fa-image text-emerald-300 text-xs';
+    if (btn) btn.title = 'Beralih ke Canvas View';
+  } else {
+    if (overlay) {
+      overlay.classList.remove('vinyl-slide-active');
+      overlay.classList.add('vinyl-slide-inactive');
+    }
+    if (canvasImg) {
+      canvasImg.classList.remove('canvas-slide-dimmed');
+    }
+    if (icon) icon.className = 'fa-solid fa-record-vinyl text-[#FA8072] text-xs';
+    if (btn) btn.title = 'Beralih ke Vinyl View';
+  }
+
+  if (vinylDisc) {
+    if (isPlaying) {
+      vinylDisc.classList.add('playing');
+    } else {
+      vinylDisc.classList.remove('playing');
+    }
+  }
+  if (vinylTonearm) {
+    if (isPlaying) {
+      vinylTonearm.classList.add('playing');
+    } else {
+      vinylTonearm.classList.remove('playing');
+    }
+  }
+}
+
+// Track Extra Actions Drawer (Expandable 3-Dots Menu)
+let isMoreActionsTrackOpen = false;
+
+function toggleMoreActionsTrack(e) {
+  if (e && e.stopPropagation) e.stopPropagation();
+  const drawer = document.getElementById('moreActionsDrawer');
+  const btn = document.getElementById('btnMoreActionsTrack');
+  const icon = document.getElementById('iconMoreActionsTrack');
+  if (!drawer) return;
+
+  isMoreActionsTrackOpen = !isMoreActionsTrackOpen;
+
+  if (isMoreActionsTrackOpen) {
+    drawer.classList.remove('max-w-0', 'opacity-0', 'pointer-events-none');
+    drawer.classList.add('max-w-[130px]', 'opacity-100', 'pointer-events-auto');
+    if (btn) {
+      btn.classList.add('bg-white/40', 'text-[#FA8072]');
+      btn.title = 'Tutup Opsi';
+    }
+    if (icon) icon.className = 'fa-solid fa-xmark text-xs';
+  } else {
+    drawer.classList.remove('max-w-[130px]', 'opacity-100', 'pointer-events-auto');
+    drawer.classList.add('max-w-0', 'opacity-0', 'pointer-events-none');
+    if (btn) {
+      btn.classList.remove('bg-white/40', 'text-[#FA8072]');
+      btn.title = 'Opsi Lainnya';
+    }
+    if (icon) icon.className = 'fa-solid fa-ellipsis text-xs';
+  }
+}
+
+// Auto-close more actions drawer when clicking outside
+document.addEventListener('click', (e) => {
+  if (!isMoreActionsTrackOpen) return;
+  const drawer = document.getElementById('moreActionsDrawer');
+  const btn = document.getElementById('btnMoreActionsTrack');
+  if (drawer && btn && !drawer.contains(e.target) && !btn.contains(e.target)) {
+    isMoreActionsTrackOpen = false;
+    drawer.classList.remove('max-w-[130px]', 'opacity-100', 'pointer-events-auto');
+    drawer.classList.add('max-w-0', 'opacity-0', 'pointer-events-none');
+    btn.classList.remove('bg-white/40', 'text-[#FA8072]');
+    btn.title = 'Opsi Lainnya';
+    const icon = document.getElementById('iconMoreActionsTrack');
+    if (icon) icon.className = 'fa-solid fa-ellipsis text-xs';
+  }
+});
+
+// ================= LISTENING TOGETHER =================
+function toggleSyncMode() {
+  const chk = document.getElementById('syncPlayToggle');
+  syncModeActive = chk.checked;
+  const statusTxt = document.getElementById('jamLiveActivityText');
+  statusTxt.textContent = syncModeActive
+    ? '🎧 Mendengarkan di detik yang sama'
+    : '⏸ Sinkronisasi pemutaran dinonaktifkan';
+}
+
+function sendFloatingReaction(emoji, echoPartner = true) {
+  spawnReactionAnimation(emoji);
+  if (echoPartner) {
+    setTimeout(() => {
+      const partnerEmojis = ['🥰', '❤️', '🥺', '✨', '🌸'];
+      const randomEcho = partnerEmojis[Math.floor(Math.random() * partnerEmojis.length)];
+      spawnReactionAnimation(randomEcho);
+      updateJamLiveActivity(`Sayang baru saja mengirim reaksi: ${randomEcho}`);
+    }, 900);
+  }
+}
+
+function spawnReactionAnimation(emoji) {
+  const stage = document.getElementById('reactionStage');
+  const el = document.createElement('div');
+  el.className = 'floating-emoji';
+  el.textContent = emoji;
+  const randomOffset = (Math.random() * 40 - 20);
+  el.style.right = `${24 + randomOffset}px`;
+  stage.appendChild(el);
+  setTimeout(() => el.remove(), 2300);
+}
+
+function updateJamLiveActivity(text) {
+  const el = document.getElementById('jamLiveActivityText');
+  if (!el) return;
+  el.textContent = text;
+  setTimeout(() => {
+    el.textContent = syncModeActive ? '🎧 Mendengarkan di detik yang sama' : 'Sinkronisasi siap';
+  }, 4000);
+}
+
+function broadcastJamSystemNote(msg) {
+  state.jamMessages.push({
+    sender: 'system',
+    text: msg,
+    time: getCurrentTimeStr()
+  });
+  saveState();
+  renderJamChat();
+}
+
+function renderJamChat() {
+  const container = document.getElementById('jamChatContainer');
+  if (!container) return;
+  container.innerHTML = state.jamMessages.map(m => {
+    if (m.sender === 'system') {
+      return `
+        <div class="text-center py-1">
+          <span class="text-[10px] bg-[#FFF0F3] text-[#E85D75] px-2.5 py-0.5 rounded-full border border-[#FFD2DC]">
+            ${m.text}
+          </span>
+        </div>
+      `;
+    }
+    const isYou = m.sender === 'you';
+    return `
+      <div class="flex flex-col ${isYou ? 'items-end' : 'items-start'}">
+        <div class="max-w-[85%] px-3 py-2 rounded-2xl ${isYou ? 'bg-gradient-to-r from-[#FA8072] to-[#E85D75] text-white rounded-br-xs' : 'bg-[#FFF5F7] text-[#3B2328] border border-[#FFD2DC] rounded-bl-xs'} shadow-xs">
+          <p class="leading-snug">${m.text}</p>
+        </div>
+        <span class="text-[9px] text-[#9A737C] mt-0.5 px-1">${m.time}</span>
+      </div>
+    `;
+  }).join('');
+  container.scrollTop = container.scrollHeight;
+}
+
+function sendJamChatMessage(e) {
+  e.preventDefault();
+  const input = document.getElementById('jamChatInput');
+  const text = input.value.trim();
+  if (!text) return;
+
+  state.jamMessages.push({
+    sender: 'you',
+    text,
+    time: getCurrentTimeStr()
+  });
+  input.value = '';
+  saveState();
+  renderJamChat();
+
+  setTimeout(() => {
+    simulatePartnerChatReply(text);
+  }, 1400);
+}
+
+function simulatePartnerChatReply(userMessage) {
+  const tracks = getActiveTracks();
+  const currentSong = tracks[currentIndex]?.title || 'lagu ini';
+  const sweetReplies = [
+    `Iyaa sayang, aku lagi dengerin "${currentSong}" juga nih sambil senyum-senyum 💕`,
+    `Suka banget liriknya yang pas bagian ini 🥺🤍`,
+    `Kangen deh, nanti malam call lagi yaa! 🥰`,
+    `Lagu ini bener-bener ngingetin aku pas pertama kali kita jalan bareng ✨`,
+    `Peluk dulu dari jauh 🤗 Lagu ini manis banget kayak kamu.`
+  ];
+  const reply = sweetReplies[Math.floor(Math.random() * sweetReplies.length)];
+
+  state.jamMessages.push({
+    sender: 'partner',
+    text: reply,
+    time: getCurrentTimeStr()
+  });
+  saveState();
+  renderJamChat();
+}
+
+function simulatePartnerSweetAction() {
+  const tracks = getActiveTracks();
+  const currentSong = tracks[currentIndex]?.title || 'lagu kita';
+  sendFloatingReaction('🥰', false);
+  broadcastJamSystemNote(`💕 Sayang memelukmu secara virtual sambil mendengarkan "${currentSong}"`);
+}
+
+function copyInviteLink() {
+  const code = document.getElementById('jamRoomCode')?.textContent || 'LUV-2407';
+  const url = `${window.location.origin}${window.location.pathname}?room=${code}`;
+  navigator.clipboard.writeText(url).then(() => {
+    showToastNotification('Link Jam Session berhasil disalin! Kirimkan ke pasanganmu 💕', 'success');
+  }).catch(() => {
+    alert(`Salin link sesi berdua: ${url}`);
+  });
+}
+
+function getCurrentTimeStr() {
+  const now = new Date();
+  return `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+}
+
+// ================= FULL MP3 UPLOAD & ITUNES SEARCH =================
+function handleFullMp3Upload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const badge = document.getElementById('fullAudioSelectedBadge');
+  const badgeName = document.getElementById('fullAudioFileName');
+  if (badge && badgeName) {
+    badgeName.textContent = file.name;
+    badge.classList.remove('hidden');
+  }
+
+  const rawName = file.name.replace(/\.[^/.]+$/, '');
+  let detectedTitle = rawName;
+  let detectedArtist = '';
+  if (rawName.includes(' - ')) {
+    const parts = rawName.split(' - ');
+    detectedArtist = parts[0].trim();
+    detectedTitle = parts[1].trim();
+  }
+  document.getElementById('inputSongTitle').value = detectedTitle;
+  document.getElementById('inputSongArtist').value = detectedArtist;
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const audioData = e.target.result;
+    document.getElementById('inputSongAudio').value = audioData;
+
+    const tempAudio = new Audio();
+    tempAudio.src = audioData;
+    tempAudio.addEventListener('loadedmetadata', () => {
+      if (tempAudio.duration && isFinite(tempAudio.duration)) {
+        const durStr = formatTime(tempAudio.duration);
+        showToastNotification(`File "${file.name}" siap diputar Full (${durStr})! 💕`, 'success');
+      }
+    });
+  };
+  reader.readAsDataURL(file);
+
+  tryAutoFetchCover(detectedTitle, detectedArtist);
+}
+
+async function tryAutoFetchCover(title, artist) {
+  if (!title) return;
+  try {
+    const q = encodeURIComponent(`${title} ${artist || ''}`);
+    const res = await fetch(`https://itunes.apple.com/search?term=${q}&entity=song&limit=1`);
+    const data = await res.json();
+    if (data.results && data.results.length > 0) {
+      const hit = data.results[0];
+      const hdCover = hit.artworkUrl100.replace('100x100bb', '600x600bb');
+      document.getElementById('inputSongCover').value = hdCover;
+      if (!document.getElementById('inputSongArtist').value && hit.artistName) {
+        document.getElementById('inputSongArtist').value = hit.artistName;
+      }
+    }
+  } catch (e) {
+    // optional
+  }
+}
+
+function useDefaultFullAudioStream() {
+  const randAudio = defaultFullAudioPool[Math.floor(Math.random() * defaultFullAudioPool.length)];
+  document.getElementById('inputSongAudio').value = randAudio;
+  showToastNotification('Sample audio full dipilih!', 'info');
+}
+
+async function searchItunesSong() {
+  const query = document.getElementById('itunesSearchQuery').value.trim();
+  if (!query) return;
+
+  const resultsBox = document.getElementById('itunesResultsList');
+  resultsBox.innerHTML = '<div class="p-3 text-center text-xs text-[#9A737C]"><i class="fa-solid fa-spinner animate-spin mr-1"></i> Mencari cover HD & metadata...</div>';
+  resultsBox.classList.remove('hidden');
+
+  try {
+    const q = encodeURIComponent(query);
+    const res = await fetch(`https://itunes.apple.com/search?term=${q}&entity=song&limit=5`);
+    const data = await res.json();
+
+    if (!data.results || data.results.length === 0) {
+      resultsBox.innerHTML = '<div class="p-3 text-center text-xs text-[#9A737C]">Lagu tidak ditemukan. Silakan upload file MP3 Anda di atas!</div>';
+      return;
+    }
+
+    resultsBox.innerHTML = data.results.map(item => {
+      const hdCover = item.artworkUrl100.replace('100x100bb', '600x600bb');
+      const safeTitle = item.trackName.replace(/'/g, "\\'");
+      const safeArtist = item.artistName.replace(/'/g, "\\'");
+
+      return `
+        <div onclick="selectItunesResult('${safeTitle}', '${safeArtist}', '${hdCover}')"
+          class="flex items-center gap-3 p-2 rounded-xl bg-white hover:bg-[#FFE4E9] border border-[#FFD2DC] cursor-pointer transition">
+          <img src="${item.artworkUrl100}" class="w-10 h-10 rounded-lg object-cover" alt="Art" />
+          <div class="flex-1 min-w-0">
+            <p class="text-xs font-bold text-[#3B2328] truncate">${item.trackName}</p>
+            <p class="text-[11px] text-[#9A737C] truncate">${item.artistName} • ${item.collectionName || 'Single'}</p>
+          </div>
+          <span class="text-[10px] text-[#FA8072] font-bold px-2 py-1 bg-[#FFF5F7] rounded-lg border border-[#FFD2DC]">Pilih</span>
+        </div>
+      `;
+    }).join('');
+  } catch (err) {
+    resultsBox.innerHTML = '<div class="p-3 text-center text-xs text-rose-500">Gagal mengambil data online. Pastikan koneksi internet aktif.</div>';
+  }
+}
+
+function selectItunesResult(title, artist, cover) {
+  document.getElementById('inputSongTitle').value = title;
+  document.getElementById('inputSongArtist').value = artist;
+  document.getElementById('inputSongCover').value = cover;
+
+  // Check if known in our real catalog
+  const lowTitle = title.toLowerCase();
+  for (const [key, yId] of Object.entries(realSongCatalog)) {
+    if (lowTitle.includes(key)) {
+      document.getElementById('inputSongAudio').value = `https://www.youtube.com/watch?v=${yId}`;
+      break;
+    }
+  }
+
+  document.getElementById('itunesResultsList').classList.add('hidden');
+  showToastNotification(`Data "${title}" terpilih! Anda bisa tempel link YouTube atau upload file MP3 aslinya.`, 'success');
+}
+
+function compressImageFile(file, maxDim, quality, callback) {
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const img = new Image();
+    img.onload = () => {
+      let width = img.width;
+      let height = img.height;
+      if (width > maxDim || height > maxDim) {
+        if (width > height) {
+          height = Math.round((height * maxDim) / width);
+          width = maxDim;
+        } else {
+          width = Math.round((width * maxDim) / height);
+          height = maxDim;
+        }
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, width, height);
+      callback(canvas.toDataURL('image/jpeg', quality));
+    };
+    img.onerror = () => callback(e.target.result);
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function compressDataUrlIfNeeded(dataUrl, maxDim = 700, quality = 0.8) {
+  return new Promise((resolve) => {
+    if (!dataUrl || typeof dataUrl !== 'string' || !dataUrl.startsWith('data:image/')) {
+      return resolve(dataUrl);
+    }
+    if (dataUrl.length < 50000) {
+      return resolve(dataUrl);
+    }
+    const timer = setTimeout(() => {
+      resolve(dataUrl);
+    }, 2000);
+    const img = new Image();
+    img.onload = () => {
+      clearTimeout(timer);
+      try {
+        let width = img.width;
+        let height = img.height;
+        if (!width || !height) return resolve(dataUrl);
+        if (width > maxDim || height > maxDim) {
+          if (width > height) {
+            height = Math.round((height * maxDim) / width);
+            width = maxDim;
+          } else {
+            width = Math.round((width * maxDim) / height);
+            height = maxDim;
+          }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      } catch (err) {
+        resolve(dataUrl);
+      }
+    };
+    img.onerror = () => {
+      clearTimeout(timer);
+      resolve(dataUrl);
+    };
+    img.src = dataUrl;
+  });
+}
+
+function handleFileUpload(event, targetInputId) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const isAvatar = targetInputId.includes('Avatar');
+  const maxDim = isAvatar ? 300 : 700;
+  const quality = isAvatar ? 0.8 : 0.8;
+
+  if (file.type && file.type.startsWith('image/')) {
+    compressImageFile(file, maxDim, quality, (compressedDataUrl) => {
+      const input = document.getElementById(targetInputId);
+      if (input) input.value = compressedDataUrl;
+      showToastNotification(`Foto "${file.name}" siap disimpan! ✨`, 'success');
+    });
+  } else {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const input = document.getElementById(targetInputId);
+      if (input) input.value = e.target.result;
+      showToastNotification(`File "${file.name}" berhasil diunggah!`, 'success');
+    };
+    reader.readAsDataURL(file);
+  }
+}
+
+function saveNewSong(e) {
+  e.preventDefault();
+  const title = document.getElementById('inputSongTitle').value.trim();
+  const artist = document.getElementById('inputSongArtist').value.trim();
+  const memory = document.getElementById('inputSongMemory').value.trim();
+  const activePl = getActivePlaylist();
+  const cover = document.getElementById('inputSongCover').value.trim() || activePl.cover;
+  let audioInput = document.getElementById('inputSongAudio').value.trim();
+
+  // Extract YouTube ID if link was provided
+  const ytId = extractYouTubeId(audioInput);
+  let finalYoutubeId = ytId;
+
+  // Check real catalog if not explicit
+  if (!finalYoutubeId) {
+    const low = title.toLowerCase();
+    for (const [key, id] of Object.entries(realSongCatalog)) {
+      if (low.includes(key)) {
+        finalYoutubeId = id;
+        break;
+      }
+    }
+  }
+
+  let finalAudioUrl = audioInput;
+  if (!finalYoutubeId && (!finalAudioUrl || finalAudioUrl.includes('audio-ssl.itunes.apple.com'))) {
+    finalAudioUrl = defaultFullAudioPool[Math.floor(Math.random() * defaultFullAudioPool.length)];
+  }
+
+  const today = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
+  const newTrack = {
+    id: 't_' + Date.now(),
+    title,
+    artist,
+    album: 'Single',
+    memory: memory || 'Lagu spesial pilihan kita 💕',
+    dateAdded: today,
+    duration: finalYoutubeId ? 'Full Official' : 'Full',
+    liked: true,
+    cover,
+    youtubeId: finalYoutubeId,
+    audioUrl: finalAudioUrl
+  };
+
+  // If local audio file, read metadata duration
+  if (finalAudioUrl && finalAudioUrl.startsWith('data:audio/')) {
+    const tempAudio = new Audio();
+    tempAudio.src = finalAudioUrl;
+    tempAudio.addEventListener('loadedmetadata', () => {
+      if (tempAudio.duration && isFinite(tempAudio.duration)) {
+        newTrack.duration = formatTime(tempAudio.duration);
+        saveState();
+        if (currentView === 'playlist') renderTracklist();
+      }
+    });
+  }
+
+  activePl.tracks.push(newTrack);
+  saveState();
+  hydrateUI();
+  closeAddSongModal();
+
+  if (currentView === 'playlist') renderTracklist();
+  renderHomeFavoritesList();
+  showToastNotification(`Lagu "${title}" berhasil ditambahkan ke playlist! ✨`, 'success');
+
+  if (!isPlaying) {
+    loadTrack(activePl.tracks.length - 1, true);
+  }
+}
+
+// ================= MODALS CONTROLS =================
+function openAddSongModal() {
+  document.getElementById('inputSongTitle').value = '';
+  document.getElementById('inputSongArtist').value = '';
+  document.getElementById('inputSongMemory').value = '';
+  document.getElementById('inputSongCover').value = '';
+  document.getElementById('inputSongAudio').value = '';
+  const badge = document.getElementById('fullAudioSelectedBadge');
+  if (badge) badge.classList.add('hidden');
+  document.getElementById('addSongModal').classList.remove('hidden');
+  document.getElementById('addSongModal').classList.add('flex');
+}
+function closeAddSongModal() {
+  document.getElementById('addSongModal').classList.add('hidden');
+  document.getElementById('addSongModal').classList.remove('flex');
+}
+
+let isShowcasePinRevealed = false;
+
+function populateProfileShowcaseView() {
+  const activePl = getActivePlaylist();
+  
+  const yourAv = document.getElementById('showcaseYourAvatar');
+  if (yourAv) yourAv.src = state.yourAvatar;
+  const partnerAv = document.getElementById('showcasePartnerAvatar');
+  if (partnerAv) partnerAv.src = state.partnerAvatar;
+
+  const yourName = document.getElementById('showcaseYourName');
+  if (yourName) yourName.textContent = state.yourName;
+  const partnerName = document.getElementById('showcasePartnerName');
+  if (partnerName) partnerName.textContent = state.partnerName;
+
+  const plCover = document.getElementById('showcasePlaylistCover');
+  if (plCover) plCover.src = activePl.cover;
+  const plTitle = document.getElementById('showcasePlaylistTitle');
+  if (plTitle) plTitle.textContent = activePl.title;
+  const plDesc = document.getElementById('showcasePlaylistDesc');
+  if (plDesc) plDesc.textContent = activePl.desc || 'after rain and lean with u <3';
+
+  const loveNote = document.getElementById('showcaseLoveNote');
+  if (loveNote) {
+    loveNote.textContent = state.loveNote ? `"${state.loveNote}"` : '"Belum ada surat cinta yang ditulis..."';
+  }
+
+  // Stats
+  const statPl = document.getElementById('showcaseStatPlaylists');
+  if (statPl) statPl.textContent = state.playlists.length;
+  const statTracks = document.getElementById('showcaseStatTracks');
+  if (statTracks) {
+    const totalTracks = state.playlists.reduce((acc, p) => acc + (p.tracks ? p.tracks.length : 0), 0);
+    statTracks.textContent = totalTracks;
+  }
+  const statPol = document.getElementById('showcaseStatPolaroids');
+  if (statPol) statPol.textContent = (state.polaroidMemories || []).length;
+
+  // Reset PIN display to masked
+  isShowcasePinRevealed = false;
+  const pinDisplay = document.getElementById('showcasePinDisplay');
+  if (pinDisplay) pinDisplay.textContent = '•••• (Tersimpan Aman)';
+  const pinText = document.getElementById('showcasePinActionText');
+  if (pinText) pinText.textContent = 'Lihat';
+  const pinIcon = document.getElementById('showcasePinIcon');
+  if (pinIcon) pinIcon.className = 'fa-regular fa-eye';
+}
+
+function toggleShowcasePin() {
+  const pinDisplay = document.getElementById('showcasePinDisplay');
+  const pinText = document.getElementById('showcasePinActionText');
+  const pinIcon = document.getElementById('showcasePinIcon');
+  const activePin = localStorage.getItem('romantic_music_custom_pin') || state.pinCode || '1402';
+
+  isShowcasePinRevealed = !isShowcasePinRevealed;
+  if (isShowcasePinRevealed) {
+    if (pinDisplay) pinDisplay.textContent = `${activePin} (PIN Aktif)`;
+    if (pinText) pinText.textContent = 'Sembunyi';
+    if (pinIcon) pinIcon.className = 'fa-regular fa-eye-slash';
+  } else {
+    if (pinDisplay) pinDisplay.textContent = '•••• (Tersimpan Aman)';
+    if (pinText) pinText.textContent = 'Lihat';
+    if (pinIcon) pinIcon.className = 'fa-regular fa-eye';
+  }
+}
+
+function switchToProfileEditMode() {
+  const showcaseView = document.getElementById('profileShowcaseView');
+  const editView = document.getElementById('profileEditView');
+  if (showcaseView) showcaseView.classList.add('hidden');
+  if (editView) {
+    editView.classList.remove('hidden');
+    editView.classList.add('view-fade-enter');
+  }
+}
+
+function switchToProfileShowcaseMode() {
+  const showcaseView = document.getElementById('profileShowcaseView');
+  const editView = document.getElementById('profileEditView');
+  if (editView) editView.classList.add('hidden');
+  if (showcaseView) {
+    showcaseView.classList.remove('hidden');
+    showcaseView.classList.add('view-fade-enter');
+  }
+}
+
+function openSettingsModal() {
+  const activePl = getActivePlaylist();
+  
+  // Fill form inputs
+  document.getElementById('setPlaylistTitle').value = activePl.title;
+  document.getElementById('setPinCode').value = localStorage.getItem('romantic_music_custom_pin') || state.pinCode || '1402';
+  document.getElementById('setPlaylistDesc').value = activePl.desc;
+  document.getElementById('setPlaylistCover').value = activePl.cover;
+  document.getElementById('setYourName').value = state.yourName;
+  document.getElementById('setPartnerName').value = state.partnerName;
+  document.getElementById('setYourAvatar').value = state.yourAvatar;
+  document.getElementById('setPartnerAvatar').value = state.partnerAvatar;
+  document.getElementById('setLoveNote').value = state.loveNote;
+
+  // Show showcase view first as requested by user
+  switchToProfileShowcaseMode();
+  populateProfileShowcaseView();
+
+  const modal = document.getElementById('settingsModal');
+  modal.classList.remove('hidden');
+  modal.classList.add('flex');
+}
+
+function closeSettingsModal() {
+  const modal = document.getElementById('settingsModal');
+  modal.classList.add('hidden');
+  modal.classList.remove('flex');
+}
+
+async function savePlaylistSettings(e) {
+  if (e) {
+    if (e.preventDefault) e.preventDefault();
+    if (e.stopPropagation) e.stopPropagation();
+  }
+
+  const saveBtn = document.getElementById('btnSaveSettings');
+  if (saveBtn) {
+    saveBtn.disabled = true;
+    saveBtn.textContent = 'Menyimpan... ⏳';
+  }
+
+  try {
+    const activePl = getActivePlaylist();
+
+    // 1. Title & Desc
+    if (activePl) {
+      activePl.title = (document.getElementById('setPlaylistTitle')?.value || '').trim() || activePl.title || '✦ our melodies.';
+      activePl.desc = (document.getElementById('setPlaylistDesc')?.value || '').trim();
+    }
+
+    // 2. PIN
+    const newPin = (document.getElementById('setPinCode')?.value || '').trim() || '1402';
+    state.pinCode = newPin;
+    try {
+      localStorage.setItem('romantic_music_custom_pin', newPin);
+    } catch(err) {
+      console.warn('PIN localStorage warn:', err);
+    }
+
+    // 3. Compress any uploaded base64 images so they never exceed localStorage quota
+    let rawCover = (document.getElementById('setPlaylistCover')?.value || '').trim();
+    let rawYourAvatar = (document.getElementById('setYourAvatar')?.value || '').trim();
+    let rawPartnerAvatar = (document.getElementById('setPartnerAvatar')?.value || '').trim();
+
+    const [compressedCover, compressedYourAvatar, compressedPartnerAvatar] = await Promise.all([
+      compressDataUrlIfNeeded(rawCover, 700, 0.8),
+      compressDataUrlIfNeeded(rawYourAvatar, 300, 0.8),
+      compressDataUrlIfNeeded(rawPartnerAvatar, 300, 0.8)
+    ]);
+
+    if (activePl && compressedCover) {
+      activePl.cover = compressedCover;
+    }
+    if (compressedYourAvatar) {
+      state.yourAvatar = compressedYourAvatar;
+    }
+    if (compressedPartnerAvatar) {
+      state.partnerAvatar = compressedPartnerAvatar;
+    }
+
+    state.yourName = (document.getElementById('setYourName')?.value || '').trim() || 'Kamu';
+    state.partnerName = (document.getElementById('setPartnerName')?.value || '').trim() || 'Sayang';
+    state.loveNote = document.getElementById('setLoveNote')?.value || '';
+
+    saveState();
+    hydrateUI();
+    if (currentView === 'home') renderHomeView();
+    else if (currentView === 'jam') updateMainJamView();
+
+    populateProfileShowcaseView();
+    switchToProfileShowcaseMode();
+    showToastNotification('Perubahan profil & data kustomisasi berhasil disimpan! 💕', 'success');
+  } catch (err) {
+    console.error('Error saving playlist settings:', err);
+    showToastNotification('Gagal menyimpan: ' + err.message, 'error');
+  } finally {
+    if (saveBtn) {
+      saveBtn.disabled = false;
+      saveBtn.textContent = 'Simpan Perubahan';
+    }
+  }
+}
+
+function resetDefaultData() {
+  if (confirm('Reset seluruh playlist dan bersihkan data lama agar lagu berdurasi full?')) {
+    localStorage.clear();
+    location.reload();
+  }
+}
+
+function openLoveNoteModal() {
+  document.getElementById('loveNoteModal').classList.remove('hidden');
+  document.getElementById('loveNoteModal').classList.add('flex');
+}
+function closeLoveNoteModal() {
+  document.getElementById('loveNoteModal').classList.add('hidden');
+  document.getElementById('loveNoteModal').classList.remove('flex');
+}
+
+function togglePolaroidModal() {
+  const modal = document.getElementById('polaroidModal');
+  modal.classList.toggle('hidden');
+  modal.classList.toggle('flex');
+}
+
+// ================= TOAST NOTIFICATION SYSTEM =================
+let toastTimeout = null;
+function showToastNotification(message, type = 'info') {
+  const toast = document.getElementById('toastNotification');
+  const msgEl = document.getElementById('toastMsg');
+  const iconEl = document.getElementById('toastIcon');
+  if (!toast || !msgEl || !iconEl) return;
+
+  clearTimeout(toastTimeout);
+
+  msgEl.textContent = message;
+  if (type === 'success') {
+    iconEl.className = 'fa-solid fa-circle-check text-emerald-400';
+  } else if (type === 'error') {
+    iconEl.className = 'fa-solid fa-circle-exclamation text-rose-400';
+  } else {
+    iconEl.className = 'fa-solid fa-download text-[#FA8072]';
+  }
+
+  toast.classList.remove('opacity-0', 'translate-y-[-12px]', 'pointer-events-none');
+  toast.classList.add('opacity-100', 'translate-y-0');
+
+  toastTimeout = setTimeout(() => {
+    toast.classList.add('opacity-0', 'translate-y-[-12px]', 'pointer-events-none');
+    toast.classList.remove('opacity-100', 'translate-y-0');
+  }, 3200);
+}
+
+// ================= DIRECT MP3 DOWNLOAD ENGINE =================
+async function downloadTrackByIdx(index) {
+  const tracks = getActiveTracks();
+  const track = tracks[index];
+  if (!track) {
+    showToastNotification('Data lagu tidak ditemukan!', 'error');
+    return;
+  }
+  downloadDirectSong(track.title, track.artist, track.audioUrl, track.youtubeId);
+}
+
+async function downloadDirectSong(title, artist, audioUrl, youtubeId) {
+  showToastNotification(`Mempersiapkan unduhan "${title}"...`, 'info');
+  const safeFilename = `${title} - ${artist}`.replace(/[/\\?%*:|"<>]/g, '_') + '.mp3';
+
+  if (audioUrl && (audioUrl.startsWith('blob:') || audioUrl.startsWith('data:') || audioUrl.startsWith('audio/'))) {
+    triggerBrowserDownload(audioUrl, safeFilename);
+    showToastNotification(`Berhasil mengunduh "${title}"! 💕`, 'success');
+    return;
+  }
+
+  if (audioUrl && audioUrl.startsWith('http') && !audioUrl.includes('youtube.com')) {
+    try {
+      const response = await fetch(audioUrl, { mode: 'cors' });
+      if (response.ok) {
+        const blob = await response.blob();
+        const objectUrl = URL.createObjectURL(blob);
+        triggerBrowserDownload(objectUrl, safeFilename);
+        setTimeout(() => URL.revokeObjectURL(objectUrl), 20000);
+        showToastNotification(`Lagu "${title}" tersimpan! 💕`, 'success');
+        return;
+      }
+    } catch (e) {
+      // fallback
+    }
+  }
+
+  if (youtubeId) {
+    const ytUrl = `https://www.youtube.com/watch?v=${youtubeId}`;
+    window.open(ytUrl, '_blank');
+    showToastNotification(`Membuka video resmi "${title}" di YouTube!`, 'info');
+  } else if (audioUrl) {
+    triggerBrowserDownload(audioUrl, safeFilename, true);
+  }
+}
+
+function triggerBrowserDownload(url, filename, isExternal = false) {
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = filename;
+  if (isExternal) {
+    anchor.target = '_blank';
+    anchor.rel = 'noopener noreferrer';
+  }
+  document.body.appendChild(anchor);
+  anchor.click();
+  document.body.removeChild(anchor);
+}
+
+function downloadCurrentTrack() {
+  downloadTrackByIdx(currentIndex);
+}
+
+// ================= DEDICATED POLAROID MEMORIES GALLERY ENGINE =================
+function renderPolaroidGallery() {
+  const container = document.getElementById('polaroidGalleryGrid');
+  if (!container) return;
+
+  const memories = state.polaroidMemories || [];
+  const btnClearAll = document.getElementById('btnClearAllPolaroids');
+  if (btnClearAll) {
+    if (!memories.length) btnClearAll.classList.add('hidden');
+    else btnClearAll.classList.remove('hidden');
+  }
+  if (!memories.length) {
+    container.innerHTML = `
+      <div class="col-span-full py-16 text-center">
+        <div class="w-16 h-16 rounded-3xl bg-[#FFF0F3] text-[#E85D75] flex items-center justify-center mx-auto mb-3 shadow-xs border border-[#FFD2DC]">
+          <i class="fa-solid fa-camera-retro text-2xl"></i>
+        </div>
+        <h3 class="text-base font-extrabold text-[#3B2328]">Belum Ada Foto Polaroid</h3>
+        <p class="text-xs text-[#9A737C] mt-1 mb-4">Yuk abadikan foto momen manis kalian berdua sekarang!</p>
+        <button onclick="openAddPolaroidModal()" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#FA8072] to-[#E85D75] text-white text-xs font-bold shadow-md shadow-[#FA8072]/25 hover:opacity-95 transition">
+          + Tambah
+        </button>
+      </div>
+    `;
+    return;
+  }
+
+  const tilts = ['polaroid-tilt-left', 'polaroid-tilt-right', 'polaroid-tilt-subtle', ''];
+
+  container.innerHTML = memories.map((item, idx) => {
+    const tiltClass = tilts[idx % tilts.length];
+    return `
+      <div class="polaroid-card ${tiltClass} group cursor-pointer" onclick="viewPolaroidDetail('${item.id}')">
+        <!-- Washi Tape -->
+        <div class="washi-tape"></div>
+
+        <!-- Image Frame -->
+        <div class="w-full h-52 sm:h-56 bg-neutral-100 rounded-sm overflow-hidden mb-3 relative border border-neutral-200/60">
+          <img src="${item.imageUrl}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500" alt="Polaroid photo" loading="lazy" />
+          
+          <!-- Hover Overlay with Zoom & Delete Buttons -->
+          <div class="absolute inset-0 bg-black/35 opacity-0 group-hover:opacity-100 transition flex items-center justify-center gap-2" onclick="event.stopPropagation()">
+            <button onclick="viewPolaroidDetail('${item.id}')" class="w-8 h-8 rounded-full bg-white text-[#3B2328] hover:text-[#FA8072] flex items-center justify-center shadow-md transition" title="Lihat Foto Penuh">
+              <i class="fa-solid fa-expand text-xs"></i>
+            </button>
+            <button onclick="deletePolaroid('${item.id}')" class="w-8 h-8 rounded-full bg-white text-[#9A737C] hover:text-rose-500 flex items-center justify-center shadow-md transition" title="Hapus Polaroid">
+              <i class="fa-solid fa-trash-can text-xs"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Handwritten Caption -->
+        <p class="font-handwriting text-xl text-[#3B2328] text-center leading-snug px-1 line-clamp-2">
+          ${item.caption || 'Kenangan manis berdua 💕'}
+        </p>
+
+        <!-- Date & Location Footer -->
+        <div class="flex items-center justify-between text-[11px] font-semibold text-[#9A737C] mt-2 pt-2 border-t border-[#FFF0F3] px-1">
+          <span>${item.date || 'Sweet moment'}</span>
+          <span class="text-[#FA8072] truncate max-w-[120px]">${item.location || 'Special place'}</span>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function openAddPolaroidModal() {
+  const modal = document.getElementById('addPolaroidModal');
+  if (!modal) return;
+  modal.classList.remove('hidden');
+  modal.classList.add('flex');
+
+  // Reset fields
+  document.getElementById('newPolaroidUrl').value = '';
+  document.getElementById('newPolaroidCaption').value = '';
+  document.getElementById('newPolaroidDate').value = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+  document.getElementById('newPolaroidLocation').value = 'Di Hati Kita 💕';
+  document.getElementById('polaroidPreviewThumb').src = 'https://images.unsplash.com/photo-1518199266791-5375a83190b7?w=400&auto=format&fit=crop&q=80';
+  document.getElementById('polaroidPreviewCaptionText').textContent = 'Cerita foto kita...';
+  document.getElementById('polaroidPreviewDateText').textContent = 'Hari ini';
+}
+
+function closeAddPolaroidModal() {
+  const modal = document.getElementById('addPolaroidModal');
+  if (modal) {
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+  }
+}
+
+function previewPolaroidImage(url) {
+  if (url && url.trim()) {
+    document.getElementById('polaroidPreviewThumb').src = url.trim();
+  }
+}
+
+function handlePolaroidUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const dataUrl = e.target.result;
+    document.getElementById('newPolaroidUrl').value = dataUrl;
+    document.getElementById('polaroidPreviewThumb').src = dataUrl;
+  };
+  reader.readAsDataURL(file);
+}
+
+function saveNewPolaroid(event) {
+  event.preventDefault();
+  const url = document.getElementById('newPolaroidUrl').value.trim() || document.getElementById('polaroidPreviewThumb').src;
+  const caption = document.getElementById('newPolaroidCaption').value.trim();
+  const date = document.getElementById('newPolaroidDate').value.trim() || 'Hari ini';
+  const location = document.getElementById('newPolaroidLocation').value.trim() || 'Tempat Spesial';
+
+  if (!caption) {
+    showToastNotification('Tulis cerita manis untuk foto ini ya sayang 💕', 'error');
+    return;
+  }
+
+  const newPol = {
+    id: 'pol-' + Date.now(),
+    imageUrl: url,
+    caption: caption,
+    date: date,
+    location: location
+  };
+
+  if (!state.polaroidMemories) state.polaroidMemories = [];
+  state.polaroidMemories.unshift(newPol);
+  localStorage.setItem('romantic_music_polaroid_memories', JSON.stringify(state.polaroidMemories));
+  saveState();
+  closeAddPolaroidModal();
+  renderPolaroidGallery();
+  showToastNotification('Foto polaroid baru berhasil disimpan ke Galeri! ✨', 'success');
+}
+
+function deletePolaroid(id) {
+  if (confirm('Hapus foto polaroid ini dari galeri kenangan?')) {
+    state.polaroidMemories = (state.polaroidMemories || []).filter(p => p.id !== id);
+    localStorage.setItem('romantic_music_polaroid_memories', JSON.stringify(state.polaroidMemories));
+    saveState();
+    renderPolaroidGallery();
+    showToastNotification('Foto polaroid telah dihapus permanen', 'success');
+  }
+}
+
+function clearAllPolaroids() {
+  if (confirm('Yakin ingin menghapus seluruh foto di galeri polaroid?')) {
+    state.polaroidMemories = [];
+    localStorage.setItem('romantic_music_polaroid_memories', JSON.stringify([]));
+    saveState();
+    renderPolaroidGallery();
+    showToastNotification('Seluruh foto polaroid telah dihapus permanen', 'success');
+  }
+}
+
+function viewPolaroidDetail(id) {
+  const pol = (state.polaroidMemories || []).find(p => p.id === id);
+  if (!pol) return;
+  document.getElementById('detailPolaroidImg').src = pol.imageUrl;
+  document.getElementById('detailPolaroidCaption').textContent = `"${pol.caption || 'Momen manis kita'}"`;
+  document.getElementById('detailPolaroidDate').textContent = pol.date || 'Sweet Day';
+  document.getElementById('detailPolaroidLocation').textContent = pol.location || 'Our Secret Place';
+
+  const modal = document.getElementById('polaroidDetailModal');
+  if (modal) {
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+  }
+}
+
+function closePolaroidDetailModal() {
+  const modal = document.getElementById('polaroidDetailModal');
+  if (modal) {
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+  }
+}
+
+
+// ================= DEDICATED LISTENING TOGETHER VIEW HELPERS =================
+function updateMainJamView() {
+  const currentTrack = getActiveTracks()[currentIndex] || {};
+  const currentCover = currentTrack.cover || 'images/spotify_covers/jakarta.jpg';
+  const coverEl = document.getElementById('mainJamCurrentCover');
+  if (coverEl) coverEl.src = currentCover;
+
+  const titleEl = document.getElementById('mainJamCurrentTitle');
+  if (titleEl) titleEl.textContent = currentTrack.title || 'Belum ada lagu';
+
+  const artistEl = document.getElementById('mainJamCurrentArtist');
+  if (artistEl) artistEl.textContent = currentTrack.artist || 'Pilih lagu untuk diputar';
+
+  const playIcon = document.getElementById('mainJamPlayIcon');
+  if (playIcon) {
+    playIcon.className = isPlaying ? 'fa-solid fa-pause text-xl' : 'fa-solid fa-play text-xl ml-0.5';
+  }
+
+  const youAv = document.getElementById('mainJamAvatarYou');
+  if (youAv) youAv.src = state.yourAvatar;
+  const partnerAv = document.getElementById('mainJamAvatarPartner');
+  if (partnerAv) partnerAv.src = state.partnerAvatar;
+
+  const nameYou = document.getElementById('mainJamNameYou');
+  if (nameYou) nameYou.textContent = state.yourName;
+  const namePartner = document.getElementById('mainJamNamePartner');
+  if (namePartner) namePartner.textContent = state.partnerName;
+
+  renderMainJamChat();
+}
+
+function renderMainJamChat() {
+  const container = document.getElementById('mainJamChatContainer');
+  if (!container) return;
+
+  const messages = state.jamMessages || [];
+  container.innerHTML = messages.map(msg => {
+    const isYou = msg.sender === 'you';
+    return `
+      <div class="flex flex-col ${isYou ? 'items-end' : 'items-start'}">
+        <div class="flex items-center gap-1.5 mb-0.5">
+          <span class="text-[10px] font-bold ${isYou ? 'text-[#FA8072]' : 'text-[#7A4E58]'}">${isYou ? state.yourName : state.partnerName}</span>
+          <span class="text-[9px] text-[#9A737C]">${msg.time}</span>
+        </div>
+        <div class="px-3.5 py-2 rounded-2xl max-w-[85%] text-xs leading-relaxed ${
+          isYou 
+            ? 'bg-gradient-to-r from-[#FA8072] to-[#E85D75] text-white rounded-tr-none shadow-xs' 
+            : 'bg-[#FFF0F3] border border-[#FFD2DC] text-[#3B2328] rounded-tl-none shadow-xs'
+        }">
+          ${msg.text}
+        </div>
+      </div>
+    `;
+  }).join('');
+  container.scrollTop = container.scrollHeight;
+}
+
+function sendMainJamChatMessage(event) {
+  event.preventDefault();
+  const input = document.getElementById('mainJamChatInput');
+  const text = input.value.trim();
+  if (!text) return;
+
+  const now = new Date();
+  const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+  if (!state.jamMessages) state.jamMessages = [];
+  state.jamMessages.push({ sender: 'you', text, time: timeStr });
+  saveState();
+  input.value = '';
+  renderMainJamChat();
+  renderJamChat();
+  sendFloatingReaction('💌', true);
+}
+
+// ================= SHARE SONG FEATURE =================
+let currentSharingTrack = null;
+
+function findTrackByIdOrIdx(identifier) {
+  const activeTracks = getActiveTracks();
+  if (identifier === undefined || identifier === null) return activeTracks[currentIndex] || null;
+
+  if (typeof identifier === 'number' || (!isNaN(identifier) && activeTracks[parseInt(identifier, 10)])) {
+    const idx = parseInt(identifier, 10);
+    if (activeTracks[idx]) return activeTracks[idx];
+  }
+
+  const strId = String(identifier).toLowerCase().trim();
+  let found = activeTracks.find(t => (t.id && t.id.toLowerCase() === strId) || (t.title && t.title.toLowerCase().trim() === strId));
+  if (found) return found;
+
+  for (const pl of state.playlists) {
+    found = pl.tracks.find(t => (t.id && t.id.toLowerCase() === strId) || (t.title && t.title.toLowerCase().trim() === strId));
+    if (found) return found;
+  }
+  return activeTracks[currentIndex] || null;
+}
+
+function openShareSongModal(trackIdentifier) {
+  const track = findTrackByIdOrIdx(trackIdentifier);
+  if (!track) return;
+  currentSharingTrack = track;
+
+  const modal = document.getElementById('shareSongModal');
+  const cover = document.getElementById('shareTrackCover');
+  const title = document.getElementById('shareTrackTitle');
+  const artist = document.getElementById('shareTrackArtist');
+  const memory = document.getElementById('shareTrackMemory');
+  const linkInput = document.getElementById('shareLinkInput');
+  const waBtn = document.getElementById('shareWhatsAppBtn');
+
+  if (cover) cover.src = track.cover;
+  if (title) title.textContent = track.title;
+  if (artist) artist.textContent = track.artist;
+  if (memory) memory.textContent = `"${track.memory || 'Lagu cinta spesial untuk kita berdua 💕'}"`;
+
+  const baseUrl = window.location.origin + window.location.pathname;
+  const shareParam = encodeURIComponent(track.id || track.title);
+  const directLink = `${baseUrl}?play=${shareParam}`;
+  if (linkInput) linkInput.value = directLink;
+
+  const waText = encodeURIComponent(
+    `Hai sayang 💕 Dengerin lagu ini yuk di space musik kita:\n\n` +
+    `🎵 *${track.title}* - ${track.artist}\n` +
+    `💌 "${track.memory || 'Setiap nada mengingatkan aku padamu'}"\n\n` +
+    `Buka & dengarkan langsung di sini:\n${directLink}`
+  );
+  if (waBtn) waBtn.href = `https://api.whatsapp.com/send?text=${waText}`;
+
+  if (modal) {
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+  }
+}
+
+function openShareSongModalCurrent() {
+  const tracks = getActiveTracks();
+  if (!tracks.length) return;
+  openShareSongModal(tracks[currentIndex]?.id || currentIndex);
+}
+
+function closeShareSongModal() {
+  const modal = document.getElementById('shareSongModal');
+  if (modal) {
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+  }
+}
+
+function copyShareLink() {
+  const linkInput = document.getElementById('shareLinkInput');
+  if (!linkInput) return;
+  linkInput.select();
+  navigator.clipboard.writeText(linkInput.value).then(() => {
+    showToastNotification('Link lagu disalin ke clipboard! Siap dikirim ke kesayangan 💌', 'success');
+  }).catch(() => {
+    document.execCommand('copy');
+    showToastNotification('Link disalin ke clipboard! 💌', 'success');
+  });
+}
+
+function copyRomanticQuote() {
+  if (!currentSharingTrack) return;
+  const track = currentSharingTrack;
+  const baseUrl = window.location.origin + window.location.pathname;
+  const shareParam = encodeURIComponent(track.id || track.title);
+  const directLink = `${baseUrl}?play=${shareParam}`;
+
+  const quoteText = `"${track.memory || 'Lagu cinta terindah untuk kita berdua 💕'}"\n— ${track.title} by ${track.artist}\n${directLink}`;
+  navigator.clipboard.writeText(quoteText).then(() => {
+    showToastNotification('Catatan cinta & judul lagu disalin ke clipboard! 🌸', 'success');
+  }).catch(() => {
+    showToastNotification('Teks berhasil disalin!', 'success');
+  });
+}
+
+// ================= ADD SONG TO PLAYLIST FEATURE =================
+let currentTrackForPlaylist = null;
+
+function openAddToPlaylistModal(trackIdentifier) {
+  const track = findTrackByIdOrIdx(trackIdentifier);
+  if (!track) return;
+  currentTrackForPlaylist = track;
+
+  const modal = document.getElementById('addToPlaylistModal');
+  const cover = document.getElementById('addToPlTrackCover');
+  const title = document.getElementById('addToPlTrackTitle');
+  const artist = document.getElementById('addToPlTrackArtist');
+
+  if (cover) cover.src = track.cover;
+  if (title) title.textContent = track.title;
+  if (artist) artist.textContent = track.artist;
+
+  renderAddToPlaylistItems();
+
+  if (modal) {
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+  }
+}
+
+function openAddToPlaylistModalCurrent() {
+  const tracks = getActiveTracks();
+  if (!tracks.length) return;
+  openAddToPlaylistModal(tracks[currentIndex]?.id || currentIndex);
+}
+
+function closeAddToPlaylistModal() {
+  const modal = document.getElementById('addToPlaylistModal');
+  if (modal) {
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+  }
+}
+
+function renderAddToPlaylistItems() {
+  const container = document.getElementById('addToPlaylistItemsContainer');
+  if (!container || !currentTrackForPlaylist) return;
+
+  const track = currentTrackForPlaylist;
+  container.innerHTML = state.playlists.map(pl => {
+    const hasTrack = pl.tracks.some(t => 
+      (t.id && track.id && t.id === track.id) || 
+      (t.title && track.title && t.title.toLowerCase().trim() === track.title.toLowerCase().trim())
+    );
+
+    return `
+      <div class="flex items-center justify-between p-2.5 rounded-2xl bg-[#FFF9FA] hover:bg-[#FFE4E9]/40 border border-[#FFD2DC] transition">
+        <div class="flex items-center gap-3 min-w-0">
+          <img src="${pl.cover || 'images/spotify_covers/jakarta.jpg'}" class="w-10 h-10 rounded-xl object-cover border border-[#FFD2DC] shrink-0" alt="${pl.title}" />
+          <div class="min-w-0">
+            <h5 class="text-xs font-bold text-[#3B2328] truncate">${pl.title}</h5>
+            <p class="text-[11px] text-[#9A737C]">${pl.tracks.length} lagu</p>
+          </div>
+        </div>
+        <div>
+          ${hasTrack ? `
+            <span class="px-3 py-1.5 rounded-full bg-emerald-100 text-emerald-700 text-[11px] font-bold flex items-center gap-1">
+              <i class="fa-solid fa-check text-xs"></i> Sudah Ada
+            </span>
+          ` : `
+            <button onclick="addTrackToSelectedPlaylist('${pl.id}')" class="px-3 py-1.5 rounded-full bg-gradient-to-r from-[#FA8072] to-[#E85D75] hover:opacity-95 text-white text-[11px] font-bold flex items-center gap-1 shadow-xs transition cursor-pointer">
+              <i class="fa-solid fa-plus text-xs"></i> Tambahkan
+            </button>
+          `}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function addTrackToSelectedPlaylist(targetPlId) {
+  if (!currentTrackForPlaylist) return;
+  const pl = state.playlists.find(p => p.id === targetPlId);
+  if (!pl) return;
+
+  const track = currentTrackForPlaylist;
+  const alreadyIn = pl.tracks.some(t => 
+    (t.id && track.id && t.id === track.id) || 
+    (t.title && track.title && t.title.toLowerCase().trim() === track.title.toLowerCase().trim())
+  );
+
+  if (alreadyIn) {
+    showToastNotification(`Lagu '${track.title}' sudah ada di playlist '${pl.title}'`, 'info');
+    return;
+  }
+
+  const newTrack = {
+    ...track,
+    id: `t-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+    dateAdded: 'Baru saja'
+  };
+  pl.tracks.push(newTrack);
+  saveState();
+
+  renderPlaylists();
+  renderSidebarPlaylists();
+  if (state.activePlaylistId === targetPlId) {
+    renderTracklist();
+    updatePlaylistHeader();
+  }
+
+  renderAddToPlaylistItems();
+  showToastNotification(`Lagu '${track.title}' berhasil ditambahkan ke '${pl.title}'! 🎵`, 'success');
+}
+
+function openCreatePlaylistFromAddModal() {
+  closeAddToPlaylistModal();
+  openCreatePlaylistModal();
+}
+
+function checkUrlPlayParam() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const playParam = urlParams.get('play');
+  if (!playParam) return;
+
+  const target = decodeURIComponent(playParam).toLowerCase().trim();
+  let targetPl = null;
+  let targetTrackIdx = -1;
+
+  for (const pl of state.playlists) {
+    const idx = pl.tracks.findIndex(t => 
+      (t.id && t.id.toLowerCase() === target) || 
+      (t.title && t.title.toLowerCase().trim() === target)
+    );
+    if (idx !== -1) {
+      targetPl = pl;
+      targetTrackIdx = idx;
+      break;
+    }
+  }
+
+  if (targetPl && targetTrackIdx !== -1) {
+    selectPlaylist(targetPl.id);
+    setTimeout(() => {
+      loadTrack(targetTrackIdx, true);
+      const track = targetPl.tracks[targetTrackIdx];
+      showToastNotification(`Memutar lagu yang dibagikan: ${track.title} 💕`, 'success');
+    }, 400);
+  }
+}
+
