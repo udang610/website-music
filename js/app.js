@@ -38,7 +38,7 @@ async function pushStateToSupabase() {
 
   try {
     const oursPl = (state && state.playlists) ? (state.playlists.find(p => p.id === 'pl-ours') || state.playlists[0]) : null;
-    
+
     // Sanitize playlists to prevent large local base64 audio/blobs from exceeding cloud payload limits
     const sanitizedPlaylists = (state.playlists || []).map(pl => ({
       id: pl.id,
@@ -103,7 +103,7 @@ function applyRemoteState(remoteData) {
 
     if (remoteData.pinCode && remoteData.pinCode !== state.pinCode) {
       state.pinCode = remoteData.pinCode;
-      try { localStorage.setItem('romantic_music_custom_pin', remoteData.pinCode); } catch(e){}
+      try { localStorage.setItem('romantic_music_custom_pin', remoteData.pinCode); } catch (e) { }
       changed = true;
     }
 
@@ -134,7 +134,7 @@ function applyRemoteState(remoteData) {
 
     if (remoteData.polaroidMemories && JSON.stringify(remoteData.polaroidMemories) !== JSON.stringify(state.polaroidMemories)) {
       state.polaroidMemories = remoteData.polaroidMemories;
-      try { localStorage.setItem('romantic_music_polaroid_memories', JSON.stringify(remoteData.polaroidMemories)); } catch(e){}
+      try { localStorage.setItem('romantic_music_polaroid_memories', JSON.stringify(remoteData.polaroidMemories)); } catch (e) { }
       changed = true;
     }
 
@@ -176,7 +176,7 @@ function applyRemoteState(remoteData) {
         // Merge and synchronize tracks in this playlist
         if (Array.isArray(remotePl.tracks)) {
           if (!localPl.tracks) localPl.tracks = [];
-          
+
           // Check for any tracks present in remote that are missing locally
           remotePl.tracks.forEach(remTrack => {
             const remKey = remTrack.id || `${remTrack.title}-${remTrack.artist}`;
@@ -204,7 +204,10 @@ function applyRemoteState(remoteData) {
       // Fallback for legacy cloud payload without full playlists array
       const targetPlId = remoteData.targetPlaylistId || 'pl-ours';
       const targetPl = state.playlists.find(p => p.id === targetPlId);
-      if (targetPl) {
+      const localPlTime = state.playlistsUpdatedAt || Number(localStorage.getItem('romantic_music_playlists_updated_at')) || 0;
+      const remotePlTime = Number(remoteData.playlistsUpdatedAt) || 0;
+      const canApplyRemotePlaylistMeta = (remotePlTime > localPlTime) || !localPlTime;
+      if (targetPl && canApplyRemotePlaylistMeta) {
         if (remoteData.playlistTitle && targetPl.title !== remoteData.playlistTitle) {
           targetPl.title = remoteData.playlistTitle;
           changed = true;
@@ -220,18 +223,15 @@ function applyRemoteState(remoteData) {
       }
     }
 
-    // Auto-heal: Ensure other default playlists that were corrupted by any legacy sync bug are restored to defaults
+    // Auto-heal: Only restore corrupted playlist title if affected by legacy duplicate bug (never touch custom covers!)
     state.playlists.forEach(pl => {
       if (pl.id !== 'pl-ours') {
         const defaultPl = defaultState.playlists.find(dp => dp.id === pl.id);
-        if (defaultPl) {
-          if (pl.title === 'ours' || (pl.cover && pl.cover.startsWith('data:image'))) {
-            console.log(`✦ Restoring corrupted playlist ${pl.id} to original default: ${defaultPl.title}`);
-            pl.title = defaultPl.title;
-            pl.desc = defaultPl.desc;
-            pl.cover = defaultPl.cover;
-            changed = true;
-          }
+        if (defaultPl && pl.title === 'ours') {
+          console.log(`✦ Restoring corrupted playlist title ${pl.id} to original default: ${defaultPl.title}`);
+          pl.title = defaultPl.title;
+          pl.desc = defaultPl.desc;
+          changed = true;
         }
       }
     });
@@ -247,7 +247,7 @@ function applyRemoteState(remoteData) {
           loveNote: state.loveNote
         };
         localStorage.setItem('romantic_music_profile_config', JSON.stringify(profileConfig));
-      } catch(e){}
+      } catch (e) { }
 
       if (typeof hydrateUI === 'function') hydrateUI();
       if (typeof populateProfileShowcaseView === 'function') populateProfileShowcaseView();
@@ -279,56 +279,58 @@ async function initSupabaseSync() {
 
     if (error) {
       console.warn('Supabase fetch error:', error);
-    } else if (data && data.data && Object.keys(data.data).length > 0) {
+    } else if (data && data.data && Object.keys(data.data).length > 0 && !data.data.test) {
       const cloudData = data.data;
 
-      // Always retrieve and apply the cloud state (since cloud is the cross-device single source of truth)
-      console.log('✦ Retrieved existing Cloud state from Supabase!');
-      applyRemoteState(cloudData);
-
-      // Check if this client has any pending local-only profile changes that were not yet in cloud
-      const localCustomPin = localStorage.getItem('romantic_music_custom_pin');
+      // Check whether local state has customized data or newer timestamp BEFORE applying cloud data
+      const localProfileTime = state.profileUpdatedAt || Number(localStorage.getItem('romantic_music_profile_updated_at')) || 0;
+      const remoteProfileTime = Number(cloudData.profileUpdatedAt) || 0;
+      const localCustomPin = localStorage.getItem('romantic_music_custom_pin') || (state.pinCode !== '1402' ? state.pinCode : null);
       const localCustomProfile = localStorage.getItem('romantic_music_profile_config');
       let parsedProfile = null;
       if (localCustomProfile) {
-        try { parsedProfile = JSON.parse(localCustomProfile); } catch(e){}
+        try { parsedProfile = JSON.parse(localCustomProfile); } catch (e) { }
       }
 
-      let localDiff = false;
-      if (localCustomPin && localCustomPin !== '1402' && (!cloudData.pinCode || cloudData.pinCode === '1402')) {
-        state.pinCode = localCustomPin;
-        localDiff = true;
-      }
-      if (parsedProfile) {
-        if (parsedProfile.yourName && (!cloudData.yourName || cloudData.yourName === 'nadeyy ★')) {
-          state.yourName = parsedProfile.yourName;
-          localDiff = true;
-        }
-        if (parsedProfile.partnerName && (!cloudData.partnerName || cloudData.partnerName === 'sayang')) {
-          state.partnerName = parsedProfile.partnerName;
-          localDiff = true;
-        }
-        if (parsedProfile.yourAvatar && parsedProfile.yourAvatar !== cloudData.yourAvatar && !parsedProfile.yourAvatar.includes('profile_nadeyy.jpg')) {
-          state.yourAvatar = parsedProfile.yourAvatar;
-          localDiff = true;
-        }
-        if (parsedProfile.partnerAvatar && parsedProfile.partnerAvatar !== cloudData.partnerAvatar) {
-          state.partnerAvatar = parsedProfile.partnerAvatar;
-          localDiff = true;
-        }
-        if (parsedProfile.loveNote && parsedProfile.loveNote !== cloudData.loveNote) {
-          state.loveNote = parsedProfile.loveNote;
-          localDiff = true;
-        }
-      }
+      const localHasCustomProfile = (localCustomPin && localCustomPin !== '1402') ||
+                                    (parsedProfile && parsedProfile.yourName && parsedProfile.yourName !== 'nadeyy ★') ||
+                                    (parsedProfile && parsedProfile.partnerName && parsedProfile.partnerName !== 'sayang') ||
+                                    (parsedProfile && parsedProfile.yourAvatar && !parsedProfile.yourAvatar.includes('profile_nadeyy.jpg')) ||
+                                    (state.yourName && state.yourName !== 'nadeyy ★') ||
+                                    (state.pinCode && state.pinCode !== '1402');
 
-      if (localDiff) {
-        console.log('✦ Pushing newer local customizations up to Supabase Cloud...');
-        saveState();
+      const cloudIsDefaultProfile = (!cloudData.pinCode || cloudData.pinCode === '1402') && 
+                                    (!cloudData.yourName || cloudData.yourName === 'nadeyy ★');
+
+      const preserveLocalProfile = (localProfileTime > remoteProfileTime) || (localHasCustomProfile && cloudIsDefaultProfile);
+
+      if (preserveLocalProfile) {
+        console.log('✦ Preserving newer/customized local profile and syncing up to Supabase...');
+        if (localCustomPin) state.pinCode = localCustomPin;
+        if (parsedProfile) {
+          if (parsedProfile.yourName) state.yourName = parsedProfile.yourName;
+          if (parsedProfile.partnerName) state.partnerName = parsedProfile.partnerName;
+          if (parsedProfile.yourAvatar) state.yourAvatar = parsedProfile.yourAvatar;
+          if (parsedProfile.partnerAvatar) state.partnerAvatar = parsedProfile.partnerAvatar;
+          if (parsedProfile.loveNote) state.loveNote = parsedProfile.loveNote;
+        }
+        state.profileUpdatedAt = Math.max(localProfileTime, Date.now());
+        cloudData.pinCode = state.pinCode;
+        cloudData.yourName = state.yourName;
+        cloudData.partnerName = state.partnerName;
+        cloudData.yourAvatar = state.yourAvatar;
+        cloudData.partnerAvatar = state.partnerAvatar;
+        cloudData.loveNote = state.loveNote;
+        cloudData.profileUpdatedAt = state.profileUpdatedAt;
+
+        applyRemoteState(cloudData);
         await pushStateToSupabase();
+      } else {
+        console.log('✦ Retrieved existing Cloud state from Supabase!');
+        applyRemoteState(cloudData);
       }
     } else {
-      console.log('✦ Cloud database is empty, initializing with local state...');
+      console.log('✦ Cloud database is empty or uninitialized, pushing local state...');
       await pushStateToSupabase();
     }
   } catch (err) {
@@ -402,1456 +404,1456 @@ const defaultState = {
   activePlaylistId: 'pl-ours',
   playlists: [
     {
-        "id": "pl-ours",
-        "title": "✦ our melodies.",
-        "desc": "after rain and lean with u <3 — lagu-lagu pengingat cerita kita berdua",
-        "cover": "images/spotify_covers/jakarta.jpg",
-        "tracks": [
-            {
-                "id": "t1",
-                "title": "Those Eyes",
-                "artist": "New West",
-                "album": "Those Eyes - Single",
-                "memory": "Tatapan pertama yang bikin aku langsung jatuh hati sama kamu 👀✨",
-                "dateAdded": "Feb 25, 2025",
-                "duration": "3:41",
-                "liked": true,
-                "cover": "images/covers/those_eyes.jpg",
-                "audioUrl": "audio/new_west_those_eyes.m4a",
-                "youtubeId": "1-xGerv5FOk"
-            },
-            {
-                "id": "t2",
-                "title": "Atlantis",
-                "artist": "Seafret",
-                "album": "Tell Me It's Real",
-                "memory": "Lagu yang selalu kita putar pas perjalanan malam di mobil 🌃",
-                "dateAdded": "Feb 25, 2025",
-                "duration": "4:02",
-                "liked": true,
-                "cover": "images/covers/atlantis.jpg",
-                "audioUrl": "audio/seafret_atlantis.m4a",
-                "youtubeId": "gVAy3IZiL0s"
-            },
-            {
-                "id": "t3",
-                "title": "Terbuang Dalam Waktu",
-                "artist": "Barasuara",
-                "album": "Pikiran dan Perjalanan",
-                "memory": "Lagu yang nemenin kita waktu saling cerita mimpi dan masa depan 💭",
-                "dateAdded": "Feb 25, 2025",
-                "duration": "4:32",
-                "liked": true,
-                "cover": "images/covers/terbuang_dalam_waktu.jpg",
-                "audioUrl": "audio/barasuara_terbuang_dalam_waktu.m4a",
-                "youtubeId": "J40iXb6D_24"
-            },
-            {
-                "id": "t4",
-                "title": "Best Part",
-                "artist": "Daniel Caesar ft. H.E.R.",
-                "album": "Freudian",
-                "memory": "If life is a movie, oh you're the best part 🤍",
-                "dateAdded": "Feb 25, 2025",
-                "duration": "3:29",
-                "liked": true,
-                "cover": "images/covers/best_part.jpg",
-                "audioUrl": "audio/daniel_caesar_best_part.m4a",
-                "youtubeId": "hKgl5-lkT8U"
-            },
-            {
-                "id": "t5",
-                "title": "Mistikus Cinta",
-                "artist": "Dewa 19",
-                "album": "Cintailah Cinta",
-                "memory": "Ketika rasa itu magis dan tak bisa dijelaskan kata-kata 🌌",
-                "dateAdded": "Feb 25, 2025",
-                "duration": "5:38",
-                "liked": true,
-                "cover": "images/covers/mistikus_cinta.jpg",
-                "audioUrl": "audio/dewa19_mistikus_cinta.m4a",
-                "youtubeId": "XQYm2t73Gv4"
-            },
-            {
-                "id": "t-dua-sejoli",
-                "title": "Dua Sejoli",
-                "artist": "Dewa 19",
-                "album": "Bintang Lima",
-                "memory": "Usaplah dahiku, genggamlah tanganku... Lagu cinta abadi kita berdua 💕",
-                "dateAdded": "Feb 25, 2025",
-                "duration": "5:26",
-                "liked": true,
-                "cover": "images/covers/dewa19_dua_sejoli.jpg",
-                "audioUrl": "audio/dewa19_dua_sejoli.m4a",
-                "youtubeId": "IU_v67PFnqk"
-            }
-        ]
+      "id": "pl-ours",
+      "title": "✦ our melodies.",
+      "desc": "after rain and lean with u <3 — lagu-lagu pengingat cerita kita berdua",
+      "cover": "images/spotify_covers/jakarta.jpg",
+      "tracks": [
+        {
+          "id": "t1",
+          "title": "Those Eyes",
+          "artist": "New West",
+          "album": "Those Eyes - Single",
+          "memory": "Tatapan pertama yang bikin aku langsung jatuh hati sama kamu 👀✨",
+          "dateAdded": "Feb 25, 2025",
+          "duration": "3:41",
+          "liked": true,
+          "cover": "images/covers/those_eyes.jpg",
+          "audioUrl": "audio/new_west_those_eyes.m4a",
+          "youtubeId": "1-xGerv5FOk"
+        },
+        {
+          "id": "t2",
+          "title": "Atlantis",
+          "artist": "Seafret",
+          "album": "Tell Me It's Real",
+          "memory": "Lagu yang selalu kita putar pas perjalanan malam di mobil 🌃",
+          "dateAdded": "Feb 25, 2025",
+          "duration": "4:02",
+          "liked": true,
+          "cover": "images/covers/atlantis.jpg",
+          "audioUrl": "audio/seafret_atlantis.m4a",
+          "youtubeId": "gVAy3IZiL0s"
+        },
+        {
+          "id": "t3",
+          "title": "Terbuang Dalam Waktu",
+          "artist": "Barasuara",
+          "album": "Pikiran dan Perjalanan",
+          "memory": "Lagu yang nemenin kita waktu saling cerita mimpi dan masa depan 💭",
+          "dateAdded": "Feb 25, 2025",
+          "duration": "4:32",
+          "liked": true,
+          "cover": "images/covers/terbuang_dalam_waktu.jpg",
+          "audioUrl": "audio/barasuara_terbuang_dalam_waktu.m4a",
+          "youtubeId": "J40iXb6D_24"
+        },
+        {
+          "id": "t4",
+          "title": "Best Part",
+          "artist": "Daniel Caesar ft. H.E.R.",
+          "album": "Freudian",
+          "memory": "If life is a movie, oh you're the best part 🤍",
+          "dateAdded": "Feb 25, 2025",
+          "duration": "3:29",
+          "liked": true,
+          "cover": "images/covers/best_part.jpg",
+          "audioUrl": "audio/daniel_caesar_best_part.m4a",
+          "youtubeId": "hKgl5-lkT8U"
+        },
+        {
+          "id": "t5",
+          "title": "Mistikus Cinta",
+          "artist": "Dewa 19",
+          "album": "Cintailah Cinta",
+          "memory": "Ketika rasa itu magis dan tak bisa dijelaskan kata-kata 🌌",
+          "dateAdded": "Feb 25, 2025",
+          "duration": "5:38",
+          "liked": true,
+          "cover": "images/covers/mistikus_cinta.jpg",
+          "audioUrl": "audio/dewa19_mistikus_cinta.m4a",
+          "youtubeId": "XQYm2t73Gv4"
+        },
+        {
+          "id": "t-dua-sejoli",
+          "title": "Dua Sejoli",
+          "artist": "Dewa 19",
+          "album": "Bintang Lima",
+          "memory": "Usaplah dahiku, genggamlah tanganku... Lagu cinta abadi kita berdua 💕",
+          "dateAdded": "Feb 25, 2025",
+          "duration": "5:26",
+          "liked": true,
+          "cover": "images/covers/dewa19_dua_sejoli.jpg",
+          "audioUrl": "audio/dewa19_dua_sejoli.m4a",
+          "youtubeId": "IU_v67PFnqk"
+        }
+      ]
     },
     {
-        "id": "pl-1",
-        "title": "✦ jakarta.",
-        "desc": "after rain and lean with u <3 — lagu-lagu pengingat cerita kita berdua di Jakarta",
-        "cover": "images/spotify_covers/jakarta.jpg",
-        "tracks": [
-            {
-                "id": "t1",
-                "title": "Those Eyes",
-                "artist": "New West",
-                "album": "Those Eyes - Single",
-                "memory": "Tatapan pertama yang bikin aku langsung jatuh hati sama kamu 👀✨",
-                "dateAdded": "Feb 25, 2025",
-                "duration": "3:41",
-                "liked": true,
-                "cover": "images/covers/those_eyes.jpg",
-                "audioUrl": "audio/new_west_those_eyes.m4a",
-                "youtubeId": "1-xGerv5FOk"
-            },
-            {
-                "id": "t2",
-                "title": "Atlantis",
-                "artist": "Seafret",
-                "album": "Tell Me It's Real",
-                "memory": "Lagu yang selalu kita putar pas perjalanan malam di mobil 🌃",
-                "dateAdded": "Feb 25, 2025",
-                "duration": "4:02",
-                "liked": true,
-                "cover": "images/covers/atlantis.jpg",
-                "audioUrl": "audio/seafret_atlantis.m4a",
-                "youtubeId": "gVAy3IZiL0s"
-            },
-            {
-                "id": "t3",
-                "title": "Terbuang Dalam Waktu",
-                "artist": "Barasuara",
-                "album": "Terbuang Dalam Waktu - Single",
-                "memory": "Lagu favorit kita waktu kehujanan bareng sambil ketawa-tawa ☔🤍",
-                "dateAdded": "Feb 25, 2025",
-                "duration": "4:59",
-                "liked": true,
-                "cover": "images/covers/terbuang_dalam_waktu.jpg",
-                "audioUrl": "audio/barasuara_terbuang_dalam_waktu.m4a",
-                "youtubeId": "pS-WJ7h_5k0"
-            },
-            {
-                "id": "t4",
-                "title": "Best Part",
-                "artist": "Daniel Caesar",
-                "album": "Freudian",
-                "memory": "You are literally the best part of my every single day ☕🌸",
-                "dateAdded": "Mar 14, 2025",
-                "duration": "3:30",
-                "liked": false,
-                "cover": "images/covers/best_part.jpg",
-                "audioUrl": "audio/daniel_caesar_best_part.m4a",
-                "youtubeId": "hKgl5-lkT8U"
-            },
-            {
-                "id": "t5",
-                "title": "Mistikus Cinta",
-                "artist": "Dewa 19",
-                "album": "Cintailah Cinta",
-                "memory": "lagu yang buat kecanduan 💕",
-                "dateAdded": "Oct 19, 2026",
-                "duration": "5:38",
-                "liked": true,
-                "cover": "images/covers/mistikus_cinta.jpg",
-                "audioUrl": "audio/dewa19_mistikus_cinta.m4a",
-                "youtubeId": "qZdYnlWJlPw"
-            },
-            {
-                "id": "pl-1-dua-sejoli",
-                "title": "Dua Sejoli",
-                "artist": "Dewa 19",
-                "album": "Bintang Lima",
-                "memory": "Usaplah dahiku, genggamlah tanganku... Lagu cinta abadi kita berdua 💕",
-                "dateAdded": "Feb 25, 2025",
-                "duration": "5:26",
-                "liked": true,
-                "cover": "images/covers/dewa19_dua_sejoli.jpg",
-                "audioUrl": "audio/dewa19_dua_sejoli.m4a",
-                "youtubeId": "IU_v67PFnqk"
-            },
-            {
-                "id": "pl-1-t3",
-                "title": "K.",
-                "artist": "Cigarettes After Sex",
-                "album": "✦ jakarta.",
-                "memory": "Suasana tenang dan damai tiap kali denger lagu ini bareng kamu ☕",
-                "dateAdded": "Oct 20, 2026",
-                "duration": "5:19",
-                "liked": false,
-                "cover": "images/covers/cigarettes_after_sex_k.jpg",
-                "audioUrl": "audio/cigarettes_after_sex_k.m4a",
-                "youtubeId": ""
-            },
-            {
-                "id": "pl-1-t4",
-                "title": "What Was I Made For? [From The Motion Picture \"Barbie\"]",
-                "artist": "Billie Eilish",
-                "album": "✦ jakarta.",
-                "memory": "Setiap liriknya berasa kayak cerita kita berdua 🤍",
-                "dateAdded": "Oct 20, 2026",
-                "duration": "3:42",
-                "liked": true,
-                "cover": "images/covers/billie_eilish_what_was_i_made_for.jpg",
-                "audioUrl": "audio/billie_eilish_what_was_i_made_for.m4a",
-                "youtubeId": ""
-            },
-            {
-                "id": "pl-1-t5",
-                "title": "It Will Rain",
-                "artist": "Bruno Mars",
-                "album": "✦ jakarta.",
-                "memory": "Ingat ga waktu lagu ini pertama kali kita putar di mobil? 🚗",
-                "dateAdded": "Oct 20, 2026",
-                "duration": "4:17",
-                "liked": false,
-                "cover": "images/covers/bruno_mars_it_will_rain.jpg",
-                "audioUrl": "audio/bruno_mars_it_will_rain.m4a",
-                "youtubeId": ""
-            },
-            {
-                "id": "pl-1-t6",
-                "title": "When I Was Your Man",
-                "artist": "Bruno Mars",
-                "album": "✦ jakarta.",
-                "memory": "Senyummu langsung kebayang tiap intro lagu ini mulai 🌸",
-                "dateAdded": "Oct 20, 2026",
-                "duration": "3:33",
-                "liked": false,
-                "cover": "images/covers/bruno_mars_when_i_was_your_man.jpg",
-                "audioUrl": "audio/bruno_mars_when_i_was_your_man.m4a",
-                "youtubeId": ""
-            },
-            {
-                "id": "pl-1-t7",
-                "title": "On Bended Knee",
-                "artist": "Boyz II Men",
-                "album": "✦ jakarta.",
-                "memory": "Melodi manis yang selalu ngingetin aku sama kamu 💕",
-                "dateAdded": "Oct 20, 2026",
-                "duration": "5:29",
-                "liked": true,
-                "cover": "images/covers/boyz_ii_men_on_bended_knee.jpg",
-                "audioUrl": "audio/boyz_ii_men_on_bended_knee.m4a",
-                "youtubeId": ""
-            },
-            {
-                "id": "pl-1-t8",
-                "title": "I Love You, I'm Sorry",
-                "artist": "Gracie Abrams",
-                "album": "✦ jakarta.",
-                "memory": "Lagu favorit waktu kita ngobrol berjam-jam tanpa bosen ✨",
-                "dateAdded": "Oct 20, 2026",
-                "duration": "2:37",
-                "liked": false,
-                "cover": "images/covers/gracie_abrams_i_love_you_im_sorry.jpg",
-                "audioUrl": "audio/gracie_abrams_i_love_you_im_sorry.m4a",
-                "youtubeId": ""
-            },
-            {
-                "id": "pl-1-t9",
-                "title": "End of Beginning",
-                "artist": "Djo",
-                "album": "✦ jakarta.",
-                "memory": "Suasana tenang dan damai tiap kali denger lagu ini bareng kamu ☕",
-                "dateAdded": "Oct 20, 2026",
-                "duration": "2:39",
-                "liked": false,
-                "cover": "images/covers/djo_end_of_beginning.jpg",
-                "audioUrl": "audio/djo_end_of_beginning.m4a",
-                "youtubeId": ""
-            },
-            {
-                "id": "pl-1-t10",
-                "title": "Walking Back Home",
-                "artist": "Vira Talisa",
-                "album": "✦ jakarta.",
-                "memory": "Setiap liriknya berasa kayak cerita kita berdua 🤍",
-                "dateAdded": "Oct 20, 2026",
-                "duration": "2:12",
-                "liked": true,
-                "cover": "images/covers/vira_talisa_walking_back_home.jpg",
-                "audioUrl": "audio/vira_talisa_walking_back_home.m4a",
-                "youtubeId": ""
-            },
-            {
-                "id": "pl-1-t11",
-                "title": "seasons",
-                "artist": "wave to earth",
-                "album": "✦ jakarta.",
-                "memory": "Ingat ga waktu lagu ini pertama kali kita putar di mobil? 🚗",
-                "dateAdded": "Oct 20, 2026",
-                "duration": "4:15",
-                "liked": false,
-                "cover": "images/covers/wave_to_earth_seasons.jpg",
-                "audioUrl": "audio/wave_to_earth_seasons.m4a",
-                "youtubeId": ""
-            },
-            {
-                "id": "pl-1-t12",
-                "title": "Summertime Sadness",
-                "artist": "Lana Del Rey",
-                "album": "✦ jakarta.",
-                "memory": "Senyummu langsung kebayang tiap intro lagu ini mulai 🌸",
-                "dateAdded": "Oct 20, 2026",
-                "duration": "4:25",
-                "liked": false,
-                "cover": "images/covers/lana_del_rey_summertime_sadness.jpg",
-                "audioUrl": "audio/lana_del_rey_summertime_sadness.m4a",
-                "youtubeId": ""
-            }
-        ]
+      "id": "pl-1",
+      "title": "✦ jakarta.",
+      "desc": "after rain and lean with u <3 — lagu-lagu pengingat cerita kita berdua di Jakarta",
+      "cover": "images/spotify_covers/jakarta.jpg",
+      "tracks": [
+        {
+          "id": "t1",
+          "title": "Those Eyes",
+          "artist": "New West",
+          "album": "Those Eyes - Single",
+          "memory": "Tatapan pertama yang bikin aku langsung jatuh hati sama kamu 👀✨",
+          "dateAdded": "Feb 25, 2025",
+          "duration": "3:41",
+          "liked": true,
+          "cover": "images/covers/those_eyes.jpg",
+          "audioUrl": "audio/new_west_those_eyes.m4a",
+          "youtubeId": "1-xGerv5FOk"
+        },
+        {
+          "id": "t2",
+          "title": "Atlantis",
+          "artist": "Seafret",
+          "album": "Tell Me It's Real",
+          "memory": "Lagu yang selalu kita putar pas perjalanan malam di mobil 🌃",
+          "dateAdded": "Feb 25, 2025",
+          "duration": "4:02",
+          "liked": true,
+          "cover": "images/covers/atlantis.jpg",
+          "audioUrl": "audio/seafret_atlantis.m4a",
+          "youtubeId": "gVAy3IZiL0s"
+        },
+        {
+          "id": "t3",
+          "title": "Terbuang Dalam Waktu",
+          "artist": "Barasuara",
+          "album": "Terbuang Dalam Waktu - Single",
+          "memory": "Lagu favorit kita waktu kehujanan bareng sambil ketawa-tawa ☔🤍",
+          "dateAdded": "Feb 25, 2025",
+          "duration": "4:59",
+          "liked": true,
+          "cover": "images/covers/terbuang_dalam_waktu.jpg",
+          "audioUrl": "audio/barasuara_terbuang_dalam_waktu.m4a",
+          "youtubeId": "pS-WJ7h_5k0"
+        },
+        {
+          "id": "t4",
+          "title": "Best Part",
+          "artist": "Daniel Caesar",
+          "album": "Freudian",
+          "memory": "You are literally the best part of my every single day ☕🌸",
+          "dateAdded": "Mar 14, 2025",
+          "duration": "3:30",
+          "liked": false,
+          "cover": "images/covers/best_part.jpg",
+          "audioUrl": "audio/daniel_caesar_best_part.m4a",
+          "youtubeId": "hKgl5-lkT8U"
+        },
+        {
+          "id": "t5",
+          "title": "Mistikus Cinta",
+          "artist": "Dewa 19",
+          "album": "Cintailah Cinta",
+          "memory": "lagu yang buat kecanduan 💕",
+          "dateAdded": "Oct 19, 2026",
+          "duration": "5:38",
+          "liked": true,
+          "cover": "images/covers/mistikus_cinta.jpg",
+          "audioUrl": "audio/dewa19_mistikus_cinta.m4a",
+          "youtubeId": "qZdYnlWJlPw"
+        },
+        {
+          "id": "pl-1-dua-sejoli",
+          "title": "Dua Sejoli",
+          "artist": "Dewa 19",
+          "album": "Bintang Lima",
+          "memory": "Usaplah dahiku, genggamlah tanganku... Lagu cinta abadi kita berdua 💕",
+          "dateAdded": "Feb 25, 2025",
+          "duration": "5:26",
+          "liked": true,
+          "cover": "images/covers/dewa19_dua_sejoli.jpg",
+          "audioUrl": "audio/dewa19_dua_sejoli.m4a",
+          "youtubeId": "IU_v67PFnqk"
+        },
+        {
+          "id": "pl-1-t3",
+          "title": "K.",
+          "artist": "Cigarettes After Sex",
+          "album": "✦ jakarta.",
+          "memory": "Suasana tenang dan damai tiap kali denger lagu ini bareng kamu ☕",
+          "dateAdded": "Oct 20, 2026",
+          "duration": "5:19",
+          "liked": false,
+          "cover": "images/covers/cigarettes_after_sex_k.jpg",
+          "audioUrl": "audio/cigarettes_after_sex_k.m4a",
+          "youtubeId": ""
+        },
+        {
+          "id": "pl-1-t4",
+          "title": "What Was I Made For? [From The Motion Picture \"Barbie\"]",
+          "artist": "Billie Eilish",
+          "album": "✦ jakarta.",
+          "memory": "Setiap liriknya berasa kayak cerita kita berdua 🤍",
+          "dateAdded": "Oct 20, 2026",
+          "duration": "3:42",
+          "liked": true,
+          "cover": "images/covers/billie_eilish_what_was_i_made_for.jpg",
+          "audioUrl": "audio/billie_eilish_what_was_i_made_for.m4a",
+          "youtubeId": ""
+        },
+        {
+          "id": "pl-1-t5",
+          "title": "It Will Rain",
+          "artist": "Bruno Mars",
+          "album": "✦ jakarta.",
+          "memory": "Ingat ga waktu lagu ini pertama kali kita putar di mobil? 🚗",
+          "dateAdded": "Oct 20, 2026",
+          "duration": "4:17",
+          "liked": false,
+          "cover": "images/covers/bruno_mars_it_will_rain.jpg",
+          "audioUrl": "audio/bruno_mars_it_will_rain.m4a",
+          "youtubeId": ""
+        },
+        {
+          "id": "pl-1-t6",
+          "title": "When I Was Your Man",
+          "artist": "Bruno Mars",
+          "album": "✦ jakarta.",
+          "memory": "Senyummu langsung kebayang tiap intro lagu ini mulai 🌸",
+          "dateAdded": "Oct 20, 2026",
+          "duration": "3:33",
+          "liked": false,
+          "cover": "images/covers/bruno_mars_when_i_was_your_man.jpg",
+          "audioUrl": "audio/bruno_mars_when_i_was_your_man.m4a",
+          "youtubeId": ""
+        },
+        {
+          "id": "pl-1-t7",
+          "title": "On Bended Knee",
+          "artist": "Boyz II Men",
+          "album": "✦ jakarta.",
+          "memory": "Melodi manis yang selalu ngingetin aku sama kamu 💕",
+          "dateAdded": "Oct 20, 2026",
+          "duration": "5:29",
+          "liked": true,
+          "cover": "images/covers/boyz_ii_men_on_bended_knee.jpg",
+          "audioUrl": "audio/boyz_ii_men_on_bended_knee.m4a",
+          "youtubeId": ""
+        },
+        {
+          "id": "pl-1-t8",
+          "title": "I Love You, I'm Sorry",
+          "artist": "Gracie Abrams",
+          "album": "✦ jakarta.",
+          "memory": "Lagu favorit waktu kita ngobrol berjam-jam tanpa bosen ✨",
+          "dateAdded": "Oct 20, 2026",
+          "duration": "2:37",
+          "liked": false,
+          "cover": "images/covers/gracie_abrams_i_love_you_im_sorry.jpg",
+          "audioUrl": "audio/gracie_abrams_i_love_you_im_sorry.m4a",
+          "youtubeId": ""
+        },
+        {
+          "id": "pl-1-t9",
+          "title": "End of Beginning",
+          "artist": "Djo",
+          "album": "✦ jakarta.",
+          "memory": "Suasana tenang dan damai tiap kali denger lagu ini bareng kamu ☕",
+          "dateAdded": "Oct 20, 2026",
+          "duration": "2:39",
+          "liked": false,
+          "cover": "images/covers/djo_end_of_beginning.jpg",
+          "audioUrl": "audio/djo_end_of_beginning.m4a",
+          "youtubeId": ""
+        },
+        {
+          "id": "pl-1-t10",
+          "title": "Walking Back Home",
+          "artist": "Vira Talisa",
+          "album": "✦ jakarta.",
+          "memory": "Setiap liriknya berasa kayak cerita kita berdua 🤍",
+          "dateAdded": "Oct 20, 2026",
+          "duration": "2:12",
+          "liked": true,
+          "cover": "images/covers/vira_talisa_walking_back_home.jpg",
+          "audioUrl": "audio/vira_talisa_walking_back_home.m4a",
+          "youtubeId": ""
+        },
+        {
+          "id": "pl-1-t11",
+          "title": "seasons",
+          "artist": "wave to earth",
+          "album": "✦ jakarta.",
+          "memory": "Ingat ga waktu lagu ini pertama kali kita putar di mobil? 🚗",
+          "dateAdded": "Oct 20, 2026",
+          "duration": "4:15",
+          "liked": false,
+          "cover": "images/covers/wave_to_earth_seasons.jpg",
+          "audioUrl": "audio/wave_to_earth_seasons.m4a",
+          "youtubeId": ""
+        },
+        {
+          "id": "pl-1-t12",
+          "title": "Summertime Sadness",
+          "artist": "Lana Del Rey",
+          "album": "✦ jakarta.",
+          "memory": "Senyummu langsung kebayang tiap intro lagu ini mulai 🌸",
+          "dateAdded": "Oct 20, 2026",
+          "duration": "4:25",
+          "liked": false,
+          "cover": "images/covers/lana_del_rey_summertime_sadness.jpg",
+          "audioUrl": "audio/lana_del_rey_summertime_sadness.m4a",
+          "youtubeId": ""
+        }
+      ]
     },
     {
-        "id": "pl-fallin-love",
-        "title": "y'll fallin' in love? ｡𖦹°‧.𖥔 ݁ ˖",
-        "desc": "the art of loving — saat hati kita saling jatuh cinta setiap detiknya ｡𖦹°‧.𖥔 ݁ ˖",
-        "cover": "images/spotify_covers/fallin_in_love.jpg",
-        "tracks": [
-            {
-                "id": "pl-fallin-love-t1",
-                "title": "That's What I Like",
-                "artist": "Bruno Mars",
-                "album": "y'll fallin' in love? ｡𖦹°‧.𖥔 ݁ ˖",
-                "memory": "Melodi manis yang selalu ngingetin aku sama kamu 💕",
-                "dateAdded": "Oct 20, 2026",
-                "duration": "3:26",
-                "liked": true,
-                "cover": "images/covers/bruno_mars_thats_what_i_like.jpg",
-                "audioUrl": "audio/bruno_mars_thats_what_i_like.m4a",
-                "youtubeId": ""
-            },
-            {
-                "id": "pl-fallin-love-t2",
-                "title": "Marry You",
-                "artist": "Bruno Mars",
-                "album": "y'll fallin' in love? ｡𖦹°‧.𖥔 ݁ ˖",
-                "memory": "Lagu favorit waktu kita ngobrol berjam-jam tanpa bosen ✨",
-                "dateAdded": "Oct 20, 2026",
-                "duration": "3:50",
-                "liked": false,
-                "cover": "images/covers/bruno_mars_marry_you.jpg",
-                "audioUrl": "audio/bruno_mars_marry_you.m4a",
-                "youtubeId": ""
-            },
-            {
-                "id": "pl-fallin-love-t3",
-                "title": "I Wanna Be Yours",
-                "artist": "Arctic Monkeys",
-                "album": "y'll fallin' in love? ｡𖦹°‧.𖥔 ݁ ˖",
-                "memory": "Suasana tenang dan damai tiap kali denger lagu ini bareng kamu ☕",
-                "dateAdded": "Oct 20, 2026",
-                "duration": "3:03",
-                "liked": false,
-                "cover": "images/covers/i_wanna_be_yours.jpg",
-                "audioUrl": "audio/arctic_monkeys_i_wanna_be_yours.m4a",
-                "youtubeId": ""
-            },
-            {
-                "id": "pl-fallin-love-t4",
-                "title": "\"Slut!\" (Taylor's Version) (From The Vault)",
-                "artist": "Taylor Swift",
-                "album": "y'll fallin' in love? ｡𖦹°‧.𖥔 ݁ ˖",
-                "memory": "Setiap liriknya berasa kayak cerita kita berdua 🤍",
-                "dateAdded": "Oct 20, 2026",
-                "duration": "3:00",
-                "liked": true,
-                "cover": "images/covers/taylor_swift_slut.jpg",
-                "audioUrl": "audio/taylor_swift_slut.m4a",
-                "youtubeId": ""
-            },
-            {
-                "id": "pl-fallin-love-t5",
-                "title": "lowkey",
-                "artist": "NIKI",
-                "album": "y'll fallin' in love? ｡𖦹°‧.𖥔 ݁ ˖",
-                "memory": "Ingat ga waktu lagu ini pertama kali kita putar di mobil? 🚗",
-                "dateAdded": "Oct 20, 2026",
-                "duration": "2:51",
-                "liked": false,
-                "cover": "images/covers/niki_lowkey.jpg",
-                "audioUrl": "audio/niki_lowkey.m4a",
-                "youtubeId": ""
-            },
-            {
-                "id": "pl-fallin-love-t6",
-                "title": "Falling In Love",
-                "artist": "Cigarettes After Sex",
-                "album": "y'll fallin' in love? ｡𖦹°‧.𖥔 ݁ ˖",
-                "memory": "Senyummu langsung kebayang tiap intro lagu ini mulai 🌸",
-                "dateAdded": "Oct 20, 2026",
-                "duration": "4:05",
-                "liked": false,
-                "cover": "images/covers/cigarettes_after_sex_falling_in_love.jpg",
-                "audioUrl": "audio/cigarettes_after_sex_falling_in_love.m4a",
-                "youtubeId": ""
-            },
-            {
-                "id": "pl-fallin-love-t7",
-                "title": "The Way I Loved You (Taylor’s Version)",
-                "artist": "Taylor Swift",
-                "album": "y'll fallin' in love? ｡𖦹°‧.𖥔 ݁ ˖",
-                "memory": "Melodi manis yang selalu ngingetin aku sama kamu 💕",
-                "dateAdded": "Oct 20, 2026",
-                "duration": "4:03",
-                "liked": true,
-                "cover": "images/covers/taylor_swift_the_way_i_loved_you.jpg",
-                "audioUrl": "audio/taylor_swift_the_way_i_loved_you.m4a",
-                "youtubeId": ""
-            },
-            {
-                "id": "pl-fallin-love-t8",
-                "title": "No. 1 Party Anthem",
-                "artist": "Arctic Monkeys",
-                "album": "y'll fallin' in love? ｡𖦹°‧.𖥔 ݁ ˖",
-                "memory": "Lagu favorit waktu kita ngobrol berjam-jam tanpa bosen ✨",
-                "dateAdded": "Oct 20, 2026",
-                "duration": "4:03",
-                "liked": false,
-                "cover": "images/covers/arctic_monkeys_no_1_party_anthem.jpg",
-                "audioUrl": "audio/arctic_monkeys_no_1_party_anthem.m4a",
-                "youtubeId": ""
-            },
-            {
-                "id": "pl-fallin-love-t9",
-                "title": "Fearless (Taylor’s Version)",
-                "artist": "Taylor Swift",
-                "album": "y'll fallin' in love? ｡𖦹°‧.𖥔 ݁ ˖",
-                "memory": "Suasana tenang dan damai tiap kali denger lagu ini bareng kamu ☕",
-                "dateAdded": "Oct 20, 2026",
-                "duration": "4:01",
-                "liked": false,
-                "cover": "images/covers/taylor_swift_fearless.jpg",
-                "audioUrl": "audio/taylor_swift_fearless.m4a",
-                "youtubeId": ""
-            },
-            {
-                "id": "pl-fallin-love-t10",
-                "title": "i wanna be your girlfriend",
-                "artist": "girl in red",
-                "album": "y'll fallin' in love? ｡𖦹°‧.𖥔 ݁ ˖",
-                "memory": "Setiap liriknya berasa kayak cerita kita berdua 🤍",
-                "dateAdded": "Oct 20, 2026",
-                "duration": "3:24",
-                "liked": true,
-                "cover": "images/covers/girl_in_red_i_wanna_be_your_girlfriend.jpg",
-                "audioUrl": "audio/girl_in_red_i_wanna_be_your_girlfriend.m4a",
-                "youtubeId": ""
-            },
-            {
-                "id": "pl-fallin-love-t11",
-                "title": "Alexandra",
-                "artist": "Reality Club",
-                "album": "y'll fallin' in love? ｡𖦹°‧.𖥔 ݁ ˖",
-                "memory": "Ingat ga waktu lagu ini pertama kali kita putar di mobil? 🚗",
-                "dateAdded": "Oct 20, 2026",
-                "duration": "3:58",
-                "liked": false,
-                "cover": "images/covers/alexandra.jpg",
-                "audioUrl": "audio/reality_club_alexandra.m4a",
-                "youtubeId": ""
-            },
-            {
-                "id": "pl-fallin-love-t12",
-                "title": "Sure Thing",
-                "artist": "Miguel",
-                "album": "y'll fallin' in love? ｡𖦹°‧.𖥔 ݁ ˖",
-                "memory": "Senyummu langsung kebayang tiap intro lagu ini mulai 🌸",
-                "dateAdded": "Oct 20, 2026",
-                "duration": "3:15",
-                "liked": false,
-                "cover": "images/covers/miguel_sure_thing.jpg",
-                "audioUrl": "audio/miguel_sure_thing.m4a",
-                "youtubeId": ""
-            }
-        ]
+      "id": "pl-fallin-love",
+      "title": "y'll fallin' in love? ｡𖦹°‧.𖥔 ݁ ˖",
+      "desc": "the art of loving — saat hati kita saling jatuh cinta setiap detiknya ｡𖦹°‧.𖥔 ݁ ˖",
+      "cover": "images/spotify_covers/fallin_in_love.jpg",
+      "tracks": [
+        {
+          "id": "pl-fallin-love-t1",
+          "title": "That's What I Like",
+          "artist": "Bruno Mars",
+          "album": "y'll fallin' in love? ｡𖦹°‧.𖥔 ݁ ˖",
+          "memory": "Melodi manis yang selalu ngingetin aku sama kamu 💕",
+          "dateAdded": "Oct 20, 2026",
+          "duration": "3:26",
+          "liked": true,
+          "cover": "images/covers/bruno_mars_thats_what_i_like.jpg",
+          "audioUrl": "audio/bruno_mars_thats_what_i_like.m4a",
+          "youtubeId": ""
+        },
+        {
+          "id": "pl-fallin-love-t2",
+          "title": "Marry You",
+          "artist": "Bruno Mars",
+          "album": "y'll fallin' in love? ｡𖦹°‧.𖥔 ݁ ˖",
+          "memory": "Lagu favorit waktu kita ngobrol berjam-jam tanpa bosen ✨",
+          "dateAdded": "Oct 20, 2026",
+          "duration": "3:50",
+          "liked": false,
+          "cover": "images/covers/bruno_mars_marry_you.jpg",
+          "audioUrl": "audio/bruno_mars_marry_you.m4a",
+          "youtubeId": ""
+        },
+        {
+          "id": "pl-fallin-love-t3",
+          "title": "I Wanna Be Yours",
+          "artist": "Arctic Monkeys",
+          "album": "y'll fallin' in love? ｡𖦹°‧.𖥔 ݁ ˖",
+          "memory": "Suasana tenang dan damai tiap kali denger lagu ini bareng kamu ☕",
+          "dateAdded": "Oct 20, 2026",
+          "duration": "3:03",
+          "liked": false,
+          "cover": "images/covers/i_wanna_be_yours.jpg",
+          "audioUrl": "audio/arctic_monkeys_i_wanna_be_yours.m4a",
+          "youtubeId": ""
+        },
+        {
+          "id": "pl-fallin-love-t4",
+          "title": "\"Slut!\" (Taylor's Version) (From The Vault)",
+          "artist": "Taylor Swift",
+          "album": "y'll fallin' in love? ｡𖦹°‧.𖥔 ݁ ˖",
+          "memory": "Setiap liriknya berasa kayak cerita kita berdua 🤍",
+          "dateAdded": "Oct 20, 2026",
+          "duration": "3:00",
+          "liked": true,
+          "cover": "images/covers/taylor_swift_slut.jpg",
+          "audioUrl": "audio/taylor_swift_slut.m4a",
+          "youtubeId": ""
+        },
+        {
+          "id": "pl-fallin-love-t5",
+          "title": "lowkey",
+          "artist": "NIKI",
+          "album": "y'll fallin' in love? ｡𖦹°‧.𖥔 ݁ ˖",
+          "memory": "Ingat ga waktu lagu ini pertama kali kita putar di mobil? 🚗",
+          "dateAdded": "Oct 20, 2026",
+          "duration": "2:51",
+          "liked": false,
+          "cover": "images/covers/niki_lowkey.jpg",
+          "audioUrl": "audio/niki_lowkey.m4a",
+          "youtubeId": ""
+        },
+        {
+          "id": "pl-fallin-love-t6",
+          "title": "Falling In Love",
+          "artist": "Cigarettes After Sex",
+          "album": "y'll fallin' in love? ｡𖦹°‧.𖥔 ݁ ˖",
+          "memory": "Senyummu langsung kebayang tiap intro lagu ini mulai 🌸",
+          "dateAdded": "Oct 20, 2026",
+          "duration": "4:05",
+          "liked": false,
+          "cover": "images/covers/cigarettes_after_sex_falling_in_love.jpg",
+          "audioUrl": "audio/cigarettes_after_sex_falling_in_love.m4a",
+          "youtubeId": ""
+        },
+        {
+          "id": "pl-fallin-love-t7",
+          "title": "The Way I Loved You (Taylor’s Version)",
+          "artist": "Taylor Swift",
+          "album": "y'll fallin' in love? ｡𖦹°‧.𖥔 ݁ ˖",
+          "memory": "Melodi manis yang selalu ngingetin aku sama kamu 💕",
+          "dateAdded": "Oct 20, 2026",
+          "duration": "4:03",
+          "liked": true,
+          "cover": "images/covers/taylor_swift_the_way_i_loved_you.jpg",
+          "audioUrl": "audio/taylor_swift_the_way_i_loved_you.m4a",
+          "youtubeId": ""
+        },
+        {
+          "id": "pl-fallin-love-t8",
+          "title": "No. 1 Party Anthem",
+          "artist": "Arctic Monkeys",
+          "album": "y'll fallin' in love? ｡𖦹°‧.𖥔 ݁ ˖",
+          "memory": "Lagu favorit waktu kita ngobrol berjam-jam tanpa bosen ✨",
+          "dateAdded": "Oct 20, 2026",
+          "duration": "4:03",
+          "liked": false,
+          "cover": "images/covers/arctic_monkeys_no_1_party_anthem.jpg",
+          "audioUrl": "audio/arctic_monkeys_no_1_party_anthem.m4a",
+          "youtubeId": ""
+        },
+        {
+          "id": "pl-fallin-love-t9",
+          "title": "Fearless (Taylor’s Version)",
+          "artist": "Taylor Swift",
+          "album": "y'll fallin' in love? ｡𖦹°‧.𖥔 ݁ ˖",
+          "memory": "Suasana tenang dan damai tiap kali denger lagu ini bareng kamu ☕",
+          "dateAdded": "Oct 20, 2026",
+          "duration": "4:01",
+          "liked": false,
+          "cover": "images/covers/taylor_swift_fearless.jpg",
+          "audioUrl": "audio/taylor_swift_fearless.m4a",
+          "youtubeId": ""
+        },
+        {
+          "id": "pl-fallin-love-t10",
+          "title": "i wanna be your girlfriend",
+          "artist": "girl in red",
+          "album": "y'll fallin' in love? ｡𖦹°‧.𖥔 ݁ ˖",
+          "memory": "Setiap liriknya berasa kayak cerita kita berdua 🤍",
+          "dateAdded": "Oct 20, 2026",
+          "duration": "3:24",
+          "liked": true,
+          "cover": "images/covers/girl_in_red_i_wanna_be_your_girlfriend.jpg",
+          "audioUrl": "audio/girl_in_red_i_wanna_be_your_girlfriend.m4a",
+          "youtubeId": ""
+        },
+        {
+          "id": "pl-fallin-love-t11",
+          "title": "Alexandra",
+          "artist": "Reality Club",
+          "album": "y'll fallin' in love? ｡𖦹°‧.𖥔 ݁ ˖",
+          "memory": "Ingat ga waktu lagu ini pertama kali kita putar di mobil? 🚗",
+          "dateAdded": "Oct 20, 2026",
+          "duration": "3:58",
+          "liked": false,
+          "cover": "images/covers/alexandra.jpg",
+          "audioUrl": "audio/reality_club_alexandra.m4a",
+          "youtubeId": ""
+        },
+        {
+          "id": "pl-fallin-love-t12",
+          "title": "Sure Thing",
+          "artist": "Miguel",
+          "album": "y'll fallin' in love? ｡𖦹°‧.𖥔 ݁ ˖",
+          "memory": "Senyummu langsung kebayang tiap intro lagu ini mulai 🌸",
+          "dateAdded": "Oct 20, 2026",
+          "duration": "3:15",
+          "liked": false,
+          "cover": "images/covers/miguel_sure_thing.jpg",
+          "audioUrl": "audio/miguel_sure_thing.m4a",
+          "youtubeId": ""
+        }
+      ]
     },
     {
-        "id": "pl-candlelight",
-        "title": "candlelight🧘🏻‍♀️",
-        "desc": "warm vibes, candlelights, & sweet melodies buat nemenin hari santai kita 🧘🏻‍♀️",
-        "cover": "images/spotify_covers/candlelight.jpg",
-        "tracks": [
-            {
-                "id": "pl-candlelight-t1",
-                "title": "2002",
-                "artist": "Anne-Marie",
-                "album": "candlelight🧘🏻‍♀️",
-                "memory": "Melodi manis yang selalu ngingetin aku sama kamu 💕",
-                "dateAdded": "Oct 20, 2026",
-                "duration": "3:06",
-                "liked": true,
-                "cover": "images/covers/annemarie_2002.jpg",
-                "audioUrl": "audio/annemarie_2002.m4a",
-                "youtubeId": ""
-            },
-            {
-                "id": "pl-candlelight-t2",
-                "title": "Last Friday Night (T.G.I.F.)",
-                "artist": "Katy Perry",
-                "album": "candlelight🧘🏻‍♀️",
-                "memory": "Lagu favorit waktu kita ngobrol berjam-jam tanpa bosen ✨",
-                "dateAdded": "Oct 20, 2026",
-                "duration": "3:50",
-                "liked": false,
-                "cover": "images/covers/katy_perry_last_friday_night.jpg",
-                "audioUrl": "audio/katy_perry_last_friday_night.m4a",
-                "youtubeId": ""
-            },
-            {
-                "id": "pl-candlelight-t3",
-                "title": "34+35",
-                "artist": "Ariana Grande",
-                "album": "candlelight🧘🏻‍♀️",
-                "memory": "Suasana tenang dan damai tiap kali denger lagu ini bareng kamu ☕",
-                "dateAdded": "Oct 20, 2026",
-                "duration": "2:53",
-                "liked": false,
-                "cover": "images/covers/ariana_grande_3435.jpg",
-                "audioUrl": "audio/ariana_grande_3435.m4a",
-                "youtubeId": ""
-            },
-            {
-                "id": "pl-candlelight-t4",
-                "title": "supernatural",
-                "artist": "Ariana Grande",
-                "album": "candlelight🧘🏻‍♀️",
-                "memory": "Setiap liriknya berasa kayak cerita kita berdua 🤍",
-                "dateAdded": "Oct 20, 2026",
-                "duration": "2:43",
-                "liked": true,
-                "cover": "images/covers/ariana_grande_supernatural.jpg",
-                "audioUrl": "audio/ariana_grande_supernatural.m4a",
-                "youtubeId": ""
-            },
-            {
-                "id": "pl-candlelight-t5",
-                "title": "All Of The Girls You Loved Before",
-                "artist": "Taylor Swift",
-                "album": "candlelight🧘🏻‍♀️",
-                "memory": "Ingat ga waktu lagu ini pertama kali kita putar di mobil? 🚗",
-                "dateAdded": "Oct 20, 2026",
-                "duration": "3:41",
-                "liked": false,
-                "cover": "images/covers/taylor_swift_all_of_the_girls_you_loved_before.jpg",
-                "audioUrl": "audio/taylor_swift_all_of_the_girls_you_loved_before.m4a",
-                "youtubeId": ""
-            },
-            {
-                "id": "pl-candlelight-t6",
-                "title": "California Gurls - feat. Snoop Dogg",
-                "artist": "Katy Perry, Snoop Dogg",
-                "album": "candlelight🧘🏻‍♀️",
-                "memory": "Senyummu langsung kebayang tiap intro lagu ini mulai 🌸",
-                "dateAdded": "Oct 20, 2026",
-                "duration": "3:56",
-                "liked": false,
-                "cover": "images/covers/katy_perry_snoop_dogg_california_gurls_feat_snoop.jpg",
-                "audioUrl": "audio/katy_perry_snoop_dogg_california_gurls_feat_snoop.m4a",
-                "youtubeId": ""
-            },
-            {
-                "id": "pl-candlelight-t7",
-                "title": "Please Please Please",
-                "artist": "Sabrina Carpenter",
-                "album": "candlelight🧘🏻‍♀️",
-                "memory": "Melodi manis yang selalu ngingetin aku sama kamu 💕",
-                "dateAdded": "Oct 20, 2026",
-                "duration": "3:06",
-                "liked": true,
-                "cover": "images/covers/sabrina_carpenter_please_please_please.jpg",
-                "audioUrl": "audio/sabrina_carpenter_please_please_please.m4a",
-                "youtubeId": ""
-            },
-            {
-                "id": "pl-candlelight-t8",
-                "title": "obsessed",
-                "artist": "zandros, Limi",
-                "album": "candlelight🧘🏻‍♀️",
-                "memory": "Lagu favorit waktu kita ngobrol berjam-jam tanpa bosen ✨",
-                "dateAdded": "Oct 20, 2026",
-                "duration": "3:00",
-                "liked": false,
-                "cover": "images/covers/obsessed.jpg",
-                "audioUrl": "audio/zandros_limi_obsessed.m4a",
-                "youtubeId": ""
-            },
-            {
-                "id": "pl-candlelight-t9",
-                "title": "Last Friday Night (T.G.I.F.)",
-                "artist": "Katy Perry",
-                "album": "candlelight🧘🏻‍♀️",
-                "memory": "Suasana tenang dan damai tiap kali denger lagu ini bareng kamu ☕",
-                "dateAdded": "Oct 20, 2026",
-                "duration": "3:50",
-                "liked": false,
-                "cover": "images/covers/katy_perry_last_friday_night.jpg",
-                "audioUrl": "audio/katy_perry_last_friday_night.m4a",
-                "youtubeId": ""
-            },
-            {
-                "id": "pl-candlelight-t10",
-                "title": "Dangerous Woman",
-                "artist": "Ariana Grande",
-                "album": "candlelight🧘🏻‍♀️",
-                "memory": "Setiap liriknya berasa kayak cerita kita berdua 🤍",
-                "dateAdded": "Oct 20, 2026",
-                "duration": "3:55",
-                "liked": true,
-                "cover": "images/covers/ariana_grande_dangerous_woman.jpg",
-                "audioUrl": "audio/ariana_grande_dangerous_woman.m4a",
-                "youtubeId": ""
-            },
-            {
-                "id": "pl-candlelight-t11",
-                "title": "If I Ain't Got You",
-                "artist": "Alicia Keys",
-                "album": "candlelight🧘🏻‍♀️",
-                "memory": "Ingat ga waktu lagu ini pertama kali kita putar di mobil? 🚗",
-                "dateAdded": "Oct 20, 2026",
-                "duration": "3:48",
-                "liked": false,
-                "cover": "images/covers/alicia_keys_if_i_aint_got_you.jpg",
-                "audioUrl": "audio/alicia_keys_if_i_aint_got_you.m4a",
-                "youtubeId": ""
-            },
-            {
-                "id": "pl-candlelight-t12",
-                "title": "Water",
-                "artist": "Tyla",
-                "album": "candlelight🧘🏻‍♀️",
-                "memory": "Senyummu langsung kebayang tiap intro lagu ini mulai 🌸",
-                "dateAdded": "Oct 20, 2026",
-                "duration": "3:20",
-                "liked": false,
-                "cover": "images/covers/tyla_water.jpg",
-                "audioUrl": "audio/tyla_water.m4a",
-                "youtubeId": ""
-            }
-        ]
+      "id": "pl-candlelight",
+      "title": "candlelight🧘🏻‍♀️",
+      "desc": "warm vibes, candlelights, & sweet melodies buat nemenin hari santai kita 🧘🏻‍♀️",
+      "cover": "images/spotify_covers/candlelight.jpg",
+      "tracks": [
+        {
+          "id": "pl-candlelight-t1",
+          "title": "2002",
+          "artist": "Anne-Marie",
+          "album": "candlelight🧘🏻‍♀️",
+          "memory": "Melodi manis yang selalu ngingetin aku sama kamu 💕",
+          "dateAdded": "Oct 20, 2026",
+          "duration": "3:06",
+          "liked": true,
+          "cover": "images/covers/annemarie_2002.jpg",
+          "audioUrl": "audio/annemarie_2002.m4a",
+          "youtubeId": ""
+        },
+        {
+          "id": "pl-candlelight-t2",
+          "title": "Last Friday Night (T.G.I.F.)",
+          "artist": "Katy Perry",
+          "album": "candlelight🧘🏻‍♀️",
+          "memory": "Lagu favorit waktu kita ngobrol berjam-jam tanpa bosen ✨",
+          "dateAdded": "Oct 20, 2026",
+          "duration": "3:50",
+          "liked": false,
+          "cover": "images/covers/katy_perry_last_friday_night.jpg",
+          "audioUrl": "audio/katy_perry_last_friday_night.m4a",
+          "youtubeId": ""
+        },
+        {
+          "id": "pl-candlelight-t3",
+          "title": "34+35",
+          "artist": "Ariana Grande",
+          "album": "candlelight🧘🏻‍♀️",
+          "memory": "Suasana tenang dan damai tiap kali denger lagu ini bareng kamu ☕",
+          "dateAdded": "Oct 20, 2026",
+          "duration": "2:53",
+          "liked": false,
+          "cover": "images/covers/ariana_grande_3435.jpg",
+          "audioUrl": "audio/ariana_grande_3435.m4a",
+          "youtubeId": ""
+        },
+        {
+          "id": "pl-candlelight-t4",
+          "title": "supernatural",
+          "artist": "Ariana Grande",
+          "album": "candlelight🧘🏻‍♀️",
+          "memory": "Setiap liriknya berasa kayak cerita kita berdua 🤍",
+          "dateAdded": "Oct 20, 2026",
+          "duration": "2:43",
+          "liked": true,
+          "cover": "images/covers/ariana_grande_supernatural.jpg",
+          "audioUrl": "audio/ariana_grande_supernatural.m4a",
+          "youtubeId": ""
+        },
+        {
+          "id": "pl-candlelight-t5",
+          "title": "All Of The Girls You Loved Before",
+          "artist": "Taylor Swift",
+          "album": "candlelight🧘🏻‍♀️",
+          "memory": "Ingat ga waktu lagu ini pertama kali kita putar di mobil? 🚗",
+          "dateAdded": "Oct 20, 2026",
+          "duration": "3:41",
+          "liked": false,
+          "cover": "images/covers/taylor_swift_all_of_the_girls_you_loved_before.jpg",
+          "audioUrl": "audio/taylor_swift_all_of_the_girls_you_loved_before.m4a",
+          "youtubeId": ""
+        },
+        {
+          "id": "pl-candlelight-t6",
+          "title": "California Gurls - feat. Snoop Dogg",
+          "artist": "Katy Perry, Snoop Dogg",
+          "album": "candlelight🧘🏻‍♀️",
+          "memory": "Senyummu langsung kebayang tiap intro lagu ini mulai 🌸",
+          "dateAdded": "Oct 20, 2026",
+          "duration": "3:56",
+          "liked": false,
+          "cover": "images/covers/katy_perry_snoop_dogg_california_gurls_feat_snoop.jpg",
+          "audioUrl": "audio/katy_perry_snoop_dogg_california_gurls_feat_snoop.m4a",
+          "youtubeId": ""
+        },
+        {
+          "id": "pl-candlelight-t7",
+          "title": "Please Please Please",
+          "artist": "Sabrina Carpenter",
+          "album": "candlelight🧘🏻‍♀️",
+          "memory": "Melodi manis yang selalu ngingetin aku sama kamu 💕",
+          "dateAdded": "Oct 20, 2026",
+          "duration": "3:06",
+          "liked": true,
+          "cover": "images/covers/sabrina_carpenter_please_please_please.jpg",
+          "audioUrl": "audio/sabrina_carpenter_please_please_please.m4a",
+          "youtubeId": ""
+        },
+        {
+          "id": "pl-candlelight-t8",
+          "title": "obsessed",
+          "artist": "zandros, Limi",
+          "album": "candlelight🧘🏻‍♀️",
+          "memory": "Lagu favorit waktu kita ngobrol berjam-jam tanpa bosen ✨",
+          "dateAdded": "Oct 20, 2026",
+          "duration": "3:00",
+          "liked": false,
+          "cover": "images/covers/obsessed.jpg",
+          "audioUrl": "audio/zandros_limi_obsessed.m4a",
+          "youtubeId": ""
+        },
+        {
+          "id": "pl-candlelight-t9",
+          "title": "Last Friday Night (T.G.I.F.)",
+          "artist": "Katy Perry",
+          "album": "candlelight🧘🏻‍♀️",
+          "memory": "Suasana tenang dan damai tiap kali denger lagu ini bareng kamu ☕",
+          "dateAdded": "Oct 20, 2026",
+          "duration": "3:50",
+          "liked": false,
+          "cover": "images/covers/katy_perry_last_friday_night.jpg",
+          "audioUrl": "audio/katy_perry_last_friday_night.m4a",
+          "youtubeId": ""
+        },
+        {
+          "id": "pl-candlelight-t10",
+          "title": "Dangerous Woman",
+          "artist": "Ariana Grande",
+          "album": "candlelight🧘🏻‍♀️",
+          "memory": "Setiap liriknya berasa kayak cerita kita berdua 🤍",
+          "dateAdded": "Oct 20, 2026",
+          "duration": "3:55",
+          "liked": true,
+          "cover": "images/covers/ariana_grande_dangerous_woman.jpg",
+          "audioUrl": "audio/ariana_grande_dangerous_woman.m4a",
+          "youtubeId": ""
+        },
+        {
+          "id": "pl-candlelight-t11",
+          "title": "If I Ain't Got You",
+          "artist": "Alicia Keys",
+          "album": "candlelight🧘🏻‍♀️",
+          "memory": "Ingat ga waktu lagu ini pertama kali kita putar di mobil? 🚗",
+          "dateAdded": "Oct 20, 2026",
+          "duration": "3:48",
+          "liked": false,
+          "cover": "images/covers/alicia_keys_if_i_aint_got_you.jpg",
+          "audioUrl": "audio/alicia_keys_if_i_aint_got_you.m4a",
+          "youtubeId": ""
+        },
+        {
+          "id": "pl-candlelight-t12",
+          "title": "Water",
+          "artist": "Tyla",
+          "album": "candlelight🧘🏻‍♀️",
+          "memory": "Senyummu langsung kebayang tiap intro lagu ini mulai 🌸",
+          "dateAdded": "Oct 20, 2026",
+          "duration": "3:20",
+          "liked": false,
+          "cover": "images/covers/tyla_water.jpg",
+          "audioUrl": "audio/tyla_water.m4a",
+          "youtubeId": ""
+        }
+      ]
     },
     {
-        "id": "pl-cry-reboot",
-        "title": "cry, breathe, & reboot.",
-        "desc": "lagu-lagu pereda lelah, tenang, dan penyemangat saat butuh pelukan hangat 🤍",
-        "cover": "images/spotify_covers/cry_reboot.jpg",
-        "tracks": [
-            {
-                "id": "pl-cry-reboot-t1",
-                "title": "Nina",
-                "artist": ".Feast",
-                "album": "cry, breathe, & reboot.",
-                "memory": "Melodi manis yang selalu ngingetin aku sama kamu 💕",
-                "dateAdded": "Oct 20, 2026",
-                "duration": "4:37",
-                "liked": true,
-                "cover": "images/covers/feast_nina.jpg",
-                "audioUrl": "audio/feast_nina.m4a",
-                "youtubeId": ""
-            },
-            {
-                "id": "pl-cry-reboot-t2",
-                "title": "Evaluasi",
-                "artist": "Hindia",
-                "album": "cry, breathe, & reboot.",
-                "memory": "Lagu favorit waktu kita ngobrol berjam-jam tanpa bosen ✨",
-                "dateAdded": "Oct 20, 2026",
-                "duration": "3:14",
-                "liked": false,
-                "cover": "images/covers/hindia_evaluasi.jpg",
-                "audioUrl": "audio/hindia_evaluasi.m4a",
-                "youtubeId": ""
-            },
-            {
-                "id": "pl-cry-reboot-t3",
-                "title": "Bertaut",
-                "artist": "Nadin Amizah",
-                "album": "cry, breathe, & reboot.",
-                "memory": "Suasana tenang dan damai tiap kali denger lagu ini bareng kamu ☕",
-                "dateAdded": "Oct 20, 2026",
-                "duration": "5:15",
-                "liked": false,
-                "cover": "images/covers/nadin_amizah_bertaut.jpg",
-                "audioUrl": "audio/nadin_amizah_bertaut.m4a",
-                "youtubeId": ""
-            },
-            {
-                "id": "pl-cry-reboot-t4",
-                "title": "Sorai",
-                "artist": "Nadin Amizah",
-                "album": "cry, breathe, & reboot.",
-                "memory": "Setiap liriknya berasa kayak cerita kita berdua 🤍",
-                "dateAdded": "Oct 20, 2026",
-                "duration": "4:38",
-                "liked": true,
-                "cover": "images/covers/nadin_amizah_sorai.jpg",
-                "audioUrl": "audio/nadin_amizah_sorai.m4a",
-                "youtubeId": ""
-            },
-            {
-                "id": "pl-cry-reboot-t5",
-                "title": "Secukupnya",
-                "artist": "Hindia",
-                "album": "cry, breathe, & reboot.",
-                "memory": "Ingat ga waktu lagu ini pertama kali kita putar di mobil? 🚗",
-                "dateAdded": "Oct 20, 2026",
-                "duration": "3:25",
-                "liked": false,
-                "cover": "images/covers/hindia_secukupnya.jpg",
-                "audioUrl": "audio/hindia_secukupnya.m4a",
-                "youtubeId": ""
-            },
-            {
-                "id": "pl-cry-reboot-t6",
-                "title": "Untungnya, Hidup Harus Tetap Berjalan",
-                "artist": "Bernadya",
-                "album": "cry, breathe, & reboot.",
-                "memory": "Senyummu langsung kebayang tiap intro lagu ini mulai 🌸",
-                "dateAdded": "Oct 20, 2026",
-                "duration": "3:02",
-                "liked": false,
-                "cover": "images/covers/untungnya.jpg",
-                "audioUrl": "audio/bernadya_untungnya_hidup_harus_tetap_berjalan.m4a",
-                "youtubeId": ""
-            },
-            {
-                "id": "pl-cry-reboot-t7",
-                "title": "Peradaban",
-                "artist": ".Feast",
-                "album": "cry, breathe, & reboot.",
-                "memory": "Melodi manis yang selalu ngingetin aku sama kamu 💕",
-                "dateAdded": "Oct 20, 2026",
-                "duration": "5:39",
-                "liked": true,
-                "cover": "images/covers/peradaban.jpg",
-                "audioUrl": "audio/feast_peradaban.m4a",
-                "youtubeId": ""
-            },
-            {
-                "id": "pl-cry-reboot-t8",
-                "title": "You're On Your Own, Kid",
-                "artist": "Taylor Swift",
-                "album": "cry, breathe, & reboot.",
-                "memory": "Lagu favorit waktu kita ngobrol berjam-jam tanpa bosen ✨",
-                "dateAdded": "Oct 20, 2026",
-                "duration": "3:14",
-                "liked": false,
-                "cover": "images/covers/taylor_swift_youre_on_your_own_kid.jpg",
-                "audioUrl": "audio/taylor_swift_youre_on_your_own_kid.m4a",
-                "youtubeId": ""
-            },
-            {
-                "id": "pl-cry-reboot-t9",
-                "title": "Matilda",
-                "artist": "Harry Styles",
-                "album": "cry, breathe, & reboot.",
-                "memory": "Suasana tenang dan damai tiap kali denger lagu ini bareng kamu ☕",
-                "dateAdded": "Oct 20, 2026",
-                "duration": "4:05",
-                "liked": false,
-                "cover": "images/covers/harry_styles_matilda.jpg",
-                "audioUrl": "audio/harry_styles_matilda.m4a",
-                "youtubeId": ""
-            },
-            {
-                "id": "pl-cry-reboot-t10",
-                "title": "Kata Mereka Ini Berlebihan",
-                "artist": "Bernadya",
-                "album": "cry, breathe, & reboot.",
-                "memory": "Setiap liriknya berasa kayak cerita kita berdua 🤍",
-                "dateAdded": "Oct 20, 2026",
-                "duration": "3:11",
-                "liked": true,
-                "cover": "images/covers/bernadya_kata_mereka_ini_berlebihan.jpg",
-                "audioUrl": "audio/bernadya_kata_mereka_ini_berlebihan.m4a",
-                "youtubeId": ""
-            },
-            {
-                "id": "pl-cry-reboot-t11",
-                "title": "Sialan",
-                "artist": "Adrian Khalif, Juicy Luicy",
-                "album": "cry, breathe, & reboot.",
-                "memory": "Ingat ga waktu lagu ini pertama kali kita putar di mobil? 🚗",
-                "dateAdded": "Oct 20, 2026",
-                "duration": "4:01",
-                "liked": false,
-                "cover": "images/covers/sialan.jpg",
-                "audioUrl": "audio/adrian_khalif_juicy_luicy_sialan.m4a",
-                "youtubeId": ""
-            },
-            {
-                "id": "pl-cry-reboot-t12",
-                "title": "Untuk Perempuan Yang Sedang Di Pelukan",
-                "artist": "Payung Teduh",
-                "album": "cry, breathe, & reboot.",
-                "memory": "Senyummu langsung kebayang tiap intro lagu ini mulai 🌸",
-                "dateAdded": "Oct 20, 2026",
-                "duration": "5:42",
-                "liked": false,
-                "cover": "images/covers/payung_teduh_untuk_perempuan_yang_sedang_di_peluka.jpg",
-                "audioUrl": "audio/payung_teduh_untuk_perempuan_yang_sedang_di_peluka.m4a",
-                "youtubeId": ""
-            }
-        ]
+      "id": "pl-cry-reboot",
+      "title": "cry, breathe, & reboot.",
+      "desc": "lagu-lagu pereda lelah, tenang, dan penyemangat saat butuh pelukan hangat 🤍",
+      "cover": "images/spotify_covers/cry_reboot.jpg",
+      "tracks": [
+        {
+          "id": "pl-cry-reboot-t1",
+          "title": "Nina",
+          "artist": ".Feast",
+          "album": "cry, breathe, & reboot.",
+          "memory": "Melodi manis yang selalu ngingetin aku sama kamu 💕",
+          "dateAdded": "Oct 20, 2026",
+          "duration": "4:37",
+          "liked": true,
+          "cover": "images/covers/feast_nina.jpg",
+          "audioUrl": "audio/feast_nina.m4a",
+          "youtubeId": ""
+        },
+        {
+          "id": "pl-cry-reboot-t2",
+          "title": "Evaluasi",
+          "artist": "Hindia",
+          "album": "cry, breathe, & reboot.",
+          "memory": "Lagu favorit waktu kita ngobrol berjam-jam tanpa bosen ✨",
+          "dateAdded": "Oct 20, 2026",
+          "duration": "3:14",
+          "liked": false,
+          "cover": "images/covers/hindia_evaluasi.jpg",
+          "audioUrl": "audio/hindia_evaluasi.m4a",
+          "youtubeId": ""
+        },
+        {
+          "id": "pl-cry-reboot-t3",
+          "title": "Bertaut",
+          "artist": "Nadin Amizah",
+          "album": "cry, breathe, & reboot.",
+          "memory": "Suasana tenang dan damai tiap kali denger lagu ini bareng kamu ☕",
+          "dateAdded": "Oct 20, 2026",
+          "duration": "5:15",
+          "liked": false,
+          "cover": "images/covers/nadin_amizah_bertaut.jpg",
+          "audioUrl": "audio/nadin_amizah_bertaut.m4a",
+          "youtubeId": ""
+        },
+        {
+          "id": "pl-cry-reboot-t4",
+          "title": "Sorai",
+          "artist": "Nadin Amizah",
+          "album": "cry, breathe, & reboot.",
+          "memory": "Setiap liriknya berasa kayak cerita kita berdua 🤍",
+          "dateAdded": "Oct 20, 2026",
+          "duration": "4:38",
+          "liked": true,
+          "cover": "images/covers/nadin_amizah_sorai.jpg",
+          "audioUrl": "audio/nadin_amizah_sorai.m4a",
+          "youtubeId": ""
+        },
+        {
+          "id": "pl-cry-reboot-t5",
+          "title": "Secukupnya",
+          "artist": "Hindia",
+          "album": "cry, breathe, & reboot.",
+          "memory": "Ingat ga waktu lagu ini pertama kali kita putar di mobil? 🚗",
+          "dateAdded": "Oct 20, 2026",
+          "duration": "3:25",
+          "liked": false,
+          "cover": "images/covers/hindia_secukupnya.jpg",
+          "audioUrl": "audio/hindia_secukupnya.m4a",
+          "youtubeId": ""
+        },
+        {
+          "id": "pl-cry-reboot-t6",
+          "title": "Untungnya, Hidup Harus Tetap Berjalan",
+          "artist": "Bernadya",
+          "album": "cry, breathe, & reboot.",
+          "memory": "Senyummu langsung kebayang tiap intro lagu ini mulai 🌸",
+          "dateAdded": "Oct 20, 2026",
+          "duration": "3:02",
+          "liked": false,
+          "cover": "images/covers/untungnya.jpg",
+          "audioUrl": "audio/bernadya_untungnya_hidup_harus_tetap_berjalan.m4a",
+          "youtubeId": ""
+        },
+        {
+          "id": "pl-cry-reboot-t7",
+          "title": "Peradaban",
+          "artist": ".Feast",
+          "album": "cry, breathe, & reboot.",
+          "memory": "Melodi manis yang selalu ngingetin aku sama kamu 💕",
+          "dateAdded": "Oct 20, 2026",
+          "duration": "5:39",
+          "liked": true,
+          "cover": "images/covers/peradaban.jpg",
+          "audioUrl": "audio/feast_peradaban.m4a",
+          "youtubeId": ""
+        },
+        {
+          "id": "pl-cry-reboot-t8",
+          "title": "You're On Your Own, Kid",
+          "artist": "Taylor Swift",
+          "album": "cry, breathe, & reboot.",
+          "memory": "Lagu favorit waktu kita ngobrol berjam-jam tanpa bosen ✨",
+          "dateAdded": "Oct 20, 2026",
+          "duration": "3:14",
+          "liked": false,
+          "cover": "images/covers/taylor_swift_youre_on_your_own_kid.jpg",
+          "audioUrl": "audio/taylor_swift_youre_on_your_own_kid.m4a",
+          "youtubeId": ""
+        },
+        {
+          "id": "pl-cry-reboot-t9",
+          "title": "Matilda",
+          "artist": "Harry Styles",
+          "album": "cry, breathe, & reboot.",
+          "memory": "Suasana tenang dan damai tiap kali denger lagu ini bareng kamu ☕",
+          "dateAdded": "Oct 20, 2026",
+          "duration": "4:05",
+          "liked": false,
+          "cover": "images/covers/harry_styles_matilda.jpg",
+          "audioUrl": "audio/harry_styles_matilda.m4a",
+          "youtubeId": ""
+        },
+        {
+          "id": "pl-cry-reboot-t10",
+          "title": "Kata Mereka Ini Berlebihan",
+          "artist": "Bernadya",
+          "album": "cry, breathe, & reboot.",
+          "memory": "Setiap liriknya berasa kayak cerita kita berdua 🤍",
+          "dateAdded": "Oct 20, 2026",
+          "duration": "3:11",
+          "liked": true,
+          "cover": "images/covers/bernadya_kata_mereka_ini_berlebihan.jpg",
+          "audioUrl": "audio/bernadya_kata_mereka_ini_berlebihan.m4a",
+          "youtubeId": ""
+        },
+        {
+          "id": "pl-cry-reboot-t11",
+          "title": "Sialan",
+          "artist": "Adrian Khalif, Juicy Luicy",
+          "album": "cry, breathe, & reboot.",
+          "memory": "Ingat ga waktu lagu ini pertama kali kita putar di mobil? 🚗",
+          "dateAdded": "Oct 20, 2026",
+          "duration": "4:01",
+          "liked": false,
+          "cover": "images/covers/sialan.jpg",
+          "audioUrl": "audio/adrian_khalif_juicy_luicy_sialan.m4a",
+          "youtubeId": ""
+        },
+        {
+          "id": "pl-cry-reboot-t12",
+          "title": "Untuk Perempuan Yang Sedang Di Pelukan",
+          "artist": "Payung Teduh",
+          "album": "cry, breathe, & reboot.",
+          "memory": "Senyummu langsung kebayang tiap intro lagu ini mulai 🌸",
+          "dateAdded": "Oct 20, 2026",
+          "duration": "5:42",
+          "liked": false,
+          "cover": "images/covers/payung_teduh_untuk_perempuan_yang_sedang_di_peluka.jpg",
+          "audioUrl": "audio/payung_teduh_untuk_perempuan_yang_sedang_di_peluka.m4a",
+          "youtubeId": ""
+        }
+      ]
     },
     {
-        "id": "pl-shes-a-racer",
-        "title": "shes a racer.",
-        "desc": "late night drive playlist, vibes keren & banger hits sambil keliling kota 🏎️",
-        "cover": "images/spotify_covers/shes_a_racer.jpg",
-        "tracks": [
-            {
-                "id": "pl-shes-a-racer-t1",
-                "title": "Reminder",
-                "artist": "The Weeknd",
-                "album": "shes a racer.",
-                "memory": "Melodi manis yang selalu ngingetin aku sama kamu 💕",
-                "dateAdded": "Oct 20, 2026",
-                "duration": "3:38",
-                "liked": true,
-                "cover": "images/covers/the_weeknd_reminder.jpg",
-                "audioUrl": "audio/the_weeknd_reminder.m4a",
-                "youtubeId": ""
-            },
-            {
-                "id": "pl-shes-a-racer-t2",
-                "title": "Sure Thing",
-                "artist": "Miguel",
-                "album": "shes a racer.",
-                "memory": "Lagu favorit waktu kita ngobrol berjam-jam tanpa bosen ✨",
-                "dateAdded": "Oct 20, 2026",
-                "duration": "3:15",
-                "liked": false,
-                "cover": "images/covers/miguel_sure_thing.jpg",
-                "audioUrl": "audio/miguel_sure_thing.m4a",
-                "youtubeId": ""
-            },
-            {
-                "id": "pl-shes-a-racer-t3",
-                "title": "Swim",
-                "artist": "Chase Atlantic",
-                "album": "shes a racer.",
-                "memory": "Suasana tenang dan damai tiap kali denger lagu ini bareng kamu ☕",
-                "dateAdded": "Oct 20, 2026",
-                "duration": "3:48",
-                "liked": false,
-                "cover": "images/covers/chase_atlantic_swim.jpg",
-                "audioUrl": "audio/chase_atlantic_swim.m4a",
-                "youtubeId": ""
-            },
-            {
-                "id": "pl-shes-a-racer-t4",
-                "title": "Kiss It Better",
-                "artist": "Rihanna",
-                "album": "shes a racer.",
-                "memory": "Setiap liriknya berasa kayak cerita kita berdua 🤍",
-                "dateAdded": "Oct 20, 2026",
-                "duration": "4:13",
-                "liked": true,
-                "cover": "images/covers/rihanna_kiss_it_better.jpg",
-                "audioUrl": "audio/rihanna_kiss_it_better.m4a",
-                "youtubeId": ""
-            },
-            {
-                "id": "pl-shes-a-racer-t5",
-                "title": "Collide (Sped Up Remix)",
-                "artist": "Justine Skye, Tyga",
-                "album": "shes a racer.",
-                "memory": "Ingat ga waktu lagu ini pertama kali kita putar di mobil? 🚗",
-                "dateAdded": "Oct 20, 2026",
-                "duration": "3:41",
-                "liked": false,
-                "cover": "images/covers/justine_skye_tyga_collide.jpg",
-                "audioUrl": "audio/justine_skye_tyga_collide.m4a",
-                "youtubeId": ""
-            },
-            {
-                "id": "pl-shes-a-racer-t6",
-                "title": "Die With A Smile",
-                "artist": "Lady Gaga, Bruno Mars",
-                "album": "shes a racer.",
-                "memory": "Senyummu langsung kebayang tiap intro lagu ini mulai 🌸",
-                "dateAdded": "Oct 20, 2026",
-                "duration": "4:11",
-                "liked": false,
-                "cover": "images/covers/lady_gaga_bruno_mars_die_with_a_smile.jpg",
-                "audioUrl": "audio/lady_gaga_bruno_mars_die_with_a_smile.m4a",
-                "youtubeId": ""
-            },
-            {
-                "id": "pl-shes-a-racer-t7",
-                "title": "Aku Milikmu",
-                "artist": "Dewa 19",
-                "album": "shes a racer.",
-                "memory": "Melodi manis yang selalu ngingetin aku sama kamu 💕",
-                "dateAdded": "Oct 20, 2026",
-                "duration": "5:32",
-                "liked": true,
-                "cover": "images/covers/dewa_19_aku_milikmu.jpg",
-                "audioUrl": "audio/dewa_19_aku_milikmu.m4a",
-                "youtubeId": ""
-            },
-            {
-                "id": "pl-shes-a-racer-t8",
-                "title": "Cry",
-                "artist": "Cigarettes After Sex",
-                "album": "shes a racer.",
-                "memory": "Lagu favorit waktu kita ngobrol berjam-jam tanpa bosen ✨",
-                "dateAdded": "Oct 20, 2026",
-                "duration": "4:16",
-                "liked": false,
-                "cover": "images/covers/cigarettes_after_sex_cry.jpg",
-                "audioUrl": "audio/cigarettes_after_sex_cry.m4a",
-                "youtubeId": ""
-            },
-            {
-                "id": "pl-shes-a-racer-t9",
-                "title": "Falling In Love",
-                "artist": "Cigarettes After Sex",
-                "album": "shes a racer.",
-                "memory": "Suasana tenang dan damai tiap kali denger lagu ini bareng kamu ☕",
-                "dateAdded": "Oct 20, 2026",
-                "duration": "4:05",
-                "liked": false,
-                "cover": "images/covers/cigarettes_after_sex_falling_in_love.jpg",
-                "audioUrl": "audio/cigarettes_after_sex_falling_in_love.m4a",
-                "youtubeId": ""
-            },
-            {
-                "id": "pl-shes-a-racer-t10",
-                "title": "Sunsetz",
-                "artist": "Cigarettes After Sex",
-                "album": "shes a racer.",
-                "memory": "Setiap liriknya berasa kayak cerita kita berdua 🤍",
-                "dateAdded": "Oct 20, 2026",
-                "duration": "3:34",
-                "liked": true,
-                "cover": "images/covers/cigarettes_after_sex_sunsetz.jpg",
-                "audioUrl": "audio/cigarettes_after_sex_sunsetz.m4a",
-                "youtubeId": ""
-            },
-            {
-                "id": "pl-shes-a-racer-t11",
-                "title": "welcome and goodbye",
-                "artist": "Dream, Ivory",
-                "album": "shes a racer.",
-                "memory": "Ingat ga waktu lagu ini pertama kali kita putar di mobil? 🚗",
-                "dateAdded": "Oct 20, 2026",
-                "duration": "2:20",
-                "liked": false,
-                "cover": "images/covers/dream_ivory_welcome_and_goodbye.jpg",
-                "audioUrl": "audio/dream_ivory_welcome_and_goodbye.m4a",
-                "youtubeId": ""
-            },
-            {
-                "id": "pl-shes-a-racer-t12",
-                "title": "Tokyo Drift (Fast & Furious) - From \"The Fast And The Furious: Tokyo Drift\" Soundtrack",
-                "artist": "Teriyaki Boyz",
-                "album": "shes a racer.",
-                "memory": "Senyummu langsung kebayang tiap intro lagu ini mulai 🌸",
-                "dateAdded": "Oct 20, 2026",
-                "duration": "4:15",
-                "liked": false,
-                "cover": "images/covers/teriyaki_boyz_tokyo_drift_from_the_fast_and_the_fu.jpg",
-                "audioUrl": "audio/teriyaki_boyz_tokyo_drift_from_the_fast_and_the_fu.m4a",
-                "youtubeId": ""
-            }
-        ]
+      "id": "pl-shes-a-racer",
+      "title": "shes a racer.",
+      "desc": "late night drive playlist, vibes keren & banger hits sambil keliling kota 🏎️",
+      "cover": "images/spotify_covers/shes_a_racer.jpg",
+      "tracks": [
+        {
+          "id": "pl-shes-a-racer-t1",
+          "title": "Reminder",
+          "artist": "The Weeknd",
+          "album": "shes a racer.",
+          "memory": "Melodi manis yang selalu ngingetin aku sama kamu 💕",
+          "dateAdded": "Oct 20, 2026",
+          "duration": "3:38",
+          "liked": true,
+          "cover": "images/covers/the_weeknd_reminder.jpg",
+          "audioUrl": "audio/the_weeknd_reminder.m4a",
+          "youtubeId": ""
+        },
+        {
+          "id": "pl-shes-a-racer-t2",
+          "title": "Sure Thing",
+          "artist": "Miguel",
+          "album": "shes a racer.",
+          "memory": "Lagu favorit waktu kita ngobrol berjam-jam tanpa bosen ✨",
+          "dateAdded": "Oct 20, 2026",
+          "duration": "3:15",
+          "liked": false,
+          "cover": "images/covers/miguel_sure_thing.jpg",
+          "audioUrl": "audio/miguel_sure_thing.m4a",
+          "youtubeId": ""
+        },
+        {
+          "id": "pl-shes-a-racer-t3",
+          "title": "Swim",
+          "artist": "Chase Atlantic",
+          "album": "shes a racer.",
+          "memory": "Suasana tenang dan damai tiap kali denger lagu ini bareng kamu ☕",
+          "dateAdded": "Oct 20, 2026",
+          "duration": "3:48",
+          "liked": false,
+          "cover": "images/covers/chase_atlantic_swim.jpg",
+          "audioUrl": "audio/chase_atlantic_swim.m4a",
+          "youtubeId": ""
+        },
+        {
+          "id": "pl-shes-a-racer-t4",
+          "title": "Kiss It Better",
+          "artist": "Rihanna",
+          "album": "shes a racer.",
+          "memory": "Setiap liriknya berasa kayak cerita kita berdua 🤍",
+          "dateAdded": "Oct 20, 2026",
+          "duration": "4:13",
+          "liked": true,
+          "cover": "images/covers/rihanna_kiss_it_better.jpg",
+          "audioUrl": "audio/rihanna_kiss_it_better.m4a",
+          "youtubeId": ""
+        },
+        {
+          "id": "pl-shes-a-racer-t5",
+          "title": "Collide (Sped Up Remix)",
+          "artist": "Justine Skye, Tyga",
+          "album": "shes a racer.",
+          "memory": "Ingat ga waktu lagu ini pertama kali kita putar di mobil? 🚗",
+          "dateAdded": "Oct 20, 2026",
+          "duration": "3:41",
+          "liked": false,
+          "cover": "images/covers/justine_skye_tyga_collide.jpg",
+          "audioUrl": "audio/justine_skye_tyga_collide.m4a",
+          "youtubeId": ""
+        },
+        {
+          "id": "pl-shes-a-racer-t6",
+          "title": "Die With A Smile",
+          "artist": "Lady Gaga, Bruno Mars",
+          "album": "shes a racer.",
+          "memory": "Senyummu langsung kebayang tiap intro lagu ini mulai 🌸",
+          "dateAdded": "Oct 20, 2026",
+          "duration": "4:11",
+          "liked": false,
+          "cover": "images/covers/lady_gaga_bruno_mars_die_with_a_smile.jpg",
+          "audioUrl": "audio/lady_gaga_bruno_mars_die_with_a_smile.m4a",
+          "youtubeId": ""
+        },
+        {
+          "id": "pl-shes-a-racer-t7",
+          "title": "Aku Milikmu",
+          "artist": "Dewa 19",
+          "album": "shes a racer.",
+          "memory": "Melodi manis yang selalu ngingetin aku sama kamu 💕",
+          "dateAdded": "Oct 20, 2026",
+          "duration": "5:32",
+          "liked": true,
+          "cover": "images/covers/dewa_19_aku_milikmu.jpg",
+          "audioUrl": "audio/dewa_19_aku_milikmu.m4a",
+          "youtubeId": ""
+        },
+        {
+          "id": "pl-shes-a-racer-t8",
+          "title": "Cry",
+          "artist": "Cigarettes After Sex",
+          "album": "shes a racer.",
+          "memory": "Lagu favorit waktu kita ngobrol berjam-jam tanpa bosen ✨",
+          "dateAdded": "Oct 20, 2026",
+          "duration": "4:16",
+          "liked": false,
+          "cover": "images/covers/cigarettes_after_sex_cry.jpg",
+          "audioUrl": "audio/cigarettes_after_sex_cry.m4a",
+          "youtubeId": ""
+        },
+        {
+          "id": "pl-shes-a-racer-t9",
+          "title": "Falling In Love",
+          "artist": "Cigarettes After Sex",
+          "album": "shes a racer.",
+          "memory": "Suasana tenang dan damai tiap kali denger lagu ini bareng kamu ☕",
+          "dateAdded": "Oct 20, 2026",
+          "duration": "4:05",
+          "liked": false,
+          "cover": "images/covers/cigarettes_after_sex_falling_in_love.jpg",
+          "audioUrl": "audio/cigarettes_after_sex_falling_in_love.m4a",
+          "youtubeId": ""
+        },
+        {
+          "id": "pl-shes-a-racer-t10",
+          "title": "Sunsetz",
+          "artist": "Cigarettes After Sex",
+          "album": "shes a racer.",
+          "memory": "Setiap liriknya berasa kayak cerita kita berdua 🤍",
+          "dateAdded": "Oct 20, 2026",
+          "duration": "3:34",
+          "liked": true,
+          "cover": "images/covers/cigarettes_after_sex_sunsetz.jpg",
+          "audioUrl": "audio/cigarettes_after_sex_sunsetz.m4a",
+          "youtubeId": ""
+        },
+        {
+          "id": "pl-shes-a-racer-t11",
+          "title": "welcome and goodbye",
+          "artist": "Dream, Ivory",
+          "album": "shes a racer.",
+          "memory": "Ingat ga waktu lagu ini pertama kali kita putar di mobil? 🚗",
+          "dateAdded": "Oct 20, 2026",
+          "duration": "2:20",
+          "liked": false,
+          "cover": "images/covers/dream_ivory_welcome_and_goodbye.jpg",
+          "audioUrl": "audio/dream_ivory_welcome_and_goodbye.m4a",
+          "youtubeId": ""
+        },
+        {
+          "id": "pl-shes-a-racer-t12",
+          "title": "Tokyo Drift (Fast & Furious) - From \"The Fast And The Furious: Tokyo Drift\" Soundtrack",
+          "artist": "Teriyaki Boyz",
+          "album": "shes a racer.",
+          "memory": "Senyummu langsung kebayang tiap intro lagu ini mulai 🌸",
+          "dateAdded": "Oct 20, 2026",
+          "duration": "4:15",
+          "liked": false,
+          "cover": "images/covers/teriyaki_boyz_tokyo_drift_from_the_fast_and_the_fu.jpg",
+          "audioUrl": "audio/teriyaki_boyz_tokyo_drift_from_the_fast_and_the_fu.m4a",
+          "youtubeId": ""
+        }
+      ]
     },
     {
-        "id": "pl-cocktails",
-        "title": "🍸 cocktails",
-        "desc": "moody R&B, smooth basslines, and chill evening talks 🍸",
-        "cover": "images/spotify_covers/cocktails.jpg",
-        "tracks": [
-            {
-                "id": "pl-cocktails-t1",
-                "title": "B.E.D.",
-                "artist": "Jacquees",
-                "album": "🍸 cocktails",
-                "memory": "Melodi manis yang selalu ngingetin aku sama kamu 💕",
-                "dateAdded": "Oct 20, 2026",
-                "duration": "3:56",
-                "liked": true,
-                "cover": "images/covers/jacquees_bed.jpg",
-                "audioUrl": "audio/jacquees_bed.m4a",
-                "youtubeId": ""
-            },
-            {
-                "id": "pl-cocktails-t2",
-                "title": "Long Way 2 Go",
-                "artist": "Cassie",
-                "album": "🍸 cocktails",
-                "memory": "Lagu favorit waktu kita ngobrol berjam-jam tanpa bosen ✨",
-                "dateAdded": "Oct 20, 2026",
-                "duration": "3:40",
-                "liked": false,
-                "cover": "images/covers/cassie_long_way_2_go.jpg",
-                "audioUrl": "audio/cassie_long_way_2_go.m4a",
-                "youtubeId": ""
-            },
-            {
-                "id": "pl-cocktails-t3",
-                "title": "2 On (feat. ScHoolboy Q)",
-                "artist": "Tinashe, ScHoolboy Q",
-                "album": "🍸 cocktails",
-                "memory": "Suasana tenang dan damai tiap kali denger lagu ini bareng kamu ☕",
-                "dateAdded": "Oct 20, 2026",
-                "duration": "3:47",
-                "liked": false,
-                "cover": "images/covers/tinashe_schoolboy_q_2_on.jpg",
-                "audioUrl": "audio/tinashe_schoolboy_q_2_on.m4a",
-                "youtubeId": ""
-            },
-            {
-                "id": "pl-cocktails-t4",
-                "title": "Or Nah (feat. The Weeknd, Wiz Khalifa & DJ Mustard) - Remix",
-                "artist": "Ty Dolla $ign, The Weeknd, Wiz Khalifa, Mustard",
-                "album": "🍸 cocktails",
-                "memory": "Setiap liriknya berasa kayak cerita kita berdua 🤍",
-                "dateAdded": "Oct 20, 2026",
-                "duration": "4:02",
-                "liked": true,
-                "cover": "images/covers/ty_dolla_ign_the_weeknd_wiz_khalifa_mustard_or_nah.jpg",
-                "audioUrl": "audio/ty_dolla_ign_the_weeknd_wiz_khalifa_mustard_or_nah.m4a",
-                "youtubeId": ""
-            },
-            {
-                "id": "pl-cocktails-t5",
-                "title": "Flashing Lights",
-                "artist": "Kanye West, Dwele",
-                "album": "🍸 cocktails",
-                "memory": "Ingat ga waktu lagu ini pertama kali kita putar di mobil? 🚗",
-                "dateAdded": "Oct 20, 2026",
-                "duration": "3:57",
-                "liked": false,
-                "cover": "images/covers/kanye_west_dwele_flashing_lights.jpg",
-                "audioUrl": "audio/kanye_west_dwele_flashing_lights.m4a",
-                "youtubeId": ""
-            },
-            {
-                "id": "pl-cocktails-t6",
-                "title": "Fair Trade (with Travis Scott)",
-                "artist": "Drake, Travis Scott",
-                "album": "🍸 cocktails",
-                "memory": "Senyummu langsung kebayang tiap intro lagu ini mulai 🌸",
-                "dateAdded": "Oct 20, 2026",
-                "duration": "4:51",
-                "liked": false,
-                "cover": "images/covers/drake_travis_scott_fair_trade.jpg",
-                "audioUrl": "audio/drake_travis_scott_fair_trade.m4a",
-                "youtubeId": ""
-            },
-            {
-                "id": "pl-cocktails-t7",
-                "title": "No Role Modelz",
-                "artist": "J. Cole",
-                "album": "🍸 cocktails",
-                "memory": "Melodi manis yang selalu ngingetin aku sama kamu 💕",
-                "dateAdded": "Oct 20, 2026",
-                "duration": "4:52",
-                "liked": true,
-                "cover": "images/covers/j_cole_no_role_modelz.jpg",
-                "audioUrl": "audio/j_cole_no_role_modelz.m4a",
-                "youtubeId": ""
-            },
-            {
-                "id": "pl-cocktails-t8",
-                "title": "Bitches Love Me",
-                "artist": "Lil Wayne, Future, Drake",
-                "album": "🍸 cocktails",
-                "memory": "Lagu favorit waktu kita ngobrol berjam-jam tanpa bosen ✨",
-                "dateAdded": "Oct 20, 2026",
-                "duration": "4:11",
-                "liked": false,
-                "cover": "images/covers/lil_wayne_future_drake_bitches_love_me.jpg",
-                "audioUrl": "audio/lil_wayne_future_drake_bitches_love_me.m4a",
-                "youtubeId": ""
-            },
-            {
-                "id": "pl-cocktails-t9",
-                "title": "P power (feat. Drake)",
-                "artist": "Gunna, Drake",
-                "album": "🍸 cocktails",
-                "memory": "Suasana tenang dan damai tiap kali denger lagu ini bareng kamu ☕",
-                "dateAdded": "Oct 20, 2026",
-                "duration": "3:13",
-                "liked": false,
-                "cover": "images/covers/gunna_drake_p_power.jpg",
-                "audioUrl": "audio/gunna_drake_p_power.m4a",
-                "youtubeId": ""
-            },
-            {
-                "id": "pl-cocktails-t10",
-                "title": "God's Plan",
-                "artist": "Drake",
-                "album": "🍸 cocktails",
-                "memory": "Setiap liriknya berasa kayak cerita kita berdua 🤍",
-                "dateAdded": "Oct 20, 2026",
-                "duration": "3:18",
-                "liked": true,
-                "cover": "images/covers/drake_gods_plan.jpg",
-                "audioUrl": "audio/drake_gods_plan.m4a",
-                "youtubeId": ""
-            },
-            {
-                "id": "pl-cocktails-t11",
-                "title": "Teenage Fever",
-                "artist": "Drake",
-                "album": "🍸 cocktails",
-                "memory": "Ingat ga waktu lagu ini pertama kali kita putar di mobil? 🚗",
-                "dateAdded": "Oct 20, 2026",
-                "duration": "3:39",
-                "liked": false,
-                "cover": "images/covers/drake_teenage_fever.jpg",
-                "audioUrl": "audio/drake_teenage_fever.m4a",
-                "youtubeId": ""
-            },
-            {
-                "id": "pl-cocktails-t12",
-                "title": "Time Flies",
-                "artist": "Drake",
-                "album": "🍸 cocktails",
-                "memory": "Senyummu langsung kebayang tiap intro lagu ini mulai 🌸",
-                "dateAdded": "Oct 20, 2026",
-                "duration": "3:12",
-                "liked": false,
-                "cover": "images/covers/drake_time_flies.jpg",
-                "audioUrl": "audio/drake_time_flies.m4a",
-                "youtubeId": ""
-            }
-        ]
+      "id": "pl-cocktails",
+      "title": "🍸 cocktails",
+      "desc": "moody R&B, smooth basslines, and chill evening talks 🍸",
+      "cover": "images/spotify_covers/cocktails.jpg",
+      "tracks": [
+        {
+          "id": "pl-cocktails-t1",
+          "title": "B.E.D.",
+          "artist": "Jacquees",
+          "album": "🍸 cocktails",
+          "memory": "Melodi manis yang selalu ngingetin aku sama kamu 💕",
+          "dateAdded": "Oct 20, 2026",
+          "duration": "3:56",
+          "liked": true,
+          "cover": "images/covers/jacquees_bed.jpg",
+          "audioUrl": "audio/jacquees_bed.m4a",
+          "youtubeId": ""
+        },
+        {
+          "id": "pl-cocktails-t2",
+          "title": "Long Way 2 Go",
+          "artist": "Cassie",
+          "album": "🍸 cocktails",
+          "memory": "Lagu favorit waktu kita ngobrol berjam-jam tanpa bosen ✨",
+          "dateAdded": "Oct 20, 2026",
+          "duration": "3:40",
+          "liked": false,
+          "cover": "images/covers/cassie_long_way_2_go.jpg",
+          "audioUrl": "audio/cassie_long_way_2_go.m4a",
+          "youtubeId": ""
+        },
+        {
+          "id": "pl-cocktails-t3",
+          "title": "2 On (feat. ScHoolboy Q)",
+          "artist": "Tinashe, ScHoolboy Q",
+          "album": "🍸 cocktails",
+          "memory": "Suasana tenang dan damai tiap kali denger lagu ini bareng kamu ☕",
+          "dateAdded": "Oct 20, 2026",
+          "duration": "3:47",
+          "liked": false,
+          "cover": "images/covers/tinashe_schoolboy_q_2_on.jpg",
+          "audioUrl": "audio/tinashe_schoolboy_q_2_on.m4a",
+          "youtubeId": ""
+        },
+        {
+          "id": "pl-cocktails-t4",
+          "title": "Or Nah (feat. The Weeknd, Wiz Khalifa & DJ Mustard) - Remix",
+          "artist": "Ty Dolla $ign, The Weeknd, Wiz Khalifa, Mustard",
+          "album": "🍸 cocktails",
+          "memory": "Setiap liriknya berasa kayak cerita kita berdua 🤍",
+          "dateAdded": "Oct 20, 2026",
+          "duration": "4:02",
+          "liked": true,
+          "cover": "images/covers/ty_dolla_ign_the_weeknd_wiz_khalifa_mustard_or_nah.jpg",
+          "audioUrl": "audio/ty_dolla_ign_the_weeknd_wiz_khalifa_mustard_or_nah.m4a",
+          "youtubeId": ""
+        },
+        {
+          "id": "pl-cocktails-t5",
+          "title": "Flashing Lights",
+          "artist": "Kanye West, Dwele",
+          "album": "🍸 cocktails",
+          "memory": "Ingat ga waktu lagu ini pertama kali kita putar di mobil? 🚗",
+          "dateAdded": "Oct 20, 2026",
+          "duration": "3:57",
+          "liked": false,
+          "cover": "images/covers/kanye_west_dwele_flashing_lights.jpg",
+          "audioUrl": "audio/kanye_west_dwele_flashing_lights.m4a",
+          "youtubeId": ""
+        },
+        {
+          "id": "pl-cocktails-t6",
+          "title": "Fair Trade (with Travis Scott)",
+          "artist": "Drake, Travis Scott",
+          "album": "🍸 cocktails",
+          "memory": "Senyummu langsung kebayang tiap intro lagu ini mulai 🌸",
+          "dateAdded": "Oct 20, 2026",
+          "duration": "4:51",
+          "liked": false,
+          "cover": "images/covers/drake_travis_scott_fair_trade.jpg",
+          "audioUrl": "audio/drake_travis_scott_fair_trade.m4a",
+          "youtubeId": ""
+        },
+        {
+          "id": "pl-cocktails-t7",
+          "title": "No Role Modelz",
+          "artist": "J. Cole",
+          "album": "🍸 cocktails",
+          "memory": "Melodi manis yang selalu ngingetin aku sama kamu 💕",
+          "dateAdded": "Oct 20, 2026",
+          "duration": "4:52",
+          "liked": true,
+          "cover": "images/covers/j_cole_no_role_modelz.jpg",
+          "audioUrl": "audio/j_cole_no_role_modelz.m4a",
+          "youtubeId": ""
+        },
+        {
+          "id": "pl-cocktails-t8",
+          "title": "Bitches Love Me",
+          "artist": "Lil Wayne, Future, Drake",
+          "album": "🍸 cocktails",
+          "memory": "Lagu favorit waktu kita ngobrol berjam-jam tanpa bosen ✨",
+          "dateAdded": "Oct 20, 2026",
+          "duration": "4:11",
+          "liked": false,
+          "cover": "images/covers/lil_wayne_future_drake_bitches_love_me.jpg",
+          "audioUrl": "audio/lil_wayne_future_drake_bitches_love_me.m4a",
+          "youtubeId": ""
+        },
+        {
+          "id": "pl-cocktails-t9",
+          "title": "P power (feat. Drake)",
+          "artist": "Gunna, Drake",
+          "album": "🍸 cocktails",
+          "memory": "Suasana tenang dan damai tiap kali denger lagu ini bareng kamu ☕",
+          "dateAdded": "Oct 20, 2026",
+          "duration": "3:13",
+          "liked": false,
+          "cover": "images/covers/gunna_drake_p_power.jpg",
+          "audioUrl": "audio/gunna_drake_p_power.m4a",
+          "youtubeId": ""
+        },
+        {
+          "id": "pl-cocktails-t10",
+          "title": "God's Plan",
+          "artist": "Drake",
+          "album": "🍸 cocktails",
+          "memory": "Setiap liriknya berasa kayak cerita kita berdua 🤍",
+          "dateAdded": "Oct 20, 2026",
+          "duration": "3:18",
+          "liked": true,
+          "cover": "images/covers/drake_gods_plan.jpg",
+          "audioUrl": "audio/drake_gods_plan.m4a",
+          "youtubeId": ""
+        },
+        {
+          "id": "pl-cocktails-t11",
+          "title": "Teenage Fever",
+          "artist": "Drake",
+          "album": "🍸 cocktails",
+          "memory": "Ingat ga waktu lagu ini pertama kali kita putar di mobil? 🚗",
+          "dateAdded": "Oct 20, 2026",
+          "duration": "3:39",
+          "liked": false,
+          "cover": "images/covers/drake_teenage_fever.jpg",
+          "audioUrl": "audio/drake_teenage_fever.m4a",
+          "youtubeId": ""
+        },
+        {
+          "id": "pl-cocktails-t12",
+          "title": "Time Flies",
+          "artist": "Drake",
+          "album": "🍸 cocktails",
+          "memory": "Senyummu langsung kebayang tiap intro lagu ini mulai 🌸",
+          "dateAdded": "Oct 20, 2026",
+          "duration": "3:12",
+          "liked": false,
+          "cover": "images/covers/drake_time_flies.jpg",
+          "audioUrl": "audio/drake_time_flies.m4a",
+          "youtubeId": ""
+        }
+      ]
     },
     {
-        "id": "pl-jj-remix",
-        "title": "in 🇮🇩 we said jj remix",
-        "desc": "jedag jedug vibes Indonesia yang seru & bikin ketawa bareng kamu 🇮🇩🔥",
-        "cover": "images/spotify_covers/jj_remix.jpg",
-        "tracks": [
-            {
-                "id": "pl-jj-remix-t1",
-                "title": "Culik Aku Dong",
-                "artist": "Kharis Sopan, DJ Likin Breat",
-                "album": "in 🇮🇩 we said jj remix",
-                "memory": "Melodi manis yang selalu ngingetin aku sama kamu 💕",
-                "dateAdded": "Oct 20, 2026",
-                "duration": "4:18",
-                "liked": true,
-                "cover": "images/covers/kharis_sopan_dj_likin_breat_culik_aku_dong.jpg",
-                "audioUrl": "audio/kharis_sopan_dj_likin_breat_culik_aku_dong.m4a",
-                "youtubeId": ""
-            },
-            {
-                "id": "pl-jj-remix-t2",
-                "title": "DITINGGAL BANG DIKA",
-                "artist": "Dika",
-                "album": "in 🇮🇩 we said jj remix",
-                "memory": "Lagu favorit waktu kita ngobrol berjam-jam tanpa bosen ✨",
-                "dateAdded": "Oct 20, 2026",
-                "duration": "5:30",
-                "liked": false,
-                "cover": "images/covers/dika_ditinggal_bang_dika.jpg",
-                "audioUrl": "audio/dika_ditinggal_bang_dika.m4a",
-                "youtubeId": ""
-            },
-            {
-                "id": "pl-jj-remix-t3",
-                "title": "DJ Hilang Harapan x Rutinitas Randong",
-                "artist": "DJ BUDOTS",
-                "album": "in 🇮🇩 we said jj remix",
-                "memory": "Suasana tenang dan damai tiap kali denger lagu ini bareng kamu ☕",
-                "dateAdded": "Oct 20, 2026",
-                "duration": "4:00",
-                "liked": false,
-                "cover": "images/covers/dj_budots_dj_hilang_harapan_extended.jpg",
-                "audioUrl": "audio/dj_budots_dj_hilang_harapan_x_rutinitas_randong.m4a",
-                "youtubeId": ""
-            },
-            {
-                "id": "pl-jj-remix-t4",
-                "title": "Karena Kamu Cantik",
-                "artist": "Komang Rimex",
-                "album": "in 🇮🇩 we said jj remix",
-                "memory": "Setiap liriknya berasa kayak cerita kita berdua 🤍",
-                "dateAdded": "Oct 20, 2026",
-                "duration": "3:36",
-                "liked": true,
-                "cover": "images/covers/komang_rimex_karena_kamu_cantik.jpg",
-                "audioUrl": "audio/komang_rimex_karena_kamu_cantik.m4a",
-                "youtubeId": ""
-            },
-            {
-                "id": "pl-jj-remix-t5",
-                "title": "SUNGGUH KETAMVANAN INI",
-                "artist": "Maman Fvndy, DJ Donall, RPH Remix",
-                "album": "in 🇮🇩 we said jj remix",
-                "memory": "Ingat ga waktu lagu ini pertama kali kita putar di mobil? 🚗",
-                "dateAdded": "Oct 20, 2026",
-                "duration": "4:40",
-                "liked": false,
-                "cover": "images/covers/maman_fvndy_seratus_persen_cintaku.jpg",
-                "audioUrl": "audio/maman_fvndy_dj_donall_rph_remix_sungguh_ketamvanan.m4a",
-                "youtubeId": ""
-            },
-            {
-                "id": "pl-jj-remix-t6",
-                "title": "DJ MALAM MINGGU AKU TAK PUNYA PACAR",
-                "artist": "DJ MANAY",
-                "album": "in 🇮🇩 we said jj remix",
-                "memory": "Senyummu langsung kebayang tiap intro lagu ini mulai 🌸",
-                "dateAdded": "Oct 20, 2026",
-                "duration": "5:55",
-                "liked": false,
-                "cover": "images/spotify_covers/jj_remix.jpg",
-                "audioUrl": "audio/dj_manay_dj_malam_minggu_aku_tak_punya_pacar.m4a",
-                "youtubeId": ""
-            },
-            {
-                "id": "pl-jj-remix-t7",
-                "title": "Sakitnya Luar Dalam",
-                "artist": "DJ Haning",
-                "album": "in 🇮🇩 we said jj remix",
-                "memory": "Melodi manis yang selalu ngingetin aku sama kamu 💕",
-                "dateAdded": "Oct 20, 2026",
-                "duration": "4:22",
-                "liked": true,
-                "cover": "images/covers/dj_haning_sakitnya_luar_dalam.jpg",
-                "audioUrl": "audio/dj_haning_sakitnya_luar_dalam.m4a",
-                "youtubeId": ""
-            },
-            {
-                "id": "pl-jj-remix-t8",
-                "title": "Seratus Persen Cintaku",
-                "artist": "Maman Fvndy",
-                "album": "in 🇮🇩 we said jj remix",
-                "memory": "Lagu favorit waktu kita ngobrol berjam-jam tanpa bosen ✨",
-                "dateAdded": "Oct 20, 2026",
-                "duration": "4:49",
-                "liked": false,
-                "cover": "images/covers/maman_fvndy_seratus_persen_cintaku.jpg",
-                "audioUrl": "audio/maman_fvndy_seratus_persen_cintaku.m4a",
-                "youtubeId": ""
-            },
-            {
-                "id": "pl-jj-remix-t9",
-                "title": "DJ JANGAN SALAH PASANGAN X BONFIRE",
-                "artist": "DJ ManikCi",
-                "album": "in 🇮🇩 we said jj remix",
-                "memory": "Suasana tenang dan damai tiap kali denger lagu ini bareng kamu ☕",
-                "dateAdded": "Oct 20, 2026",
-                "duration": "3:55",
-                "liked": false,
-                "cover": "images/spotify_covers/jj_remix.jpg",
-                "audioUrl": "audio/dj_manikci_dj_jangan_salah_pasangan_x_bonfire.m4a",
-                "youtubeId": ""
-            },
-            {
-                "id": "pl-jj-remix-t10",
-                "title": "DJ HILANG HARAPAN EXTENDED",
-                "artist": "DJ BUDOTS",
-                "album": "in 🇮🇩 we said jj remix",
-                "memory": "Setiap liriknya berasa kayak cerita kita berdua 🤍",
-                "dateAdded": "Oct 20, 2026",
-                "duration": "4:43",
-                "liked": true,
-                "cover": "images/covers/dj_budots_dj_hilang_harapan_extended.jpg",
-                "audioUrl": "audio/dj_budots_dj_hilang_harapan_extended.m4a",
-                "youtubeId": ""
-            },
-            {
-                "id": "pl-jj-remix-t11",
-                "title": "Laguku Dubstep",
-                "artist": "DJ Cantika",
-                "album": "in 🇮🇩 we said jj remix",
-                "memory": "Ingat ga waktu lagu ini pertama kali kita putar di mobil? 🚗",
-                "dateAdded": "Oct 20, 2026",
-                "duration": "3:58",
-                "liked": false,
-                "cover": "images/covers/dj_cantika_laguku_dubstep.jpg",
-                "audioUrl": "audio/dj_cantika_laguku_dubstep.m4a",
-                "youtubeId": ""
-            },
-            {
-                "id": "pl-jj-remix-t12",
-                "title": "DJ GOYANG DAYUNG Instrumental",
-                "artist": "Maman Fvndy",
-                "album": "in 🇮🇩 we said jj remix",
-                "memory": "Senyummu langsung kebayang tiap intro lagu ini mulai 🌸",
-                "dateAdded": "Oct 20, 2026",
-                "duration": "3:51",
-                "liked": false,
-                "cover": "images/covers/maman_fvndy_dj_goyang_dayung_instrumental.jpg",
-                "audioUrl": "audio/maman_fvndy_dj_goyang_dayung_instrumental.m4a",
-                "youtubeId": ""
-            }
-        ]
+      "id": "pl-jj-remix",
+      "title": "in 🇮🇩 we said jj remix",
+      "desc": "jedag jedug vibes Indonesia yang seru & bikin ketawa bareng kamu 🇮🇩🔥",
+      "cover": "images/spotify_covers/jj_remix.jpg",
+      "tracks": [
+        {
+          "id": "pl-jj-remix-t1",
+          "title": "Culik Aku Dong",
+          "artist": "Kharis Sopan, DJ Likin Breat",
+          "album": "in 🇮🇩 we said jj remix",
+          "memory": "Melodi manis yang selalu ngingetin aku sama kamu 💕",
+          "dateAdded": "Oct 20, 2026",
+          "duration": "4:18",
+          "liked": true,
+          "cover": "images/covers/kharis_sopan_dj_likin_breat_culik_aku_dong.jpg",
+          "audioUrl": "audio/kharis_sopan_dj_likin_breat_culik_aku_dong.m4a",
+          "youtubeId": ""
+        },
+        {
+          "id": "pl-jj-remix-t2",
+          "title": "DITINGGAL BANG DIKA",
+          "artist": "Dika",
+          "album": "in 🇮🇩 we said jj remix",
+          "memory": "Lagu favorit waktu kita ngobrol berjam-jam tanpa bosen ✨",
+          "dateAdded": "Oct 20, 2026",
+          "duration": "5:30",
+          "liked": false,
+          "cover": "images/covers/dika_ditinggal_bang_dika.jpg",
+          "audioUrl": "audio/dika_ditinggal_bang_dika.m4a",
+          "youtubeId": ""
+        },
+        {
+          "id": "pl-jj-remix-t3",
+          "title": "DJ Hilang Harapan x Rutinitas Randong",
+          "artist": "DJ BUDOTS",
+          "album": "in 🇮🇩 we said jj remix",
+          "memory": "Suasana tenang dan damai tiap kali denger lagu ini bareng kamu ☕",
+          "dateAdded": "Oct 20, 2026",
+          "duration": "4:00",
+          "liked": false,
+          "cover": "images/covers/dj_budots_dj_hilang_harapan_extended.jpg",
+          "audioUrl": "audio/dj_budots_dj_hilang_harapan_x_rutinitas_randong.m4a",
+          "youtubeId": ""
+        },
+        {
+          "id": "pl-jj-remix-t4",
+          "title": "Karena Kamu Cantik",
+          "artist": "Komang Rimex",
+          "album": "in 🇮🇩 we said jj remix",
+          "memory": "Setiap liriknya berasa kayak cerita kita berdua 🤍",
+          "dateAdded": "Oct 20, 2026",
+          "duration": "3:36",
+          "liked": true,
+          "cover": "images/covers/komang_rimex_karena_kamu_cantik.jpg",
+          "audioUrl": "audio/komang_rimex_karena_kamu_cantik.m4a",
+          "youtubeId": ""
+        },
+        {
+          "id": "pl-jj-remix-t5",
+          "title": "SUNGGUH KETAMVANAN INI",
+          "artist": "Maman Fvndy, DJ Donall, RPH Remix",
+          "album": "in 🇮🇩 we said jj remix",
+          "memory": "Ingat ga waktu lagu ini pertama kali kita putar di mobil? 🚗",
+          "dateAdded": "Oct 20, 2026",
+          "duration": "4:40",
+          "liked": false,
+          "cover": "images/covers/maman_fvndy_seratus_persen_cintaku.jpg",
+          "audioUrl": "audio/maman_fvndy_dj_donall_rph_remix_sungguh_ketamvanan.m4a",
+          "youtubeId": ""
+        },
+        {
+          "id": "pl-jj-remix-t6",
+          "title": "DJ MALAM MINGGU AKU TAK PUNYA PACAR",
+          "artist": "DJ MANAY",
+          "album": "in 🇮🇩 we said jj remix",
+          "memory": "Senyummu langsung kebayang tiap intro lagu ini mulai 🌸",
+          "dateAdded": "Oct 20, 2026",
+          "duration": "5:55",
+          "liked": false,
+          "cover": "images/spotify_covers/jj_remix.jpg",
+          "audioUrl": "audio/dj_manay_dj_malam_minggu_aku_tak_punya_pacar.m4a",
+          "youtubeId": ""
+        },
+        {
+          "id": "pl-jj-remix-t7",
+          "title": "Sakitnya Luar Dalam",
+          "artist": "DJ Haning",
+          "album": "in 🇮🇩 we said jj remix",
+          "memory": "Melodi manis yang selalu ngingetin aku sama kamu 💕",
+          "dateAdded": "Oct 20, 2026",
+          "duration": "4:22",
+          "liked": true,
+          "cover": "images/covers/dj_haning_sakitnya_luar_dalam.jpg",
+          "audioUrl": "audio/dj_haning_sakitnya_luar_dalam.m4a",
+          "youtubeId": ""
+        },
+        {
+          "id": "pl-jj-remix-t8",
+          "title": "Seratus Persen Cintaku",
+          "artist": "Maman Fvndy",
+          "album": "in 🇮🇩 we said jj remix",
+          "memory": "Lagu favorit waktu kita ngobrol berjam-jam tanpa bosen ✨",
+          "dateAdded": "Oct 20, 2026",
+          "duration": "4:49",
+          "liked": false,
+          "cover": "images/covers/maman_fvndy_seratus_persen_cintaku.jpg",
+          "audioUrl": "audio/maman_fvndy_seratus_persen_cintaku.m4a",
+          "youtubeId": ""
+        },
+        {
+          "id": "pl-jj-remix-t9",
+          "title": "DJ JANGAN SALAH PASANGAN X BONFIRE",
+          "artist": "DJ ManikCi",
+          "album": "in 🇮🇩 we said jj remix",
+          "memory": "Suasana tenang dan damai tiap kali denger lagu ini bareng kamu ☕",
+          "dateAdded": "Oct 20, 2026",
+          "duration": "3:55",
+          "liked": false,
+          "cover": "images/spotify_covers/jj_remix.jpg",
+          "audioUrl": "audio/dj_manikci_dj_jangan_salah_pasangan_x_bonfire.m4a",
+          "youtubeId": ""
+        },
+        {
+          "id": "pl-jj-remix-t10",
+          "title": "DJ HILANG HARAPAN EXTENDED",
+          "artist": "DJ BUDOTS",
+          "album": "in 🇮🇩 we said jj remix",
+          "memory": "Setiap liriknya berasa kayak cerita kita berdua 🤍",
+          "dateAdded": "Oct 20, 2026",
+          "duration": "4:43",
+          "liked": true,
+          "cover": "images/covers/dj_budots_dj_hilang_harapan_extended.jpg",
+          "audioUrl": "audio/dj_budots_dj_hilang_harapan_extended.m4a",
+          "youtubeId": ""
+        },
+        {
+          "id": "pl-jj-remix-t11",
+          "title": "Laguku Dubstep",
+          "artist": "DJ Cantika",
+          "album": "in 🇮🇩 we said jj remix",
+          "memory": "Ingat ga waktu lagu ini pertama kali kita putar di mobil? 🚗",
+          "dateAdded": "Oct 20, 2026",
+          "duration": "3:58",
+          "liked": false,
+          "cover": "images/covers/dj_cantika_laguku_dubstep.jpg",
+          "audioUrl": "audio/dj_cantika_laguku_dubstep.m4a",
+          "youtubeId": ""
+        },
+        {
+          "id": "pl-jj-remix-t12",
+          "title": "DJ GOYANG DAYUNG Instrumental",
+          "artist": "Maman Fvndy",
+          "album": "in 🇮🇩 we said jj remix",
+          "memory": "Senyummu langsung kebayang tiap intro lagu ini mulai 🌸",
+          "dateAdded": "Oct 20, 2026",
+          "duration": "3:51",
+          "liked": false,
+          "cover": "images/covers/maman_fvndy_dj_goyang_dayung_instrumental.jpg",
+          "audioUrl": "audio/maman_fvndy_dj_goyang_dayung_instrumental.m4a",
+          "youtubeId": ""
+        }
+      ]
     },
     {
-        "id": "pl-midnight-cry",
-        "title": "⋆˙⟡ midnight cry",
-        "desc": "lagu-lagu mellow tengah malam, saat hening dan rindu menyapa ⋆˙⟡",
-        "cover": "images/spotify_covers/midnight_cry.jpg",
-        "tracks": [
-            {
-                "id": "pl-midnight-cry-t1",
-                "title": "Fix You",
-                "artist": "Coldplay",
-                "album": "⋆˙⟡ midnight cry",
-                "memory": "Melodi manis yang selalu ngingetin aku sama kamu 💕",
-                "dateAdded": "Oct 20, 2026",
-                "duration": "4:55",
-                "liked": true,
-                "cover": "images/covers/coldplay_fix_you.jpg",
-                "audioUrl": "audio/coldplay_fix_you.m4a",
-                "youtubeId": ""
-            },
-            {
-                "id": "pl-midnight-cry-t2",
-                "title": "Somewhere Only We Know",
-                "artist": "Keane",
-                "album": "⋆˙⟡ midnight cry",
-                "memory": "Lagu favorit waktu kita ngobrol berjam-jam tanpa bosen ✨",
-                "dateAdded": "Oct 20, 2026",
-                "duration": "3:57",
-                "liked": false,
-                "cover": "images/covers/keane_somewhere_only_we_know.jpg",
-                "audioUrl": "audio/keane_somewhere_only_we_know.m4a",
-                "youtubeId": ""
-            },
-            {
-                "id": "pl-midnight-cry-t3",
-                "title": "When I Was Your Man",
-                "artist": "Bruno Mars",
-                "album": "⋆˙⟡ midnight cry",
-                "memory": "Suasana tenang dan damai tiap kali denger lagu ini bareng kamu ☕",
-                "dateAdded": "Oct 20, 2026",
-                "duration": "3:33",
-                "liked": false,
-                "cover": "images/covers/bruno_mars_when_i_was_your_man.jpg",
-                "audioUrl": "audio/bruno_mars_when_i_was_your_man.m4a",
-                "youtubeId": ""
-            },
-            {
-                "id": "pl-midnight-cry-t4",
-                "title": "'Cause You Have To",
-                "artist": "LANY",
-                "album": "⋆˙⟡ midnight cry",
-                "memory": "Setiap liriknya berasa kayak cerita kita berdua 🤍",
-                "dateAdded": "Oct 20, 2026",
-                "duration": "4:10",
-                "liked": true,
-                "cover": "images/covers/lany_cause_you_have_to.jpg",
-                "audioUrl": "audio/lany_cause_you_have_to.m4a",
-                "youtubeId": ""
-            },
-            {
-                "id": "pl-midnight-cry-t5",
-                "title": "The Man Who Can't Be Moved",
-                "artist": "The Script",
-                "album": "⋆˙⟡ midnight cry",
-                "memory": "Ingat ga waktu lagu ini pertama kali kita putar di mobil? 🚗",
-                "dateAdded": "Oct 20, 2026",
-                "duration": "4:01",
-                "liked": false,
-                "cover": "images/covers/the_script_the_man_who_cant_be_moved.jpg",
-                "audioUrl": "audio/the_script_the_man_who_cant_be_moved.m4a",
-                "youtubeId": ""
-            },
-            {
-                "id": "pl-midnight-cry-t6",
-                "title": "If Ever You're in My Arms Again",
-                "artist": "Peabo Bryson",
-                "album": "⋆˙⟡ midnight cry",
-                "memory": "Senyummu langsung kebayang tiap intro lagu ini mulai 🌸",
-                "dateAdded": "Oct 20, 2026",
-                "duration": "4:11",
-                "liked": false,
-                "cover": "images/covers/peabo_bryson_if_ever_youre_in_my_arms_again.jpg",
-                "audioUrl": "audio/peabo_bryson_if_ever_youre_in_my_arms_again.m4a",
-                "youtubeId": ""
-            },
-            {
-                "id": "pl-midnight-cry-t7",
-                "title": "It Will Rain",
-                "artist": "Bruno Mars",
-                "album": "⋆˙⟡ midnight cry",
-                "memory": "Melodi manis yang selalu ngingetin aku sama kamu 💕",
-                "dateAdded": "Oct 20, 2026",
-                "duration": "4:17",
-                "liked": true,
-                "cover": "images/covers/bruno_mars_it_will_rain.jpg",
-                "audioUrl": "audio/bruno_mars_it_will_rain.m4a",
-                "youtubeId": ""
-            },
-            {
-                "id": "pl-midnight-cry-t8",
-                "title": "Thru These Tears",
-                "artist": "LANY",
-                "album": "⋆˙⟡ midnight cry",
-                "memory": "Lagu favorit waktu kita ngobrol berjam-jam tanpa bosen ✨",
-                "dateAdded": "Oct 20, 2026",
-                "duration": "3:24",
-                "liked": false,
-                "cover": "images/covers/lany_thru_these_tears.jpg",
-                "audioUrl": "audio/lany_thru_these_tears.m4a",
-                "youtubeId": ""
-            },
-            {
-                "id": "pl-midnight-cry-t9",
-                "title": "back to friends",
-                "artist": "sombr",
-                "album": "⋆˙⟡ midnight cry",
-                "memory": "Suasana tenang dan damai tiap kali denger lagu ini bareng kamu ☕",
-                "dateAdded": "Oct 20, 2026",
-                "duration": "3:19",
-                "liked": false,
-                "cover": "images/covers/back_to_friends.jpg",
-                "audioUrl": "audio/sombr_back_to_friends.m4a",
-                "youtubeId": ""
-            },
-            {
-                "id": "pl-midnight-cry-t10",
-                "title": "Glimpse of Us",
-                "artist": "Joji",
-                "album": "⋆˙⟡ midnight cry",
-                "memory": "Setiap liriknya berasa kayak cerita kita berdua 🤍",
-                "dateAdded": "Oct 20, 2026",
-                "duration": "3:53",
-                "liked": true,
-                "cover": "images/covers/joji_glimpse_of_us.jpg",
-                "audioUrl": "audio/joji_glimpse_of_us.m4a",
-                "youtubeId": ""
-            },
-            {
-                "id": "pl-midnight-cry-t11",
-                "title": "Slipping Through My Fingers",
-                "artist": "ABBA",
-                "album": "⋆˙⟡ midnight cry",
-                "memory": "Ingat ga waktu lagu ini pertama kali kita putar di mobil? 🚗",
-                "dateAdded": "Oct 20, 2026",
-                "duration": "3:53",
-                "liked": false,
-                "cover": "images/covers/abba_slipping_through_my_fingers.jpg",
-                "audioUrl": "audio/abba_slipping_through_my_fingers.m4a",
-                "youtubeId": ""
-            },
-            {
-                "id": "pl-midnight-cry-t12",
-                "title": "Atlantis",
-                "artist": "Seafret",
-                "album": "⋆˙⟡ midnight cry",
-                "memory": "Senyummu langsung kebayang tiap intro lagu ini mulai 🌸",
-                "dateAdded": "Oct 20, 2026",
-                "duration": "3:49",
-                "liked": false,
-                "cover": "images/covers/atlantis.jpg",
-                "audioUrl": "audio/seafret_atlantis.m4a",
-                "youtubeId": "gVAy3IZiL0s"
-            }
-        ]
+      "id": "pl-midnight-cry",
+      "title": "⋆˙⟡ midnight cry",
+      "desc": "lagu-lagu mellow tengah malam, saat hening dan rindu menyapa ⋆˙⟡",
+      "cover": "images/spotify_covers/midnight_cry.jpg",
+      "tracks": [
+        {
+          "id": "pl-midnight-cry-t1",
+          "title": "Fix You",
+          "artist": "Coldplay",
+          "album": "⋆˙⟡ midnight cry",
+          "memory": "Melodi manis yang selalu ngingetin aku sama kamu 💕",
+          "dateAdded": "Oct 20, 2026",
+          "duration": "4:55",
+          "liked": true,
+          "cover": "images/covers/coldplay_fix_you.jpg",
+          "audioUrl": "audio/coldplay_fix_you.m4a",
+          "youtubeId": ""
+        },
+        {
+          "id": "pl-midnight-cry-t2",
+          "title": "Somewhere Only We Know",
+          "artist": "Keane",
+          "album": "⋆˙⟡ midnight cry",
+          "memory": "Lagu favorit waktu kita ngobrol berjam-jam tanpa bosen ✨",
+          "dateAdded": "Oct 20, 2026",
+          "duration": "3:57",
+          "liked": false,
+          "cover": "images/covers/keane_somewhere_only_we_know.jpg",
+          "audioUrl": "audio/keane_somewhere_only_we_know.m4a",
+          "youtubeId": ""
+        },
+        {
+          "id": "pl-midnight-cry-t3",
+          "title": "When I Was Your Man",
+          "artist": "Bruno Mars",
+          "album": "⋆˙⟡ midnight cry",
+          "memory": "Suasana tenang dan damai tiap kali denger lagu ini bareng kamu ☕",
+          "dateAdded": "Oct 20, 2026",
+          "duration": "3:33",
+          "liked": false,
+          "cover": "images/covers/bruno_mars_when_i_was_your_man.jpg",
+          "audioUrl": "audio/bruno_mars_when_i_was_your_man.m4a",
+          "youtubeId": ""
+        },
+        {
+          "id": "pl-midnight-cry-t4",
+          "title": "'Cause You Have To",
+          "artist": "LANY",
+          "album": "⋆˙⟡ midnight cry",
+          "memory": "Setiap liriknya berasa kayak cerita kita berdua 🤍",
+          "dateAdded": "Oct 20, 2026",
+          "duration": "4:10",
+          "liked": true,
+          "cover": "images/covers/lany_cause_you_have_to.jpg",
+          "audioUrl": "audio/lany_cause_you_have_to.m4a",
+          "youtubeId": ""
+        },
+        {
+          "id": "pl-midnight-cry-t5",
+          "title": "The Man Who Can't Be Moved",
+          "artist": "The Script",
+          "album": "⋆˙⟡ midnight cry",
+          "memory": "Ingat ga waktu lagu ini pertama kali kita putar di mobil? 🚗",
+          "dateAdded": "Oct 20, 2026",
+          "duration": "4:01",
+          "liked": false,
+          "cover": "images/covers/the_script_the_man_who_cant_be_moved.jpg",
+          "audioUrl": "audio/the_script_the_man_who_cant_be_moved.m4a",
+          "youtubeId": ""
+        },
+        {
+          "id": "pl-midnight-cry-t6",
+          "title": "If Ever You're in My Arms Again",
+          "artist": "Peabo Bryson",
+          "album": "⋆˙⟡ midnight cry",
+          "memory": "Senyummu langsung kebayang tiap intro lagu ini mulai 🌸",
+          "dateAdded": "Oct 20, 2026",
+          "duration": "4:11",
+          "liked": false,
+          "cover": "images/covers/peabo_bryson_if_ever_youre_in_my_arms_again.jpg",
+          "audioUrl": "audio/peabo_bryson_if_ever_youre_in_my_arms_again.m4a",
+          "youtubeId": ""
+        },
+        {
+          "id": "pl-midnight-cry-t7",
+          "title": "It Will Rain",
+          "artist": "Bruno Mars",
+          "album": "⋆˙⟡ midnight cry",
+          "memory": "Melodi manis yang selalu ngingetin aku sama kamu 💕",
+          "dateAdded": "Oct 20, 2026",
+          "duration": "4:17",
+          "liked": true,
+          "cover": "images/covers/bruno_mars_it_will_rain.jpg",
+          "audioUrl": "audio/bruno_mars_it_will_rain.m4a",
+          "youtubeId": ""
+        },
+        {
+          "id": "pl-midnight-cry-t8",
+          "title": "Thru These Tears",
+          "artist": "LANY",
+          "album": "⋆˙⟡ midnight cry",
+          "memory": "Lagu favorit waktu kita ngobrol berjam-jam tanpa bosen ✨",
+          "dateAdded": "Oct 20, 2026",
+          "duration": "3:24",
+          "liked": false,
+          "cover": "images/covers/lany_thru_these_tears.jpg",
+          "audioUrl": "audio/lany_thru_these_tears.m4a",
+          "youtubeId": ""
+        },
+        {
+          "id": "pl-midnight-cry-t9",
+          "title": "back to friends",
+          "artist": "sombr",
+          "album": "⋆˙⟡ midnight cry",
+          "memory": "Suasana tenang dan damai tiap kali denger lagu ini bareng kamu ☕",
+          "dateAdded": "Oct 20, 2026",
+          "duration": "3:19",
+          "liked": false,
+          "cover": "images/covers/back_to_friends.jpg",
+          "audioUrl": "audio/sombr_back_to_friends.m4a",
+          "youtubeId": ""
+        },
+        {
+          "id": "pl-midnight-cry-t10",
+          "title": "Glimpse of Us",
+          "artist": "Joji",
+          "album": "⋆˙⟡ midnight cry",
+          "memory": "Setiap liriknya berasa kayak cerita kita berdua 🤍",
+          "dateAdded": "Oct 20, 2026",
+          "duration": "3:53",
+          "liked": true,
+          "cover": "images/covers/joji_glimpse_of_us.jpg",
+          "audioUrl": "audio/joji_glimpse_of_us.m4a",
+          "youtubeId": ""
+        },
+        {
+          "id": "pl-midnight-cry-t11",
+          "title": "Slipping Through My Fingers",
+          "artist": "ABBA",
+          "album": "⋆˙⟡ midnight cry",
+          "memory": "Ingat ga waktu lagu ini pertama kali kita putar di mobil? 🚗",
+          "dateAdded": "Oct 20, 2026",
+          "duration": "3:53",
+          "liked": false,
+          "cover": "images/covers/abba_slipping_through_my_fingers.jpg",
+          "audioUrl": "audio/abba_slipping_through_my_fingers.m4a",
+          "youtubeId": ""
+        },
+        {
+          "id": "pl-midnight-cry-t12",
+          "title": "Atlantis",
+          "artist": "Seafret",
+          "album": "⋆˙⟡ midnight cry",
+          "memory": "Senyummu langsung kebayang tiap intro lagu ini mulai 🌸",
+          "dateAdded": "Oct 20, 2026",
+          "duration": "3:49",
+          "liked": false,
+          "cover": "images/covers/atlantis.jpg",
+          "audioUrl": "audio/seafret_atlantis.m4a",
+          "youtubeId": "gVAy3IZiL0s"
+        }
+      ]
     }
-],
+  ],
   jamMessages: [
     { sender: 'partner', text: 'Sayang, lagunya sekarang pakai cover album official dan lagunya asli semua 🥺💕 Cantik banget!', time: '19:42' },
     { sender: 'you', text: 'Iyaa! Tampilannya jadi berasa kayak Spotify Premium asli ✨', time: '19:43' }
@@ -1909,7 +1911,7 @@ let isYtReady = false;
 let ytScrubTimer = null;
 
 // ================= YOUTUBE REAL AUDIO ENGINE =================
-window.onYouTubeIframeAPIReady = function() {
+window.onYouTubeIframeAPIReady = function () {
   ytPlayer = new YT.Player('ytPlayer', {
     height: '10',
     width: '10',
@@ -2046,7 +2048,7 @@ function loadState() {
     if (rawProfile) {
       try {
         savedProfileConfig = JSON.parse(rawProfile);
-      } catch (e) {}
+      } catch (e) { }
     }
 
     let parsed = null;
@@ -2074,6 +2076,32 @@ function loadState() {
       if (savedProfileConfig.yourAvatar) parsed.yourAvatar = savedProfileConfig.yourAvatar;
       if (savedProfileConfig.partnerAvatar) parsed.partnerAvatar = savedProfileConfig.partnerAvatar;
       if (savedProfileConfig.loveNote) parsed.loveNote = savedProfileConfig.loveNote;
+      if (savedProfileConfig.profileUpdatedAt) parsed.profileUpdatedAt = Number(savedProfileConfig.profileUpdatedAt);
+    }
+    const savedProfTime = localStorage.getItem('romantic_music_profile_updated_at');
+    if (savedProfTime) parsed.profileUpdatedAt = Number(savedProfTime);
+
+    const savedPlTime = localStorage.getItem('romantic_music_playlists_updated_at');
+    if (savedPlTime) parsed.playlistsUpdatedAt = Number(savedPlTime);
+
+    const savedPolTime = localStorage.getItem('romantic_music_polaroids_updated_at');
+    if (savedPolTime) parsed.polaroidsUpdatedAt = Number(savedPolTime);
+
+    // Restore playlist metadata customizations (title, desc, cover)
+    const rawPlCustom = localStorage.getItem('romantic_music_playlist_customizations');
+    if (rawPlCustom) {
+      try {
+        const plCustom = JSON.parse(rawPlCustom);
+        if (Array.isArray(parsed.playlists)) {
+          parsed.playlists.forEach(pl => {
+            if (plCustom[pl.id]) {
+              if (plCustom[pl.id].title) pl.title = plCustom[pl.id].title;
+              if (plCustom[pl.id].desc !== undefined) pl.desc = plCustom[pl.id].desc;
+              if (plCustom[pl.id].cover) pl.cover = plCustom[pl.id].cover;
+            }
+          });
+        }
+      } catch(e){}
     }
 
     // Restore dedicated polaroid memories if user added or deleted any
@@ -2100,13 +2128,10 @@ function loadState() {
       parsed.playlists.forEach(pl => {
         if (pl.id !== 'pl-ours') {
           const defaultPl = defaultState.playlists.find(dp => dp.id === pl.id);
-          if (defaultPl) {
-            if (pl.title === 'ours' || (pl.cover && pl.cover.startsWith('data:image'))) {
-              console.log(`✦ Auto-healing corrupted playlist ${pl.id} back to: ${defaultPl.title}`);
-              pl.title = defaultPl.title;
-              pl.desc = defaultPl.desc;
-              pl.cover = defaultPl.cover;
-            }
+          if (defaultPl && pl.title === 'ours') {
+            console.log(`✦ Auto-healing corrupted playlist title ${pl.id} back to: ${defaultPl.title}`);
+            pl.title = defaultPl.title;
+            pl.desc = defaultPl.desc;
           }
         }
       });
@@ -2137,25 +2162,25 @@ function loadState() {
 
         if (Array.isArray(pl.tracks)) {
           pl.tracks.forEach(t => {
-          const lowTitle = (t.title || '').toLowerCase().trim();
-          for (const [key, localPath] of Object.entries(realAudioTracks)) {
-            if (lowTitle.includes(key)) {
-              t.audioUrl = localPath;
+            const lowTitle = (t.title || '').toLowerCase().trim();
+            for (const [key, localPath] of Object.entries(realAudioTracks)) {
+              if (lowTitle.includes(key)) {
+                t.audioUrl = localPath;
+              }
             }
-          }
-          for (const [key, covPath] of Object.entries(officialCovers)) {
-            if (lowTitle.includes(key)) {
-              t.cover = covPath;
+            for (const [key, covPath] of Object.entries(officialCovers)) {
+              if (lowTitle.includes(key)) {
+                t.cover = covPath;
+              }
             }
-          }
-          if (lowTitle.includes('atlantis')) {
-            t.youtubeId = 'gVAy3IZiL0s';
-            t.audioUrl = 'audio/seafret_atlantis.m4a';
-            t.duration = '4:18';
-          }
-        });
-      }
-    });
+            if (lowTitle.includes('atlantis')) {
+              t.youtubeId = 'gVAy3IZiL0s';
+              t.audioUrl = 'audio/seafret_atlantis.m4a';
+              t.duration = '4:18';
+            }
+          });
+        }
+      });
     }
 
     const mergedState = { ...defaultState, ...parsed };
@@ -2286,7 +2311,7 @@ window.addEventListener('DOMContentLoaded', () => {
         lock.classList.add('hidden', 'opacity-0', 'pointer-events-none');
       }
     }
-  } catch (e) {}
+  } catch (e) { }
 
   hydrateUI();
   navigateTo('home');
@@ -2732,7 +2757,7 @@ function unlockApp() {
   if (val === validPin) {
     try {
       localStorage.setItem('romantic_music_unlocked', 'true');
-    } catch (e) {}
+    } catch (e) { }
 
     const lock = document.getElementById('lockScreen');
     if (lock) {
@@ -2769,7 +2794,7 @@ function unlockApp() {
 function logOutApp() {
   try {
     localStorage.removeItem('romantic_music_unlocked');
-  } catch (e) {}
+  } catch (e) { }
 
   closeSettingsModal();
   if (isPlaying) {
@@ -2929,7 +2954,7 @@ function loadTrack(index, autoPlay = true, playlistId = null) {
       trackTitle: track.title || null
     };
     localStorage.setItem('romantic_music_last_played', JSON.stringify(lastPlayedData));
-  } catch (e) {}
+  } catch (e) { }
 
   updateActiveTrackUI();
   if (currentView === 'playlist') renderTracklist();
@@ -3914,7 +3939,7 @@ let isShowcasePinRevealed = false;
 
 function populateProfileShowcaseView() {
   const activePl = getActivePlaylist();
-  
+
   const yourAv = document.getElementById('showcaseYourAvatar');
   if (yourAv) yourAv.src = state.yourAvatar;
   const partnerAv = document.getElementById('showcasePartnerAvatar');
@@ -4077,11 +4102,6 @@ async function saveProfileOnlySettings(e) {
   try {
     const newPin = (document.getElementById('setPinCode')?.value || '').trim() || '1402';
     state.pinCode = newPin;
-    try {
-      localStorage.setItem('romantic_music_custom_pin', newPin);
-    } catch(err) {
-      console.warn('PIN localStorage warn:', err);
-    }
 
     let rawYourAvatar = (document.getElementById('setYourAvatar')?.value || '').trim();
     let rawPartnerAvatar = (document.getElementById('setPartnerAvatar')?.value || '').trim();
@@ -4097,6 +4117,24 @@ async function saveProfileOnlySettings(e) {
     state.yourName = (document.getElementById('setYourName')?.value || '').trim() || 'Kamu';
     state.partnerName = (document.getElementById('setPartnerName')?.value || '').trim() || 'Sayang';
     state.loveNote = document.getElementById('setLoveNote')?.value || '';
+    state.profileUpdatedAt = Date.now();
+
+    // Immediately persist directly to dedicated keys
+    try {
+      localStorage.setItem('romantic_music_custom_pin', newPin);
+      localStorage.setItem('romantic_music_profile_updated_at', state.profileUpdatedAt.toString());
+      const profileConfig = {
+        yourName: state.yourName,
+        partnerName: state.partnerName,
+        yourAvatar: state.yourAvatar,
+        partnerAvatar: state.partnerAvatar,
+        loveNote: state.loveNote,
+        profileUpdatedAt: state.profileUpdatedAt
+      };
+      localStorage.setItem('romantic_music_profile_config', JSON.stringify(profileConfig));
+    } catch (err) {
+      console.warn('Dedicated profile localStorage warn:', err);
+    }
 
     saveState();
     hydrateUI();
@@ -4142,6 +4180,21 @@ async function savePlaylistOnlySettings(e) {
       if (compressedCover) {
         activePl.cover = compressedCover;
       }
+
+      state.playlistsUpdatedAt = Date.now();
+      try {
+        localStorage.setItem('romantic_music_playlists_updated_at', state.playlistsUpdatedAt.toString());
+        let plCustom = {};
+        const rawPlCustom = localStorage.getItem('romantic_music_playlist_customizations');
+        if (rawPlCustom) { try { plCustom = JSON.parse(rawPlCustom); } catch(e){} }
+        plCustom[activePl.id] = {
+          title: activePl.title,
+          desc: activePl.desc,
+          cover: activePl.cover,
+          updatedAt: state.playlistsUpdatedAt
+        };
+        localStorage.setItem('romantic_music_playlist_customizations', JSON.stringify(plCustom));
+      } catch(e){}
     }
 
     saveState();
@@ -4381,7 +4434,7 @@ function handlePolaroidUpload(event) {
   const file = event.target.files[0];
   if (!file) return;
   const reader = new FileReader();
-  reader.onload = function(e) {
+  reader.onload = function (e) {
     const dataUrl = e.target.result;
     document.getElementById('newPolaroidUrl').value = dataUrl;
     document.getElementById('polaroidPreviewThumb').src = dataUrl;
@@ -4507,11 +4560,10 @@ function renderMainJamChat() {
           <span class="text-[10px] font-bold ${isYou ? 'text-[#FA8072]' : 'text-[#7A4E58]'}">${isYou ? state.yourName : state.partnerName}</span>
           <span class="text-[9px] text-[#9A737C]">${msg.time}</span>
         </div>
-        <div class="px-3.5 py-2 rounded-2xl max-w-[85%] text-xs leading-relaxed ${
-          isYou 
-            ? 'bg-gradient-to-r from-[#FA8072] to-[#E85D75] text-white rounded-tr-none shadow-xs' 
-            : 'bg-[#FFF0F3] border border-[#FFD2DC] text-[#3B2328] rounded-tl-none shadow-xs'
-        }">
+        <div class="px-3.5 py-2 rounded-2xl max-w-[85%] text-xs leading-relaxed ${isYou
+        ? 'bg-gradient-to-r from-[#FA8072] to-[#E85D75] text-white rounded-tr-none shadow-xs'
+        : 'bg-[#FFF0F3] border border-[#FFD2DC] text-[#3B2328] rounded-tl-none shadow-xs'
+      }">
           ${msg.text}
         </div>
       </div>
@@ -4698,8 +4750,8 @@ function renderAddToPlaylistItems() {
 
   const track = currentTrackForPlaylist;
   container.innerHTML = state.playlists.map(pl => {
-    const hasTrack = Array.isArray(pl.tracks) && pl.tracks.some(t => 
-      (t.id && track.id && t.id === track.id) || 
+    const hasTrack = Array.isArray(pl.tracks) && pl.tracks.some(t =>
+      (t.id && track.id && t.id === track.id) ||
       (t.title && track.title && t.title.toLowerCase().trim() === track.title.toLowerCase().trim())
     );
 
@@ -4738,8 +4790,8 @@ function addTrackToSelectedPlaylist(targetPlId) {
   }
 
   const track = currentTrackForPlaylist;
-  const alreadyIn = pl.tracks.some(t => 
-    (t.id && track.id && t.id === track.id) || 
+  const alreadyIn = pl.tracks.some(t =>
+    (t.id && track.id && t.id === track.id) ||
     (t.title && track.title && t.title.toLowerCase().trim() === track.title.toLowerCase().trim())
   );
 
@@ -4784,8 +4836,8 @@ function checkUrlPlayParam() {
   let targetTrackIdx = -1;
 
   for (const pl of state.playlists) {
-    const idx = pl.tracks.findIndex(t => 
-      (t.id && t.id.toLowerCase() === target) || 
+    const idx = pl.tracks.findIndex(t =>
+      (t.id && t.id.toLowerCase() === target) ||
       (t.title && t.title.toLowerCase().trim() === target)
     );
     if (idx !== -1) {
@@ -4886,8 +4938,8 @@ function renderMobileDrawerTracklist() {
     .filter(item => {
       if (!query) return true;
       return item.title.toLowerCase().includes(query) ||
-             item.artist.toLowerCase().includes(query) ||
-             (item.memory || '').toLowerCase().includes(query);
+        item.artist.toLowerCase().includes(query) ||
+        (item.memory || '').toLowerCase().includes(query);
     });
 
   if (filtered.length === 0) {
