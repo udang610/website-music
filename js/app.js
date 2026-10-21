@@ -38,6 +38,28 @@ async function pushStateToSupabase() {
 
   try {
     const oursPl = (state && state.playlists) ? (state.playlists.find(p => p.id === 'pl-ours') || state.playlists[0]) : null;
+    
+    // Sanitize playlists to prevent large local base64 audio/blobs from exceeding cloud payload limits
+    const sanitizedPlaylists = (state.playlists || []).map(pl => ({
+      id: pl.id,
+      title: pl.title,
+      desc: pl.desc || '',
+      cover: pl.cover || '',
+      tracks: (pl.tracks || []).map(t => ({
+        id: t.id,
+        title: t.title,
+        artist: t.artist,
+        album: t.album || '',
+        memory: t.memory || '',
+        dateAdded: t.dateAdded || '',
+        duration: t.duration || 'Full',
+        liked: !!t.liked,
+        cover: t.cover || '',
+        youtubeId: t.youtubeId || null,
+        audioUrl: (t.audioUrl && t.audioUrl.startsWith('data:')) ? '' : (t.audioUrl || '')
+      }))
+    }));
+
     const syncPayload = {
       pinCode: state.pinCode,
       yourName: state.yourName,
@@ -51,7 +73,8 @@ async function pushStateToSupabase() {
       targetPlaylistId: 'pl-ours',
       playlistTitle: oursPl ? oursPl.title : '',
       playlistDesc: oursPl ? oursPl.desc : '',
-      playlistCover: oursPl ? oursPl.cover : ''
+      playlistCover: oursPl ? oursPl.cover : '',
+      playlists: sanitizedPlaylists
     };
 
     const { error } = await client
@@ -65,7 +88,7 @@ async function pushStateToSupabase() {
     if (error) {
       console.warn('Supabase save warning:', error);
     } else {
-      console.log('✦ State successfully synced to Supabase Cloud!');
+      console.log('✦ State & Playlists successfully synced to Supabase Cloud!');
     }
   } catch (err) {
     console.warn('pushStateToSupabase error:', err);
@@ -120,24 +143,84 @@ function applyRemoteState(remoteData) {
       changed = true;
     }
 
-    const targetPlId = remoteData.targetPlaylistId || 'pl-ours';
-    const targetPl = state.playlists.find(p => p.id === targetPlId);
-    if (targetPl) {
-      if (remoteData.playlistTitle && targetPl.title !== remoteData.playlistTitle) {
-        targetPl.title = remoteData.playlistTitle;
-        changed = true;
-      }
-      if (remoteData.playlistDesc !== undefined && targetPl.desc !== remoteData.playlistDesc) {
-        targetPl.desc = remoteData.playlistDesc;
-        changed = true;
-      }
-      if (remoteData.playlistCover && targetPl.cover !== remoteData.playlistCover) {
-        targetPl.cover = remoteData.playlistCover;
-        changed = true;
+    // Sync Playlists and Custom Tracks across devices (Mobile <-> Desktop)
+    if (Array.isArray(remoteData.playlists) && remoteData.playlists.length > 0) {
+      remoteData.playlists.forEach(remotePl => {
+        let localPl = state.playlists.find(p => p.id === remotePl.id);
+        if (!localPl) {
+          // New playlist created from another device
+          localPl = {
+            id: remotePl.id,
+            title: remotePl.title,
+            desc: remotePl.desc || '',
+            cover: remotePl.cover || '',
+            tracks: []
+          };
+          state.playlists.push(localPl);
+          changed = true;
+        } else {
+          if (remotePl.title && localPl.title !== remotePl.title) {
+            localPl.title = remotePl.title;
+            changed = true;
+          }
+          if (remotePl.desc !== undefined && localPl.desc !== remotePl.desc) {
+            localPl.desc = remotePl.desc;
+            changed = true;
+          }
+          if (remotePl.cover && localPl.cover !== remotePl.cover) {
+            localPl.cover = remotePl.cover;
+            changed = true;
+          }
+        }
+
+        // Merge and synchronize tracks in this playlist
+        if (Array.isArray(remotePl.tracks)) {
+          if (!localPl.tracks) localPl.tracks = [];
+          
+          // Check for any tracks present in remote that are missing locally
+          remotePl.tracks.forEach(remTrack => {
+            const remKey = remTrack.id || `${remTrack.title}-${remTrack.artist}`;
+            const exists = localPl.tracks.some(locTrack => {
+              const locKey = locTrack.id || `${locTrack.title}-${locTrack.artist}`;
+              return locKey.toLowerCase() === remKey.toLowerCase();
+            });
+
+            if (!exists) {
+              console.log(`✦ Syncing new track from remote into "${localPl.title}":`, remTrack.title);
+              localPl.tracks.push({ ...remTrack });
+              changed = true;
+            } else {
+              // Update liked state if changed remotely
+              const locTrack = localPl.tracks.find(t => (t.id && t.id === remTrack.id) || (t.title === remTrack.title && t.artist === remTrack.artist));
+              if (locTrack && locTrack.liked !== remTrack.liked && remTrack.liked !== undefined) {
+                locTrack.liked = remTrack.liked;
+                changed = true;
+              }
+            }
+          });
+        }
+      });
+    } else {
+      // Fallback for legacy cloud payload without full playlists array
+      const targetPlId = remoteData.targetPlaylistId || 'pl-ours';
+      const targetPl = state.playlists.find(p => p.id === targetPlId);
+      if (targetPl) {
+        if (remoteData.playlistTitle && targetPl.title !== remoteData.playlistTitle) {
+          targetPl.title = remoteData.playlistTitle;
+          changed = true;
+        }
+        if (remoteData.playlistDesc !== undefined && targetPl.desc !== remoteData.playlistDesc) {
+          targetPl.desc = remoteData.playlistDesc;
+          changed = true;
+        }
+        if (remoteData.playlistCover && targetPl.cover !== remoteData.playlistCover) {
+          targetPl.cover = remoteData.playlistCover;
+          changed = true;
+        }
       }
     }
 
-    // Auto-heal: Ensure other default playlists that were corrupted by the sync bug are restored to defaults
+    // Auto-heal: Ensure other default playlists that were corrupted by any legacy sync bug are restored to defaults
     state.playlists.forEach(pl => {
       if (pl.id !== 'pl-ours') {
         const defaultPl = defaultState.playlists.find(dp => dp.id === pl.id);
@@ -168,7 +251,9 @@ function applyRemoteState(remoteData) {
 
       if (typeof hydrateUI === 'function') hydrateUI();
       if (typeof populateProfileShowcaseView === 'function') populateProfileShowcaseView();
+      if (typeof renderSidebarPlaylists === 'function') renderSidebarPlaylists();
       if (currentView === 'home' && typeof renderHomeView === 'function') renderHomeView();
+      else if (currentView === 'playlist' && typeof renderTracklist === 'function') renderTracklist();
       else if (currentView === 'jam' && typeof updateMainJamView === 'function') {
         updateMainJamView();
         if (typeof renderJamChat === 'function') renderJamChat();
@@ -2095,6 +2180,11 @@ function saveState() {
     localStorage.setItem('romantic_music_profile_config', JSON.stringify(profileConfig));
   } catch (err) {
     console.warn('Could not save profile config:', err);
+  }
+
+  // Automatically sync updated state (including added/removed songs and playlists) to Supabase Cloud
+  if (typeof triggerSupabaseSync === 'function') {
+    triggerSupabaseSync();
   }
 }
 
