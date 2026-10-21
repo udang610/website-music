@@ -291,7 +291,7 @@ const officialCovers = {
 const defaultState = {
   pinCode: '1402',
   yourName: 'nadeyy ★',
-  partnerName: 'sayang 💕',
+  partnerName: 'sayang',
   yourAvatar: 'images/spotify_covers/profile_nadeyy.jpg',
   partnerAvatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150&auto=format&fit=crop&q=80',
   loveNote: "Hai sayang,\nSetiap lagu di dalam playlist ini punya potongan cerita tentang kita. Kapan pun kamu kangen atau lagi capek, putar lagu-lagu ini ya. Kita juga bisa nyalain fitur Listening Together biar berasa dengerin bareng terus! I love you more than words can say 🤍",
@@ -2098,7 +2098,39 @@ function saveState() {
   }
 }
 
+function getAllLikedTracks() {
+  const allLiked = [];
+  const seenIds = new Set();
+  (state.playlists || []).forEach(pl => {
+    (pl.tracks || []).forEach(t => {
+      if (t.liked) {
+        const uniqueKey = t.id || `${t.title}-${t.artist}`;
+        if (!seenIds.has(uniqueKey)) {
+          seenIds.add(uniqueKey);
+          allLiked.push({ ...t, sourcePlaylistId: pl.id });
+        }
+      }
+    });
+  });
+  return allLiked;
+}
+
+function getLikedSongsPlaylist() {
+  const tracks = getAllLikedTracks();
+  return {
+    id: 'pl-liked',
+    title: 'Liked Songs',
+    desc: 'Kumpulan lagu favorit pilihan berdua',
+    cover: 'images/spotify_covers/liked_songs.jpg',
+    isLikedSpecial: true,
+    tracks: tracks
+  };
+}
+
 function getActivePlaylist() {
+  if (state.activePlaylistId === 'pl-liked') {
+    return getLikedSongsPlaylist();
+  }
   const pl = state.playlists.find(p => p.id === state.activePlaylistId);
   return pl || state.playlists[0] || defaultState.playlists[0];
 }
@@ -2109,6 +2141,9 @@ function getActiveTracks() {
 }
 
 function getPlayingPlaylist() {
+  if (currentPlayingPlaylistId === 'pl-liked') {
+    return getLikedSongsPlaylist();
+  }
   const pl = state.playlists.find(p => p.id === currentPlayingPlaylistId);
   return pl || getActivePlaylist();
 }
@@ -2122,6 +2157,13 @@ function getPlayingTrack() {
   if (currentPlayingTrack) return currentPlayingTrack;
   const tracks = getPlayingTracks();
   return tracks[currentPlayingIndex] || getActiveTracks()[0] || null;
+}
+
+function openLikedSongs() {
+  currentFilter = 'all';
+  const label = document.getElementById('filterStatusLabel');
+  if (label) label.textContent = 'Semua Lagu';
+  navigateTo('playlist', 'pl-liked');
 }
 
 // ================= INITIALIZATION =================
@@ -2239,6 +2281,16 @@ function hydrateUI() {
   if (mobYou) mobYou.src = state.yourAvatar;
   const mobPartner = document.getElementById('mobileNavAvatarPartner');
   if (mobPartner) mobPartner.src = state.partnerAvatar;
+
+  // Toggle Edit/Delete buttons if on special virtual playlist
+  const btnDelete = document.getElementById('btnDeletePlaylist');
+  const btnEdit = document.querySelector('button[onclick="openEditPlaylistModal()"]');
+  if (btnDelete) {
+    btnDelete.style.display = activePl.isLikedSpecial ? 'none' : '';
+  }
+  if (btnEdit) {
+    btnEdit.style.display = activePl.isLikedSpecial ? 'none' : '';
+  }
 
   renderSidebarPlaylists();
 }
@@ -2522,7 +2574,7 @@ function closeCreatePlaylistModal() {
 function handleCreatePlaylistSubmit(e) {
   e.preventDefault();
   const title = document.getElementById('newPlaylistTitle').value.trim();
-  const desc = document.getElementById('newPlaylistDesc').value.trim() || 'Playlist kenangan kita berdua 💕';
+  const desc = document.getElementById('newPlaylistDesc').value.trim() || 'Playlist kenangan kita berdua';
   const cover = document.getElementById('newPlaylistCover').value.trim() || 'https://images.unsplash.com/photo-1518199266791-5375a83190b7?w=600&auto=format&fit=crop&q=80';
 
   const newId = 'pl_' + Date.now();
@@ -2544,11 +2596,15 @@ function handleCreatePlaylistSubmit(e) {
 }
 
 function deleteCurrentPlaylist() {
-  if (state.playlists.length <= 1) {
-    showToastNotification('Minimal harus ada 1 playlist ya sayang!', 'error');
+  const currentPl = getActivePlaylist();
+  if (currentPl.isLikedSpecial || state.activePlaylistId === 'pl-liked') {
+    showToastNotification('Playlist Liked Songs tidak dapat dihapus', 'info');
     return;
   }
-  const currentPl = getActivePlaylist();
+  if (state.playlists.length <= 1) {
+    showToastNotification('Minimal harus ada 1 playlist ya!', 'error');
+    return;
+  }
   if (confirm(`Yakin ingin menghapus playlist "${currentPl.title}"? Seluruh lagu di dalamnya akan terhapus.`)) {
     state.playlists = state.playlists.filter(p => p.id !== currentPl.id);
     state.activePlaylistId = state.playlists[0].id;
@@ -2839,12 +2895,12 @@ function updateActiveTrackUI() {
   document.getElementById('vinylCenterArt').src = track.cover;
   document.getElementById('rightTrackTitle').textContent = track.title;
   document.getElementById('rightTrackArtist').textContent = track.artist;
-  document.getElementById('rightTrackMemory').textContent = `"${track.memory || 'Lagu spesial buat kita berdua 💕'}"`;
+  document.getElementById('rightTrackMemory').textContent = `"${track.memory || 'Lagu spesial buat kita berdua ✦'}"`;
 
   // Polaroid Modal
   document.getElementById('polaroidImg').src = track.cover;
   document.getElementById('polaroidTitle').textContent = `${track.title} — ${track.artist}`;
-  document.getElementById('polaroidMemory').textContent = `"${track.memory || 'Every beat reminds me of you 💕'}"`;
+  document.getElementById('polaroidMemory').textContent = `"${track.memory || 'Every beat reminds me of you ✦'}"`;
 
   // Like status
   const likeIcon = track.liked ? '<i class="fa-solid fa-heart text-[#FF4D6D]"></i>' : '<i class="fa-regular fa-heart text-white"></i>';
@@ -2858,7 +2914,7 @@ function updateActiveTrackUI() {
   const mobArtist = document.getElementById('mobileTrackArtist');
   if (mobArtist) mobArtist.textContent = track.artist;
   const mobMemory = document.getElementById('mobileTrackMemory');
-  if (mobMemory) mobMemory.textContent = `"${track.memory || 'Lagu spesial buat kita berdua 💕'}"`;
+  if (mobMemory) mobMemory.textContent = `"${track.memory || 'Lagu spesial buat kita berdua ✦'}"`;
 
   const mobLikeBtn = document.getElementById('mobileLikeBtn');
   if (mobLikeBtn) {
@@ -3090,10 +3146,28 @@ function extractYouTubeId(url) {
 // ================= LIKE & DELETE ACTIONS =================
 function toggleLikeTrack(idx) {
   const tracks = getActiveTracks();
-  if (!tracks[idx]) return;
-  tracks[idx].liked = !tracks[idx].liked;
+  const track = tracks[idx];
+  if (!track) return;
+
+  const newLiked = !track.liked;
+  track.liked = newLiked;
+
+  // If in virtual Liked Songs playlist, update the original track across playlists
+  if (state.activePlaylistId === 'pl-liked') {
+    (state.playlists || []).forEach(pl => {
+      (pl.tracks || []).forEach(t => {
+        if ((t.id && t.id === track.id) || (t.title === track.title && t.artist === track.artist)) {
+          t.liked = newLiked;
+        }
+      });
+    });
+  }
+
   saveState();
-  if (currentView === 'playlist') renderTracklist();
+  if (currentView === 'playlist') {
+    hydrateUI();
+    renderTracklist();
+  }
   if (idx === currentIndex) updateActiveTrackUI();
   renderHomeFavoritesList();
 }
@@ -3107,6 +3181,16 @@ function toggleLikeCurrent() {
 
 function deleteTrack(idx) {
   const tracks = getActiveTracks();
+  if (state.activePlaylistId === 'pl-liked') {
+    // Un-like rather than destroy track when deleted from Liked Songs
+    const track = tracks[idx];
+    if (track) {
+      toggleLikeTrack(idx);
+      showToastNotification(`Lagu "${track.title}" dihapus dari Liked Songs`, 'info');
+    }
+    return;
+  }
+
   if (tracks.length <= 1) {
     showToastNotification('Minimal harus ada 1 lagu di dalam playlist ya!', 'error');
     return;
@@ -3122,7 +3206,7 @@ function deleteTrack(idx) {
 function switchPlaylistFilter(mode) {
   currentFilter = mode;
   const label = document.getElementById('filterStatusLabel');
-  if (label) label.textContent = mode === 'liked' ? 'Lagu Favorit ❤️' : 'Semua Lagu';
+  if (label) label.textContent = mode === 'liked' ? 'Lagu Favorit' : 'Semua Lagu';
   const libBtnLiked = document.getElementById('libBtnLiked');
   if (libBtnLiked) libBtnLiked.classList.toggle('border-[#3B2328]', mode === 'liked');
   if (currentView !== 'playlist') navigateTo('playlist');
@@ -3358,11 +3442,11 @@ function simulatePartnerChatReply(userMessage) {
   const tracks = getActiveTracks();
   const currentSong = tracks[currentIndex]?.title || 'lagu ini';
   const sweetReplies = [
-    `Iyaa sayang, aku lagi dengerin "${currentSong}" juga nih sambil senyum-senyum 💕`,
-    `Suka banget liriknya yang pas bagian ini 🥺🤍`,
-    `Kangen deh, nanti malam call lagi yaa! 🥰`,
-    `Lagu ini bener-bener ngingetin aku pas pertama kali kita jalan bareng ✨`,
-    `Peluk dulu dari jauh 🤗 Lagu ini manis banget kayak kamu.`
+    `Iyaa, aku lagi dengerin "${currentSong}" juga nih sambil senyum-senyum ✦`,
+    `Suka banget melodinya yang pas bagian ini ✨`,
+    `Nanti malam kita dengerin bareng lagi yaa!`,
+    `Lagu ini bener-bener ngingetin aku pas momen kita jalan bareng ✨`,
+    `Lagu ini tenang banget dan punya banyak memori.`
   ];
   const reply = sweetReplies[Math.floor(Math.random() * sweetReplies.length)];
 
@@ -3378,15 +3462,15 @@ function simulatePartnerChatReply(userMessage) {
 function simulatePartnerSweetAction() {
   const tracks = getActiveTracks();
   const currentSong = tracks[currentIndex]?.title || 'lagu kita';
-  sendFloatingReaction('🥰', false);
-  broadcastJamSystemNote(`💕 Sayang memelukmu secara virtual sambil mendengarkan "${currentSong}"`);
+  sendFloatingReaction('✦', false);
+  broadcastJamSystemNote(`✦ Pasanganmu membagikan momen mendengarkan "${currentSong}"`);
 }
 
 function copyInviteLink() {
   const code = document.getElementById('jamRoomCode')?.textContent || 'LUV-2407';
   const url = `${window.location.origin}${window.location.pathname}?room=${code}`;
   navigator.clipboard.writeText(url).then(() => {
-    showToastNotification('Link Jam Session berhasil disalin! Kirimkan ke pasanganmu 💕', 'success');
+    showToastNotification('Link Jam Session berhasil disalin!', 'success');
   }).catch(() => {
     alert(`Salin link sesi berdua: ${url}`);
   });
@@ -3837,6 +3921,10 @@ function closeSettingsModal() { closeProfileModal(); }
 
 function openEditPlaylistModal() {
   const activePl = getActivePlaylist();
+  if (activePl.isLikedSpecial || state.activePlaylistId === 'pl-liked') {
+    showToastNotification('Playlist Liked Songs tidak dapat diedit', 'info');
+    return;
+  }
   if (document.getElementById('editPlaylistTitle')) {
     document.getElementById('editPlaylistTitle').value = activePl.title || '';
   }
@@ -4116,34 +4204,34 @@ function renderPolaroidGallery() {
   container.innerHTML = memories.map((item, idx) => {
     const tiltClass = tilts[idx % tilts.length];
     return `
-      <div class="polaroid-card ${tiltClass} group cursor-pointer" onclick="viewPolaroidDetail('${item.id}')">
+      <div class="polaroid-card polaroid-card-compact w-full shrink-0 ${tiltClass} group cursor-pointer" onclick="viewPolaroidDetail('${item.id}')">
         <!-- Washi Tape -->
         <div class="washi-tape"></div>
 
         <!-- Image Frame -->
-        <div class="w-full h-52 sm:h-56 bg-neutral-100 rounded-sm overflow-hidden mb-3 relative border border-neutral-200/60">
+        <div class="w-full h-28 sm:h-32 bg-neutral-100 rounded-sm overflow-hidden mb-1.5 relative border border-neutral-200/60">
           <img src="${item.imageUrl}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500" alt="Polaroid photo" loading="lazy" />
           
           <!-- Hover Overlay with Zoom & Delete Buttons -->
           <div class="absolute inset-0 bg-black/35 opacity-0 group-hover:opacity-100 transition flex items-center justify-center gap-2" onclick="event.stopPropagation()">
-            <button onclick="viewPolaroidDetail('${item.id}')" class="w-8 h-8 rounded-full bg-white text-[#3B2328] hover:text-[#FA8072] flex items-center justify-center shadow-md transition" title="Lihat Foto Penuh">
-              <i class="fa-solid fa-expand text-xs"></i>
+            <button onclick="viewPolaroidDetail('${item.id}')" class="w-7 h-7 rounded-full bg-white text-[#3B2328] hover:text-[#FA8072] flex items-center justify-center shadow-md transition" title="Lihat Foto Penuh">
+              <i class="fa-solid fa-expand text-[10px]"></i>
             </button>
-            <button onclick="deletePolaroid('${item.id}')" class="w-8 h-8 rounded-full bg-white text-[#9A737C] hover:text-rose-500 flex items-center justify-center shadow-md transition" title="Hapus Polaroid">
-              <i class="fa-solid fa-trash-can text-xs"></i>
+            <button onclick="deletePolaroid('${item.id}')" class="w-7 h-7 rounded-full bg-white text-[#9A737C] hover:text-rose-500 flex items-center justify-center shadow-md transition" title="Hapus Polaroid">
+              <i class="fa-solid fa-trash-can text-[10px]"></i>
             </button>
           </div>
         </div>
 
         <!-- Handwritten Caption -->
-        <p class="font-handwriting text-xl text-[#3B2328] text-center leading-snug px-1 line-clamp-2">
-          ${item.caption || 'Kenangan manis berdua 💕'}
+        <p class="font-handwriting text-sm sm:text-base text-[#3B2328] text-center leading-snug px-1 truncate">
+          ${item.caption || 'Kenangan manis berdua ✦'}
         </p>
 
         <!-- Date & Location Footer -->
-        <div class="flex items-center justify-between text-[11px] font-semibold text-[#9A737C] mt-2 pt-2 border-t border-[#FFF0F3] px-1">
-          <span>${item.date || 'Sweet moment'}</span>
-          <span class="text-[#FA8072] truncate max-w-[120px]">${item.location || 'Special place'}</span>
+        <div class="flex items-center justify-between text-[10px] font-semibold text-[#9A737C] mt-1 pt-1 border-t border-[#FFF0F3] px-1">
+          <span class="truncate max-w-[80px]">${item.date || 'Sweet moment'}</span>
+          <span class="text-[#FA8072] truncate max-w-[70px]">${item.location || 'Special place'}</span>
         </div>
       </div>
     `;
@@ -4160,7 +4248,7 @@ function openAddPolaroidModal() {
   document.getElementById('newPolaroidUrl').value = '';
   document.getElementById('newPolaroidCaption').value = '';
   document.getElementById('newPolaroidDate').value = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
-  document.getElementById('newPolaroidLocation').value = 'Di Hati Kita 💕';
+  document.getElementById('newPolaroidLocation').value = 'Di Hati Kita';
   document.getElementById('polaroidPreviewThumb').src = 'https://images.unsplash.com/photo-1518199266791-5375a83190b7?w=400&auto=format&fit=crop&q=80';
   document.getElementById('polaroidPreviewCaptionText').textContent = 'Cerita foto kita...';
   document.getElementById('polaroidPreviewDateText').textContent = 'Hari ini';
@@ -4200,7 +4288,7 @@ function saveNewPolaroid(event) {
   const location = document.getElementById('newPolaroidLocation').value.trim() || 'Tempat Spesial';
 
   if (!caption) {
-    showToastNotification('Tulis cerita manis untuk foto ini ya sayang 💕', 'error');
+    showToastNotification('Tulis cerita untuk foto ini ya', 'error');
     return;
   }
 
@@ -4223,25 +4311,23 @@ function saveNewPolaroid(event) {
 }
 
 function deletePolaroid(id) {
-  if (confirm('Hapus foto polaroid ini dari galeri kenangan?')) {
-    state.polaroidMemories = (state.polaroidMemories || []).filter(p => p.id !== id);
-    localStorage.setItem('romantic_music_polaroid_memories', JSON.stringify(state.polaroidMemories));
-    saveState();
-    triggerSupabaseSync();
-    renderPolaroidGallery();
-    showToastNotification('Foto polaroid telah dihapus permanen', 'success');
-  }
+  // Directly delete without browser confirm popup
+  state.polaroidMemories = (state.polaroidMemories || []).filter(p => p.id !== id);
+  localStorage.setItem('romantic_music_polaroid_memories', JSON.stringify(state.polaroidMemories));
+  saveState();
+  triggerSupabaseSync();
+  renderPolaroidGallery();
+  showToastNotification('Foto polaroid telah dihapus', 'info');
 }
 
 function clearAllPolaroids() {
-  if (confirm('Yakin ingin menghapus seluruh foto di galeri polaroid?')) {
-    state.polaroidMemories = [];
-    localStorage.setItem('romantic_music_polaroid_memories', JSON.stringify([]));
-    saveState();
-    triggerSupabaseSync();
-    renderPolaroidGallery();
-    showToastNotification('Seluruh foto polaroid telah dihapus permanen', 'success');
-  }
+  // Directly clear without browser confirm popup
+  state.polaroidMemories = [];
+  localStorage.setItem('romantic_music_polaroid_memories', JSON.stringify([]));
+  saveState();
+  triggerSupabaseSync();
+  renderPolaroidGallery();
+  showToastNotification('Seluruh foto polaroid telah dihapus', 'info');
 }
 
 function viewPolaroidDetail(id) {
@@ -4383,7 +4469,7 @@ function openShareSongModal(trackIdentifier) {
   if (cover) cover.src = track.cover;
   if (title) title.textContent = track.title;
   if (artist) artist.textContent = track.artist;
-  if (memory) memory.textContent = `"${track.memory || 'Lagu cinta spesial untuk kita berdua 💕'}"`;
+  if (memory) memory.textContent = `"${track.memory || 'Lagu spesial untuk kita berdua ✦'}"`;
 
   const baseUrl = window.location.origin + window.location.pathname;
   const shareParam = encodeURIComponent(track.id || track.title);
@@ -4391,9 +4477,9 @@ function openShareSongModal(trackIdentifier) {
   if (linkInput) linkInput.value = directLink;
 
   const waText = encodeURIComponent(
-    `Hai sayang 💕 Dengerin lagu ini yuk di space musik kita:\n\n` +
+    `Hai, dengerin lagu ini yuk di space musik kita:\n\n` +
     `🎵 *${track.title}* - ${track.artist}\n` +
-    `💌 "${track.memory || 'Setiap nada mengingatkan aku padamu'}"\n\n` +
+    `✦ "${track.memory || 'Setiap nada mengingatkan momen manis bersama'}"\n\n` +
     `Buka & dengarkan langsung di sini:\n${directLink}`
   );
   if (waBtn) waBtn.href = `https://api.whatsapp.com/send?text=${waText}`;
@@ -4423,10 +4509,10 @@ function copyShareLink() {
   if (!linkInput) return;
   linkInput.select();
   navigator.clipboard.writeText(linkInput.value).then(() => {
-    showToastNotification('Link lagu disalin ke clipboard! Siap dikirim ke kesayangan 💌', 'success');
+    showToastNotification('Link lagu disalin ke clipboard! ✦', 'success');
   }).catch(() => {
     document.execCommand('copy');
-    showToastNotification('Link disalin ke clipboard! 💌', 'success');
+    showToastNotification('Link disalin ke clipboard! ✦', 'success');
   });
 }
 
@@ -4437,9 +4523,9 @@ function copyRomanticQuote() {
   const shareParam = encodeURIComponent(track.id || track.title);
   const directLink = `${baseUrl}?play=${shareParam}`;
 
-  const quoteText = `"${track.memory || 'Lagu cinta terindah untuk kita berdua 💕'}"\n— ${track.title} by ${track.artist}\n${directLink}`;
+  const quoteText = `"${track.memory || 'Lagu indah untuk kita berdua ✦'}"\n— ${track.title} by ${track.artist}\n${directLink}`;
   navigator.clipboard.writeText(quoteText).then(() => {
-    showToastNotification('Catatan cinta & judul lagu disalin ke clipboard! 🌸', 'success');
+    showToastNotification('Catatan & judul lagu disalin ke clipboard! ✦', 'success');
   }).catch(() => {
     showToastNotification('Teks berhasil disalin!', 'success');
   });
