@@ -2484,6 +2484,27 @@ function unlockApp() {
   }
 }
 
+function logOutApp() {
+  closeSettingsModal();
+  if (isPlaying) {
+    togglePlay();
+  }
+  const lock = document.getElementById('lockScreen');
+  if (lock) {
+    lock.classList.remove('hidden');
+    void lock.offsetWidth;
+    lock.classList.remove('opacity-0', 'pointer-events-none');
+  }
+  const input = document.getElementById('pinInput');
+  if (input) {
+    input.value = '';
+    setTimeout(() => input.focus(), 200);
+  }
+  const err = document.getElementById('pinError');
+  if (err) err.classList.add('hidden');
+  showToastNotification('Berhasil keluar. Masukkan PIN untuk masuk kembali 🔒', 'info');
+}
+
 // Auto-submit on 4 digits or Enter key
 document.getElementById('pinInput')?.addEventListener('input', (e) => {
   const err = document.getElementById('pinError');
