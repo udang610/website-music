@@ -2083,7 +2083,43 @@ function getPlayingTrack() {
 window.addEventListener('DOMContentLoaded', () => {
   hydrateUI();
   navigateTo('home');
-  loadTrack(0, false);
+
+  // Detect and restore last played song
+  let restored = false;
+  try {
+    const rawLast = localStorage.getItem('romantic_music_last_played');
+    if (rawLast) {
+      const last = JSON.parse(rawLast);
+      if (last && last.playlistId) {
+        const pl = state.playlists.find(p => p.id === last.playlistId) || state.playlists[0];
+        if (pl && pl.tracks && pl.tracks.length > 0) {
+          let tIdx = -1;
+          if (last.trackId) {
+            tIdx = pl.tracks.findIndex(t => t.id === last.trackId);
+          }
+          if (tIdx === -1 && last.trackTitle) {
+            tIdx = pl.tracks.findIndex(t => t.title && t.title.toLowerCase().trim() === last.trackTitle.toLowerCase().trim());
+          }
+          if (tIdx === -1 && typeof last.trackIndex === 'number' && pl.tracks[last.trackIndex]) {
+            tIdx = last.trackIndex;
+          }
+          if (tIdx !== -1) {
+            currentPlayingPlaylistId = pl.id;
+            state.activePlaylistId = pl.id;
+            loadTrack(tIdx, false, pl.id);
+            restored = true;
+          }
+        }
+      }
+    }
+  } catch (e) {
+    console.warn('Error restoring last played track:', e);
+  }
+
+  if (!restored) {
+    loadTrack(0, false);
+  }
+
   renderJamChat();
   hydrateItunesCovers();
   checkUrlPlayParam();
@@ -2344,6 +2380,8 @@ function renderHomeFavoritesList() {
 
 // Custom Sidebar Tooltip System (Pink-bordered Card with Dark Text)
 function showSidebarTooltip(el) {
+  // Never show popup tooltip on mobile touch devices
+  if (window.innerWidth < 1024) return;
   const tooltip = document.getElementById('sidebarPlaylistTooltip');
   if (!tooltip || !el) return;
   const title = el.getAttribute('data-title') || '';
@@ -2649,6 +2687,17 @@ function loadTrack(index, autoPlay = true, playlistId = null) {
   const track = tracks[currentPlayingIndex];
   currentPlayingTrack = track;
 
+  // Persist last played track so it is automatically restored on next visit
+  try {
+    const lastPlayedData = {
+      playlistId: currentPlayingPlaylistId,
+      trackIndex: currentPlayingIndex,
+      trackId: track.id || null,
+      trackTitle: track.title || null
+    };
+    localStorage.setItem('romantic_music_last_played', JSON.stringify(lastPlayedData));
+  } catch (e) {}
+
   updateActiveTrackUI();
   if (currentView === 'playlist') renderTracklist();
 
@@ -2820,7 +2869,7 @@ function updatePlayButtons() {
     if (vinylDisc) vinylDisc.classList.add('playing');
     if (vinylTonearm) vinylTonearm.classList.add('playing');
     if (mainJamPlayIcon) mainJamPlayIcon.className = 'fa-solid fa-pause text-xl';
-    if (mobilePlayIcon) mobilePlayIcon.className = 'fa-solid fa-pause text-xl';
+    if (mobilePlayIcon) mobilePlayIcon.className = 'fa-solid fa-pause text-2xl text-white';
     if (mobileVinylDisc) mobileVinylDisc.classList.add('playing');
     if (mobileVinylTonearm) mobileVinylTonearm.classList.add('playing');
   } else {
@@ -2829,7 +2878,7 @@ function updatePlayButtons() {
     if (vinylDisc) vinylDisc.classList.remove('playing');
     if (vinylTonearm) vinylTonearm.classList.remove('playing');
     if (mainJamPlayIcon) mainJamPlayIcon.className = 'fa-solid fa-play text-xl ml-0.5';
-    if (mobilePlayIcon) mobilePlayIcon.className = 'fa-solid fa-play text-xl ml-0.5';
+    if (mobilePlayIcon) mobilePlayIcon.className = 'fa-solid fa-play text-2xl ml-1 text-white';
     if (mobileVinylDisc) mobileVinylDisc.classList.remove('playing');
     if (mobileVinylTonearm) mobileVinylTonearm.classList.remove('playing');
   }
