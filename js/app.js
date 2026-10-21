@@ -2762,6 +2762,10 @@ function selectTrackFromList(index) {
       broadcastJamSystemNote(`🎧 Kamu memutar "${tracks[index].title}" untuk didengarkan berdua`);
     }
   }
+  // Buka tampilan piringan hitam estetik secara detail jika di mobile
+  if (window.innerWidth < 1024) {
+    openMobileDetailPlayer();
+  }
 }
 
 function playAudio() {
@@ -4467,6 +4471,23 @@ function checkUrlPlayParam() {
       const track = targetPl.tracks[targetTrackIdx];
       showToastNotification(`Memutar lagu yang dibagikan: ${track.title} 💕`, 'success');
     }, 400);
+  }
+}
+
+// ================= MOBILE FULLSCREEN TURNTABLE DETAIL MODAL =================
+function openMobileDetailPlayer() {
+  const modal = document.getElementById('mobileDetailPlayerModal');
+  if (modal) {
+    modal.classList.remove('translate-y-full');
+    modal.classList.add('translate-y-0');
+  }
+}
+
+function closeMobileDetailPlayer() {
+  const modal = document.getElementById('mobileDetailPlayerModal');
+  if (modal) {
+    modal.classList.remove('translate-y-0');
+    modal.classList.add('translate-y-full');
   }
 }
 

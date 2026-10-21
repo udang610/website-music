@@ -70,7 +70,7 @@
   </div>
 
   <!-- ================= TOP NAVIGATION BAR (SPOTIFY HEADER) ================= -->
-  <header class="hidden lg:flex h-16 px-2.5 lg:px-3 items-center justify-between gap-3 shrink-0 bg-[#FFF5F7]">
+  <header class="flex h-16 px-2.5 lg:px-3 items-center justify-between gap-3 shrink-0 bg-[#FFF5F7]">
     <!-- Left Logo aligned with sidebar -->
     <div class="flex items-center gap-2.5">
       <div class="w-[74px] flex items-center justify-center shrink-0">
@@ -131,7 +131,7 @@
   </header>
 
   <!-- ================= MAIN 3-COLUMN SPOTIFY WORKSPACE ================= -->
-  <div class="hidden lg:flex flex-1 flex-col lg:flex-row gap-2.5 px-2.5 lg:px-3 pb-2 overflow-hidden">
+  <div class="flex flex-1 flex-col lg:flex-row gap-2.5 px-2.5 lg:px-3 pb-2 overflow-hidden">
 
     <!-- 1. LEFT MINI LIBRARY SIDEBAR -->
     <aside
@@ -671,7 +671,7 @@
 
     <!-- 3. RIGHT PANEL: NOW PLAYING VISUAL CARD & LISTENING TOGETHER (SPOTIFY JAM) -->
     <aside
-      class="w-full lg:w-[350px] xl:w-[375px] bg-white border border-[#FFD2DC] rounded-2xl overflow-hidden shadow-sm flex flex-col shrink-0 relative">
+      class="hidden lg:flex w-full lg:w-[350px] xl:w-[375px] bg-white border border-[#FFD2DC] rounded-2xl overflow-hidden shadow-sm flex-col shrink-0 relative">
 
       <!-- Floating Reactions Container -->
       <div id="reactionStage" class="pointer-events-none absolute inset-0 overflow-hidden z-50"></div>
@@ -943,15 +943,15 @@
     </aside>
   </div>
 
-  <!-- ================= DEDICATED MOBILE TURNTABLE PLAYER (AESTHETIC VINTAGE VINYL) ================= -->
-  <div id="mobileTurntableContainer" class="flex lg:hidden flex-col h-[100dvh] max-h-[100dvh] w-full overflow-hidden justify-between px-3.5 py-2.5 select-none relative bg-gradient-to-b from-[#FFF5F7] via-[#FFF0F3] to-[#FFE4E9]">
+  <!-- ================= DEDICATED MOBILE TURNTABLE PLAYER (VIEW DETAIL SAAT MAINKAN LAGU) ================= -->
+  <div id="mobileDetailPlayerModal" class="fixed inset-0 z-50 bg-gradient-to-b from-[#FFF5F7] via-[#FFF0F3] to-[#FFE4E9] flex flex-col justify-between px-3.5 py-2.5 select-none transition-transform duration-300 ease-out transform translate-y-full lg:hidden">
     
     <!-- 1. MOBILE TOP BAR -->
     <div class="flex items-center justify-between shrink-0 h-10 w-full z-10">
-      <!-- Left: Open Playlist Drawer Button -->
-      <button onclick="openMobilePlaylistDrawer()"
+      <!-- Left: Minimize / Back to Menu Button -->
+      <button onclick="closeMobileDetailPlayer()"
         class="w-9 h-9 rounded-full bg-white/80 backdrop-blur-md border border-[#FFD2DC] text-[#3B2328] hover:text-[#FA8072] flex items-center justify-center shadow-xs transition active:scale-95"
-        title="Daftar Lagu">
+        title="Kembali ke Menu Utama">
         <i class="fa-solid fa-chevron-down text-sm"></i>
       </button>
 
@@ -1231,31 +1231,40 @@
   </div>
 
   <!-- ================= BOTTOM STICKY NOW PLAYING BAR (SPOTIFY FOOTER) ================= -->
-  <footer class="hidden lg:flex h-20 px-4 bg-white border-t border-[#FFD2DC] items-center justify-between gap-4 shrink-0 z-40">
+  <footer class="h-20 px-3 sm:px-4 bg-white border-t border-[#FFD2DC] flex items-center justify-between gap-2 sm:gap-4 shrink-0 z-40">
 
     <!-- Left: Active Track Cover + Title + Artist + Add Heart + Download -->
-    <div class="flex items-center gap-3 w-1/4 min-w-[180px] max-w-[280px]">
-      <img id="bottomTrackCover" onclick="switchRightPanelTab('canvas')" src="images/spotify_covers/jakarta.jpg"
-        class="w-14 h-14 shrink-0 rounded-xl object-cover border border-[#FFD2DC] shadow-sm cursor-pointer hover:scale-105 transition"
-        alt="Now Playing" />
-      <div class="min-w-0 flex-1 truncate">
-        <h4 id="bottomTrackTitle" class="text-sm font-bold text-[#3B2328] truncate">Those Eyes</h4>
-        <p id="bottomTrackArtist" class="text-xs text-[#9A737C] truncate">New West</p>
+    <div onclick="if(window.innerWidth < 1024) openMobileDetailPlayer(); else switchRightPanelTab('canvas');"
+      class="flex items-center gap-2.5 sm:gap-3 flex-1 sm:w-1/4 sm:min-w-[180px] sm:max-w-[280px] min-w-0 cursor-pointer group">
+      <div class="relative shrink-0">
+        <img id="bottomTrackCover" src="images/spotify_covers/jakarta.jpg"
+          class="w-12 h-12 sm:w-14 sm:h-14 rounded-xl object-cover border border-[#FFD2DC] shadow-sm group-hover:scale-105 transition"
+          alt="Now Playing" />
+        <span class="lg:hidden absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[#FA8072] text-white flex items-center justify-center text-[7.5px] shadow-xs">
+          <i class="fa-solid fa-compact-disc"></i>
+        </span>
       </div>
-      <div class="flex items-center gap-2 shrink-0">
-        <button onclick="openAddToPlaylistModalCurrent()" id="bottomAddToPlaylistBtn"
+      <div class="min-w-0 flex-1 truncate">
+        <div class="flex items-center gap-1.5">
+          <h4 id="bottomTrackTitle" class="text-xs sm:text-sm font-bold text-[#3B2328] group-hover:text-[#FA8072] transition truncate">Those Eyes</h4>
+          <span class="hidden sm:inline-block text-[9px] font-bold text-[#E85D75] bg-[#FFE4E9] px-1 rounded">Lullaby</span>
+        </div>
+        <p id="bottomTrackArtist" class="text-[10px] sm:text-xs text-[#9A737C] truncate">New West</p>
+      </div>
+      <div class="hidden sm:flex items-center gap-2 shrink-0">
+        <button onclick="event.stopPropagation(); openAddToPlaylistModalCurrent();" id="bottomAddToPlaylistBtn"
           class="text-[#9A737C] hover:text-[#FA8072] hover:scale-110 transition" title="Masukkan ke Playlist">
           <i class="fa-solid fa-folder-plus text-sm"></i>
         </button>
-        <button onclick="openShareSongModalCurrent()" id="bottomShareBtn"
+        <button onclick="event.stopPropagation(); openShareSongModalCurrent();" id="bottomShareBtn"
           class="text-[#9A737C] hover:text-[#FA8072] hover:scale-110 transition" title="Bagikan Lagu Ini">
           <i class="fa-solid fa-share-nodes text-sm"></i>
         </button>
-        <button onclick="toggleLikeCurrent()" id="bottomLikeBtn" class="text-[#FA8072] hover:scale-110 transition"
+        <button onclick="event.stopPropagation(); toggleLikeCurrent();" id="bottomLikeBtn" class="text-[#FA8072] hover:scale-110 transition"
           title="Simpan ke Favorit">
           <i class="fa-solid fa-circle-plus text-base"></i>
         </button>
-        <button onclick="downloadCurrentTrack()" id="bottomDownloadBtn"
+        <button onclick="event.stopPropagation(); downloadCurrentTrack();" id="bottomDownloadBtn"
           class="text-[#9A737C] hover:text-[#FA8072] hover:scale-110 transition" title="Download Audio MP3">
           <i class="fa-solid fa-download text-sm"></i>
         </button>
@@ -1263,30 +1272,36 @@
     </div>
 
     <!-- Center: Playback Controls & Timeline Scrubber -->
-    <div class="flex flex-col items-center max-w-xl w-2/4">
-      <div class="flex items-center gap-5 mb-1.5">
+    <div class="flex flex-col items-center max-w-xl w-auto sm:w-2/4">
+      <div class="flex items-center gap-2.5 sm:gap-5 mb-0 sm:mb-1.5">
         <button onclick="toggleShuffle()" id="btnShuffleBottom"
-          class="text-[#9A737C] hover:text-[#FA8072] text-sm transition" title="Shuffle">
+          class="hidden sm:inline-block text-[#9A737C] hover:text-[#FA8072] text-sm transition" title="Shuffle">
           <i class="fa-solid fa-shuffle"></i>
         </button>
-        <button onclick="prevTrack()" class="text-[#3B2328] hover:text-[#FA8072] text-base transition" title="Previous">
+        <button onclick="prevTrack()" class="hidden sm:inline-block text-[#3B2328] hover:text-[#FA8072] text-base transition" title="Previous">
           <i class="fa-solid fa-backward-step"></i>
         </button>
         <button onclick="togglePlay()"
-          class="w-9 h-9 rounded-full bg-[#3B2328] hover:bg-[#FA8072] text-white flex items-center justify-center shadow-md transition transform hover:scale-105"
+          class="w-10 h-10 sm:w-9 sm:h-9 rounded-full bg-[#3B2328] hover:bg-[#FA8072] text-white flex items-center justify-center shadow-md transition transform hover:scale-105 shrink-0"
           title="Play/Pause">
           <i id="bottomPlayIcon" class="fa-solid fa-play text-xs ml-0.5"></i>
         </button>
-        <button onclick="nextTrack()" class="text-[#3B2328] hover:text-[#FA8072] text-base transition" title="Next">
+        <button onclick="nextTrack()" class="text-[#3B2328] hover:text-[#FA8072] text-base transition shrink-0" title="Next">
           <i class="fa-solid fa-forward-step"></i>
         </button>
         <button onclick="toggleRepeat()" id="btnRepeatBottom"
-          class="text-[#9A737C] hover:text-[#FA8072] text-sm transition" title="Repeat">
+          class="hidden sm:inline-block text-[#9A737C] hover:text-[#FA8072] text-sm transition" title="Repeat">
           <i class="fa-solid fa-repeat"></i>
+        </button>
+        <!-- Mobile Expand to Full Turntable Detail Button -->
+        <button onclick="openMobileDetailPlayer()"
+          class="lg:hidden w-8 h-8 rounded-full bg-[#FFF0F3] text-[#FA8072] flex items-center justify-center border border-[#FFD2DC] active:scale-95 transition shrink-0 ml-1"
+          title="Buka Tampilan Vinyl Penuh">
+          <i class="fa-solid fa-chevron-up text-xs"></i>
         </button>
       </div>
 
-      <div class="w-full flex items-center gap-2.5">
+      <div class="hidden sm:flex w-full items-center gap-2.5">
         <span id="currentTimeText" class="text-[11px] font-semibold text-[#9A737C] w-8 text-right">0:00</span>
         <input id="progressSlider" type="range" min="0" max="100" value="0" oninput="seekAudio(this.value)"
           class="flex-1" />
