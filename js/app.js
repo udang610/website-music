@@ -10,6 +10,7 @@ const realAudioTracks = {
   'last night on earth': 'audio/green_day_last_night_on_earth.m4a',
   'apocalypse': 'audio/cigarettes_after_sex_apocalypse.m4a',
   'i think they call this love': 'audio/matthew_ifield_i_think_they_call_this_love.m4a',
+  'matthew ifield': 'audio/matthew_ifield_i_think_they_call_this_love.m4a',
   'those eyes': 'audio/new_west_those_eyes.m4a',
   'atlantis': 'audio/seafret_atlantis.m4a',
   'terbuang dalam waktu': 'audio/barasuara_terbuang_dalam_waktu.m4a',
@@ -33,7 +34,8 @@ const officialCovers = {
   'from the start': 'images/covers/laufey_from_the_start.jpg',
   'last night on earth': 'images/covers/green_day_last_night_on_earth.jpg',
   'apocalypse': 'images/covers/cigarettes_after_sex_apocalypse.jpg',
-  'i think they call this love': 'images/covers/matthew_ifield_i_think_they_call_this_love.jpg',
+  'i think they call this love': 'images/covers/matthew_ifield_cover.jpg',
+  'matthew ifield': 'images/covers/matthew_ifield_cover.jpg',
   'those eyes': 'images/covers/those_eyes.jpg',
   'atlantis': 'images/covers/atlantis.jpg',
   'terbuang dalam waktu': 'images/covers/terbuang_dalam_waktu.jpg',
@@ -1851,6 +1853,15 @@ function loadState() {
               t.audioUrl = 'audio/dewa19_kangen.m4a';
               t.cover = 'images/covers/dewa19_kangen.jpg';
               t.duration = '5:32';
+            }
+            if (lowTitle.includes('i think they call this love') || (t.artist || '').toLowerCase().includes('matthew ifield')) {
+              t.title = 'I Think They Call This Love (Cover)';
+              t.artist = 'Matthew Ifield';
+              t.album = "I’ll Be Home For Christmas / I Think They Call This Love (Cover)";
+              t.cover = 'images/covers/matthew_ifield_cover.jpg';
+              t.audioUrl = 'audio/matthew_ifield_i_think_they_call_this_love.m4a';
+              t.youtubeId = 'CnEqrgMlWLQ';
+              t.duration = '3:16';
             }
           });
         }
