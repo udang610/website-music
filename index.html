@@ -1364,97 +1364,116 @@
         </button>
       </div>
 
-      <!-- 1. Primary Full MP3 File Upload Box (Recommended for 100% Full Duration) -->
-      <div onclick="document.getElementById('fullMp3FileInput').click()"
-        class="group p-4 rounded-2xl bg-gradient-to-r from-[#FFF0F3] to-[#FFE4E9]/60 border-2 border-dashed border-[#FA8072]/60 hover:border-[#FA8072] text-center cursor-pointer transition mb-3">
-        <input type="file" id="fullMp3FileInput" accept="audio/*" onchange="handleFullMp3Upload(event)"
-          class="hidden" />
-        <div
-          class="w-11 h-11 rounded-2xl bg-[#FA8072] text-white flex items-center justify-center mx-auto mb-2 shadow-sm group-hover:scale-105 transition">
-          <i class="fa-solid fa-file-audio text-xl"></i>
-        </div>
-        <p class="font-extrabold text-sm text-[#3B2328]">Pilih File MP3 Full dari Laptop / HP</p>
-        <p class="text-[11px] text-[#9A737C] mt-0.5">Lagu diputar 100% penuh tanpa batasan 30 detik (judul & cover
-          otomatis disesuaikan!)</p>
-        <div id="fullAudioSelectedBadge"
-          class="hidden mt-2.5 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-[11px] font-bold">
-          <i class="fa-solid fa-circle-check text-emerald-600"></i>
-          <span id="fullAudioFileName">File MP3 Terpilih</span>
-        </div>
-      </div>
-
-      <!-- 2. Auto-Fetch Online Search Box (HD Cover + Metadata) -->
-      <div class="p-3.5 rounded-2xl bg-[#FFF5F7] border border-[#FFD2DC] mb-3">
-        <label class="block text-xs font-bold text-[#E85D75] mb-1.5 flex items-center justify-between">
-          <span><i class="fa-solid fa-wand-magic-sparkles mr-1"></i> Atau Cari Cover HD & Data Online</span>
-          <span class="text-[10px] text-[#9A737C] font-normal">iTunes HD Metadata</span>
+      <!-- 1. Primary Online Search Box (HD Cover + Instant Add) -->
+      <div class="p-4 rounded-2xl bg-[#FFF5F7] border border-[#FFD2DC] mb-3">
+        <label class="block text-xs font-extrabold text-[#3B2328] mb-2 flex items-center justify-between">
+          <span class="flex items-center gap-1.5">
+            <i class="fa-solid fa-magnifying-glass text-[#FA8072]"></i>
+            <span>Cari Lagu Online & Cover Official</span>
+          </span>
+          <span class="text-[10px] px-2 py-0.5 rounded-full bg-white text-[#FA8072] font-bold border border-[#FFD2DC]">
+            iTunes & Apple Music HD
+          </span>
         </label>
         <div class="flex gap-2">
-          <input id="itunesSearchQuery" type="text"
-            placeholder="Ketik judul lagu / penyanyi (cth: Dewa 19, New West, Barasuara)..."
-            onkeydown="if(event.key==='Enter'){event.preventDefault(); searchItunesSong();}"
-            class="flex-1 px-3.5 py-2 rounded-xl bg-white border border-[#FFD2DC] text-xs focus:outline-none focus:border-[#FA8072]" />
+          <div class="relative flex-1">
+            <i class="fa-solid fa-music absolute left-3.5 top-1/2 -translate-y-1/2 text-[#9A737C] text-xs"></i>
+            <input id="itunesSearchQuery" type="text"
+              placeholder="Ketik judul lagu atau artis (cth: Dewa 19, Sheila On 7, New West, Bruno Mars)..."
+              onkeydown="if(event.key==='Enter'){event.preventDefault(); searchItunesSong();}"
+              class="w-full pl-9 pr-3.5 py-2.5 rounded-xl bg-white border border-[#FFD2DC] text-xs text-[#3B2328] placeholder-[#9A737C] focus:outline-none focus:border-[#FA8072] shadow-xs" />
+          </div>
           <button type="button" onclick="searchItunesSong()"
-            class="px-4 py-2 rounded-xl bg-[#FA8072] hover:bg-[#E85D75] text-white text-xs font-bold transition">
-            Cari
+            class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#FA8072] to-[#E85D75] hover:opacity-95 text-white text-xs font-bold shadow-sm transition active:scale-95 shrink-0 flex items-center gap-1.5">
+            <i class="fa-solid fa-magnifying-glass text-xs"></i>
+            <span>Cari</span>
           </button>
         </div>
-        <!-- Search Results Dropdown -->
-        <div id="itunesResultsList" class="mt-2 space-y-1.5 max-h-44 overflow-y-auto hidden"></div>
+
+        <!-- Search Results Container -->
+        <div id="itunesResultsList" class="mt-3 space-y-2 max-h-72 overflow-y-auto hidden pr-0.5"></div>
       </div>
 
-      <!-- Form Input Detail Lagu -->
-      <form onsubmit="saveNewSong(event)" class="space-y-3 text-xs">
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div>
-            <label class="font-bold text-[#3B2328] block mb-1">Judul Lagu *</label>
-            <input id="inputSongTitle" required type="text" placeholder="Contoh: Mistikus Cinta"
-              class="w-full px-3 py-2 rounded-xl bg-[#FFF5F7] border border-[#FFD2DC] focus:outline-none focus:border-[#FA8072]" />
-          </div>
-          <div>
-            <label class="font-bold text-[#3B2328] block mb-1">Nama Penyanyi / Artis *</label>
-            <input id="inputSongArtist" required type="text" placeholder="Contoh: Dewa 19"
-              class="w-full px-3 py-2 rounded-xl bg-[#FFF5F7] border border-[#FFD2DC] focus:outline-none focus:border-[#FA8072]" />
-          </div>
-        </div>
+      <!-- 2. Collapsible Manual Options (Upload MP3 Sendiri / Tempel Link) -->
+      <details class="group border border-[#FFD2DC] rounded-2xl bg-[#FFF9FA] overflow-hidden text-xs">
+        <summary class="px-4 py-2.5 font-bold text-[#9A737C] hover:text-[#FA8072] cursor-pointer flex items-center justify-between transition select-none">
+          <span class="flex items-center gap-2">
+            <i class="fa-solid fa-sliders text-[#FA8072]"></i>
+            <span>Opsi Manual: Upload MP3 Sendiri / Tempel Link</span>
+          </span>
+          <i class="fa-solid fa-chevron-down text-[10px] group-open:rotate-180 transition"></i>
+        </summary>
 
-        <div>
-          <label class="font-bold text-[#3B2328] block mb-1">Catatan Memori / Cerita Lagu Ini 💬</label>
-          <input id="inputSongMemory" type="text" placeholder="Contoh: Lagu favorit waktu kita jalan berdua 🌅"
-            class="w-full px-3 py-2 rounded-xl bg-[#FFF5F7] border border-[#FFD2DC] focus:outline-none focus:border-[#FA8072]" />
-        </div>
-
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div>
-            <label class="font-bold text-[#3B2328] block mb-1">Link Cover Album (URL / Upload Foto)</label>
-            <input id="inputSongCover" type="url" placeholder="https://..."
-              class="w-full px-3 py-2 rounded-xl bg-[#FFF5F7] border border-[#FFD2DC] focus:outline-none focus:border-[#FA8072]" />
-            <input type="file" accept="image/*" onchange="handleFileUpload(event, 'inputSongCover')"
-              class="mt-1 text-[10px] text-[#9A737C]" />
+        <div class="p-4 pt-1 space-y-3 border-t border-[#FFE4E9]">
+          <!-- File Upload Box -->
+          <div onclick="document.getElementById('fullMp3FileInput').click()"
+            class="group/up p-3.5 rounded-xl bg-white border-2 border-dashed border-[#FA8072]/50 hover:border-[#FA8072] text-center cursor-pointer transition">
+            <input type="file" id="fullMp3FileInput" accept="audio/*" onchange="handleFullMp3Upload(event)"
+              class="hidden" />
+            <div class="w-9 h-9 rounded-xl bg-[#FFF0F3] text-[#FA8072] flex items-center justify-center mx-auto mb-1.5 shadow-xs">
+              <i class="fa-solid fa-file-audio text-base"></i>
+            </div>
+            <p class="font-bold text-xs text-[#3B2328]">Pilih File Audio Lokal (MP3/M4A)</p>
+            <p class="text-[10px] text-[#9A737C]">Upload file MP3 dari laptop / HP untuk lagu 100% full durasi</p>
+            <div id="fullAudioSelectedBadge"
+              class="hidden mt-2 inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold">
+              <i class="fa-solid fa-circle-check text-emerald-600"></i>
+              <span id="fullAudioFileName">File MP3 Terpilih</span>
+            </div>
           </div>
-          <div>
-            <label class="font-bold text-[#3B2328] block mb-1 flex items-center justify-between">
-              <span>Link YouTube / MP3 Audio *</span>
-              <button type="button" onclick="useDefaultFullAudioStream()"
-                class="text-[10px] text-[#FA8072] hover:underline font-bold">Gunakan Sample Full</button>
-            </label>
-            <input id="inputSongAudio" required type="text"
-              placeholder="Tempel link YouTube (https://youtu.be/...) atau link MP3"
-              class="w-full px-3 py-2 rounded-xl bg-[#FFF5F7] border border-[#FFD2DC] focus:outline-none focus:border-[#FA8072]" />
-            <input type="file" accept="audio/*" onchange="handleFileUpload(event, 'inputSongAudio')"
-              class="mt-1 text-[10px] text-[#9A737C]" />
-          </div>
-        </div>
 
-        <div class="pt-3 flex justify-end gap-2">
-          <button type="button" onclick="closeAddSongModal()"
-            class="px-4 py-2.5 rounded-xl bg-[#FFF5F7] text-[#9A737C] font-bold">Batal</button>
-          <button type="submit"
-            class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#FA8072] to-[#E85D75] text-white font-bold shadow-md">
-            Simpan ke Playlist ✨
-          </button>
+          <!-- Form Input Detail Manual -->
+          <form onsubmit="saveNewSong(event)" class="space-y-2.5">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              <div>
+                <label class="font-bold text-[#3B2328] block mb-1">Judul Lagu *</label>
+                <input id="inputSongTitle" type="text" placeholder="Contoh: Mistikus Cinta"
+                  class="w-full px-3 py-2 rounded-xl bg-white border border-[#FFD2DC] focus:outline-none focus:border-[#FA8072]" />
+              </div>
+              <div>
+                <label class="font-bold text-[#3B2328] block mb-1">Nama Artis *</label>
+                <input id="inputSongArtist" type="text" placeholder="Contoh: Dewa 19"
+                  class="w-full px-3 py-2 rounded-xl bg-white border border-[#FFD2DC] focus:outline-none focus:border-[#FA8072]" />
+              </div>
+            </div>
+
+            <div>
+              <label class="font-bold text-[#3B2328] block mb-1">Catatan Memori 💬</label>
+              <input id="inputSongMemory" type="text" placeholder="Contoh: Lagu favorit waktu kita jalan berdua 🌅"
+                class="w-full px-3 py-2 rounded-xl bg-white border border-[#FFD2DC] focus:outline-none focus:border-[#FA8072]" />
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              <div>
+                <label class="font-bold text-[#3B2328] block mb-1">Link Cover Album</label>
+                <input id="inputSongCover" type="url" placeholder="https://..."
+                  class="w-full px-3 py-2 rounded-xl bg-white border border-[#FFD2DC] focus:outline-none focus:border-[#FA8072]" />
+                <input type="file" accept="image/*" onchange="handleFileUpload(event, 'inputSongCover')"
+                  class="mt-1 text-[10px] text-[#9A737C]" />
+              </div>
+              <div>
+                <label class="font-bold text-[#3B2328] block mb-1 flex items-center justify-between">
+                  <span>Link Audio / YouTube *</span>
+                  <button type="button" onclick="useDefaultFullAudioStream()"
+                    class="text-[10px] text-[#FA8072] hover:underline font-bold">Sample</button>
+                </label>
+                <input id="inputSongAudio" type="text"
+                  placeholder="Link YouTube (https://...) atau link MP3"
+                  class="w-full px-3 py-2 rounded-xl bg-white border border-[#FFD2DC] focus:outline-none focus:border-[#FA8072]" />
+              </div>
+            </div>
+
+            <div class="pt-2 flex justify-end gap-2">
+              <button type="button" onclick="closeAddSongModal()"
+                class="px-3.5 py-2 rounded-xl bg-white border border-[#FFD2DC] text-[#9A737C] font-bold">Batal</button>
+              <button type="submit"
+                class="px-4 py-2 rounded-xl bg-gradient-to-r from-[#FA8072] to-[#E85D75] text-white font-bold shadow-xs">
+                Simpan ke Playlist
+              </button>
+            </div>
+          </form>
         </div>
-      </form>
+      </details>
     </div>
   </div>
 

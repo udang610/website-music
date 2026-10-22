@@ -3428,44 +3428,126 @@ function useDefaultFullAudioStream() {
   showToastNotification('Sample audio full dipilih!', 'info');
 }
 
+let currentItunesSearchResults = [];
+let itunesAudioPreviewObj = null;
+
+function formatDurationMs(ms) {
+  if (!ms || isNaN(ms)) return 'Full';
+  const totalSec = Math.floor(ms / 1000);
+  const min = Math.floor(totalSec / 60);
+  const sec = totalSec % 60;
+  return `${min}:${sec < 10 ? '0' : ''}${sec}`;
+}
+
+function toggleItunesPreview(url, btn) {
+  if (!url) return;
+  if (itunesAudioPreviewObj && itunesAudioPreviewObj.src === url && !itunesAudioPreviewObj.paused) {
+    itunesAudioPreviewObj.pause();
+    btn.innerHTML = '<i class="fa-solid fa-play text-xs ml-0.5"></i>';
+    return;
+  }
+  if (itunesAudioPreviewObj) {
+    itunesAudioPreviewObj.pause();
+  }
+  itunesAudioPreviewObj = new Audio(url);
+  itunesAudioPreviewObj.play().catch(() => {});
+  btn.innerHTML = '<i class="fa-solid fa-pause text-xs"></i>';
+  itunesAudioPreviewObj.onended = () => {
+    btn.innerHTML = '<i class="fa-solid fa-play text-xs ml-0.5"></i>';
+  };
+}
+
 async function searchItunesSong() {
   const query = document.getElementById('itunesSearchQuery').value.trim();
   if (!query) return;
 
   const resultsBox = document.getElementById('itunesResultsList');
-  resultsBox.innerHTML = '<div class="p-3 text-center text-xs text-[#9A737C]"><i class="fa-solid fa-spinner animate-spin mr-1"></i> Mencari cover HD & metadata...</div>';
+  resultsBox.innerHTML = '<div class="p-4 text-center text-xs text-[#9A737C]"><i class="fa-solid fa-spinner animate-spin text-[#FA8072] mr-1.5"></i> Mencari lagu & cover official...</div>';
   resultsBox.classList.remove('hidden');
 
   try {
     const q = encodeURIComponent(query);
-    const res = await fetch(`https://itunes.apple.com/search?term=${q}&entity=song&limit=5`);
+    const res = await fetch(`https://itunes.apple.com/search?term=${q}&entity=song&limit=8`);
     const data = await res.json();
 
     if (!data.results || data.results.length === 0) {
-      resultsBox.innerHTML = '<div class="p-3 text-center text-xs text-[#9A737C]">Lagu tidak ditemukan. Silakan upload file MP3 Anda di atas!</div>';
+      resultsBox.innerHTML = '<div class="p-4 text-center text-xs text-[#9A737C]">Lagu tidak ditemukan. Coba ketik judul / nama artis lain atau upload file MP3 Anda di bawah.</div>';
       return;
     }
 
-    resultsBox.innerHTML = data.results.map(item => {
-      const hdCover = item.artworkUrl100.replace('100x100bb', '600x600bb');
-      const safeTitle = item.trackName.replace(/'/g, "\\'");
-      const safeArtist = item.artistName.replace(/'/g, "\\'");
+    currentItunesSearchResults = data.results;
+
+    resultsBox.innerHTML = data.results.map((item, idx) => {
+      const hdCover = item.artworkUrl100 ? item.artworkUrl100.replace('100x100bb', '600x600bb') : 'images/spotify_covers/jakarta.jpg';
+      const dur = formatDurationMs(item.trackTimeMillis);
+      const safeTitle = (item.trackName || 'Track').replace(/"/g, '&quot;');
+      const safeArtist = (item.artistName || 'Artist').replace(/"/g, '&quot;');
+      const safeAlbum = (item.collectionName || 'Single').replace(/"/g, '&quot;');
 
       return `
-        <div onclick="selectItunesResult('${safeTitle}', '${safeArtist}', '${hdCover}')"
-          class="flex items-center gap-3 p-2 rounded-xl bg-white hover:bg-[#FFE4E9] border border-[#FFD2DC] cursor-pointer transition">
-          <img src="${item.artworkUrl100}" class="w-10 h-10 rounded-lg object-cover" alt="Art" />
-          <div class="flex-1 min-w-0">
-            <p class="text-xs font-bold text-[#3B2328] truncate">${item.trackName}</p>
-            <p class="text-[11px] text-[#9A737C] truncate">${item.artistName} • ${item.collectionName || 'Single'}</p>
+        <div class="flex items-center justify-between gap-2.5 p-2.5 rounded-2xl bg-white hover:bg-[#FFE4E9]/40 border border-[#FFD2DC] transition shadow-2xs">
+          <div class="flex items-center gap-2.5 min-w-0 flex-1">
+            <img src="${item.artworkUrl100}" class="w-12 h-12 rounded-xl object-cover border border-[#FFD2DC] shrink-0 shadow-xs" alt="${safeTitle}" />
+            <div class="min-w-0 flex-1">
+              <p class="text-xs font-extrabold text-[#3B2328] truncate">${safeTitle}</p>
+              <p class="text-[11px] text-[#9A737C] truncate">${safeArtist} • <span class="text-[#FA8072] font-semibold">${safeAlbum}</span></p>
+              <span class="text-[10px] text-[#9A737C] font-medium">${dur}</span>
+            </div>
           </div>
-          <span class="text-[10px] text-[#FA8072] font-bold px-2 py-1 bg-[#FFF5F7] rounded-lg border border-[#FFD2DC]">Pilih</span>
+          <div class="flex items-center gap-1.5 shrink-0">
+            ${item.previewUrl ? `
+              <button type="button" onclick="toggleItunesPreview('${item.previewUrl}', this)" class="w-7 h-7 rounded-full bg-[#FFF0F3] hover:bg-[#FFE4E9] text-[#FA8072] flex items-center justify-center transition shadow-xs" title="Putar Cuplikan Studio">
+                <i class="fa-solid fa-play text-[10px] ml-0.5"></i>
+              </button>
+            ` : ''}
+            <button type="button" onclick="quickAddOnlineSongToPlaylist(${idx})" class="px-3 py-1.5 rounded-full bg-gradient-to-r from-[#FA8072] to-[#E85D75] hover:opacity-95 text-white text-[11px] font-bold flex items-center gap-1 shadow-xs transition active:scale-95 cursor-pointer">
+              <i class="fa-solid fa-folder-plus text-xs"></i> Tambah
+            </button>
+          </div>
         </div>
       `;
     }).join('');
   } catch (err) {
     resultsBox.innerHTML = '<div class="p-3 text-center text-xs text-rose-500">Gagal mengambil data online. Pastikan koneksi internet aktif.</div>';
   }
+}
+
+function quickAddOnlineSongToPlaylist(idx) {
+  if (itunesAudioPreviewObj) {
+    itunesAudioPreviewObj.pause();
+    itunesAudioPreviewObj = null;
+  }
+  const item = currentItunesSearchResults[idx];
+  if (!item) return;
+
+  const ultraHdCover = item.artworkUrl100 ? item.artworkUrl100.replace('100x100bb', '1000x1000bb') : 'images/spotify_covers/jakarta.jpg';
+
+  let matchedAudioUrl = item.previewUrl || '';
+  let matchedYoutubeId = null;
+  const lowTitle = (item.trackName || '').toLowerCase();
+  for (const [key, yId] of Object.entries(realSongCatalog)) {
+    if (lowTitle.includes(key)) {
+      matchedYoutubeId = yId;
+      break;
+    }
+  }
+
+  const trackObj = {
+    id: `t-online-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+    title: item.trackName || 'Lagu Baru',
+    artist: item.artistName || 'Artis',
+    album: item.collectionName || 'Single',
+    cover: ultraHdCover,
+    audioUrl: matchedAudioUrl,
+    youtubeId: matchedYoutubeId,
+    duration: formatDurationMs(item.trackTimeMillis),
+    memory: `Lagu spesial dari album "${item.collectionName || item.trackName}" ✦`,
+    liked: false
+  };
+
+  closeAddSongModal();
+  openAddToPlaylistModal(trackObj);
+  showToastNotification(`Pilih playlist tujuan untuk "${trackObj.title}" ✨`, 'info');
 }
 
 function selectItunesResult(title, artist, cover) {
@@ -3483,7 +3565,7 @@ function selectItunesResult(title, artist, cover) {
   }
 
   document.getElementById('itunesResultsList').classList.add('hidden');
-  showToastNotification(`Data "${title}" terpilih! Anda bisa tempel link YouTube atau upload file MP3 aslinya.`, 'success');
+  showToastNotification(`Data "${title}" terpilih!`, 'success');
 }
 
 function compressImageFile(file, maxDim, quality, callback) {
@@ -4665,7 +4747,13 @@ function renderAddToPlaylistItems() {
   if (!container || !currentTrackForPlaylist) return;
 
   const track = currentTrackForPlaylist;
-  container.innerHTML = state.playlists.map(pl => {
+  const likedTracks = (typeof getAllLikedTracks === 'function') ? getAllLikedTracks() : [];
+  const isAlreadyInLiked = likedTracks.some(t =>
+    (t.id && track.id && t.id === track.id) ||
+    (t.title && track.title && t.title.toLowerCase().trim() === track.title.toLowerCase().trim())
+  );
+
+  const regularHtml = state.playlists.map(pl => {
     const hasTrack = Array.isArray(pl.tracks) && pl.tracks.some(t =>
       (t.id && track.id && t.id === track.id) ||
       (t.title && track.title && t.title.toLowerCase().trim() === track.title.toLowerCase().trim())
@@ -4674,7 +4762,7 @@ function renderAddToPlaylistItems() {
     return `
       <div class="flex items-center justify-between p-2.5 rounded-2xl bg-[#FFF9FA] hover:bg-[#FFE4E9]/40 border border-[#FFD2DC] transition">
         <div class="flex items-center gap-3 min-w-0">
-          <img src="${pl.cover || 'images/spotify_covers/jakarta.jpg'}" class="w-10 h-10 rounded-xl object-cover border border-[#FFD2DC] shrink-0" alt="${pl.title}" />
+          <img src="${pl.cover || 'images/spotify_covers/jakarta.jpg'}" class="w-10 h-10 rounded-xl object-cover border border-[#FFD2DC] shrink-0 shadow-xs" alt="${pl.title}" />
           <div class="min-w-0">
             <h5 class="text-xs font-bold text-[#3B2328] truncate">${pl.title}</h5>
             <p class="text-[11px] text-[#9A737C]">${(pl.tracks || []).length} lagu</p>
@@ -4683,10 +4771,10 @@ function renderAddToPlaylistItems() {
         <div>
           ${hasTrack ? `
             <span class="px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-300 text-[11px] font-bold flex items-center gap-1 shadow-xs transition">
-              <i class="fa-solid fa-check text-xs text-emerald-600"></i> Sudah Tersimpan
+              <i class="fa-solid fa-check text-xs text-emerald-600"></i> Sudah Ada
             </span>
           ` : `
-            <button type="button" onclick="event.stopPropagation(); addTrackToSelectedPlaylist('${pl.id}')" class="px-3 py-1.5 rounded-full bg-gradient-to-r from-[#FA8072] to-[#E85D75] hover:opacity-95 text-white text-[11px] font-bold flex items-center gap-1 shadow-xs transition cursor-pointer active:scale-95">
+            <button type="button" onclick="event.stopPropagation(); addTrackToSelectedPlaylist('${pl.id}')" class="px-3.5 py-1.5 rounded-full bg-gradient-to-r from-[#FA8072] to-[#E85D75] hover:opacity-95 text-white text-[11px] font-bold flex items-center gap-1 shadow-xs transition cursor-pointer active:scale-95">
               <i class="fa-solid fa-plus text-xs"></i> Tambahkan
             </button>
           `}
@@ -4694,10 +4782,68 @@ function renderAddToPlaylistItems() {
       </div>
     `;
   }).join('');
+
+  const likedCardHtml = `
+    <div class="flex items-center justify-between p-2.5 rounded-2xl bg-[#FFF5F7] hover:bg-[#FFE4E9]/50 border border-[#FFB6C1] transition mb-2">
+      <div class="flex items-center gap-3 min-w-0">
+        <img src="images/spotify_covers/liked_cover.svg" class="w-10 h-10 rounded-xl object-cover border border-[#FFD2DC] shrink-0 shadow-xs" alt="Liked Songs" />
+        <div class="min-w-0">
+          <h5 class="text-xs font-bold text-[#3B2328] truncate">Liked Songs ❤️</h5>
+          <p class="text-[11px] text-[#FA8072] font-semibold">${likedTracks.length} lagu favorit</p>
+        </div>
+      </div>
+      <div>
+        ${isAlreadyInLiked ? `
+          <span class="px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-300 text-[11px] font-bold flex items-center gap-1 shadow-xs transition">
+            <i class="fa-solid fa-check text-xs text-emerald-600"></i> Favorit
+          </span>
+        ` : `
+          <button type="button" onclick="event.stopPropagation(); addTrackToSelectedPlaylist('pl-liked')" class="px-3.5 py-1.5 rounded-full bg-gradient-to-r from-[#FA8072] to-[#E85D75] hover:opacity-95 text-white text-[11px] font-bold flex items-center gap-1 shadow-xs transition cursor-pointer active:scale-95">
+            <i class="fa-solid fa-heart text-xs"></i> Tambahkan
+          </button>
+        `}
+      </div>
+    </div>
+  `;
+
+  container.innerHTML = likedCardHtml + regularHtml;
 }
 
 function addTrackToSelectedPlaylist(targetPlId) {
   if (!currentTrackForPlaylist) return;
+
+  const track = currentTrackForPlaylist;
+
+  // Handle adding to Liked Songs
+  if (targetPlId === 'pl-liked') {
+    const defaultPl = state.playlists.find(p => p.id === 'pl-ours') || state.playlists[0];
+    if (defaultPl) {
+      if (!Array.isArray(defaultPl.tracks)) defaultPl.tracks = [];
+      const already = defaultPl.tracks.find(t =>
+        (t.id && track.id && t.id === track.id) ||
+        (t.title && track.title && t.title.toLowerCase().trim() === track.title.toLowerCase().trim())
+      );
+      if (already) {
+        already.liked = true;
+      } else {
+        defaultPl.tracks.push({
+          ...track,
+          id: `t-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+          liked: true,
+          dateAdded: 'Baru saja'
+        });
+      }
+      saveState();
+      triggerSupabaseSync();
+      if (typeof renderSidebarPlaylists === 'function') renderSidebarPlaylists();
+      if (typeof renderHomeFavoritesList === 'function') renderHomeFavoritesList();
+      if (state.activePlaylistId === 'pl-liked' && typeof renderTracklist === 'function') renderTracklist();
+      renderAddToPlaylistItems();
+      showToastNotification(`Lagu '${track.title}' ditambahkan ke Liked Songs! ❤️`, 'success');
+      return;
+    }
+  }
+
   const pl = state.playlists.find(p => p.id === targetPlId);
   if (!pl) return;
 
@@ -4705,7 +4851,6 @@ function addTrackToSelectedPlaylist(targetPlId) {
     pl.tracks = [];
   }
 
-  const track = currentTrackForPlaylist;
   const alreadyIn = pl.tracks.some(t =>
     (t.id && track.id && t.id === track.id) ||
     (t.title && track.title && t.title.toLowerCase().trim() === track.title.toLowerCase().trim())
@@ -4724,6 +4869,7 @@ function addTrackToSelectedPlaylist(targetPlId) {
   };
   pl.tracks.push(newTrack);
   saveState();
+  triggerSupabaseSync();
 
   if (typeof renderHomePlaylistsGrid === 'function') renderHomePlaylistsGrid();
   if (typeof renderSidebarPlaylists === 'function') renderSidebarPlaylists();
@@ -4732,7 +4878,7 @@ function addTrackToSelectedPlaylist(targetPlId) {
     if (typeof updatePlaylistHeader === 'function') updatePlaylistHeader();
   }
 
-  // Immediately re-render items so button changes to "Sudah Tersimpan"
+  // Immediately re-render items so button changes to "Sudah Ada"
   renderAddToPlaylistItems();
   showToastNotification(`Lagu '${track.title}' berhasil ditambahkan ke '${pl.title}'! 🎵`, 'success');
 }
