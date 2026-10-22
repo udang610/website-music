@@ -38,7 +38,10 @@ const officialCovers = {
   'alexandra': 'images/covers/alexandra.jpg',
   'obsessed': 'images/covers/obsessed.jpg',
   'untungnya, hidup harus tetap berjalan': 'images/covers/untungnya.jpg',
-  'peradaban': 'images/covers/peradaban.jpg'
+  'peradaban': 'images/covers/peradaban.jpg',
+  'pupus': 'images/covers/dewa19_pupus.jpg',
+  'separuh nafas': 'images/covers/dewa19_separuh_nafas.jpg',
+  'kangen': 'images/covers/dewa19_kangen.jpg'
 };
 
 // Verified YouTube Official Audio Catalog
@@ -1826,16 +1829,19 @@ function loadState() {
             if (lowTitle.includes('pupus')) {
               t.youtubeId = '7v2AJiZXHjI';
               t.audioUrl = 'audio/dewa19_pupus.m4a';
+              t.cover = 'images/covers/dewa19_pupus.jpg';
               t.duration = '5:05';
             }
             if (lowTitle.includes('separuh nafas')) {
               t.youtubeId = '0vuBZYWZPIc';
               t.audioUrl = 'audio/dewa19_separuh_nafas.m4a';
+              t.cover = 'images/covers/dewa19_separuh_nafas.jpg';
               t.duration = '5:00';
             }
             if (lowTitle.includes('kangen')) {
               t.youtubeId = 'NSSBwftuG7A';
               t.audioUrl = 'audio/dewa19_kangen.m4a';
+              t.cover = 'images/covers/dewa19_kangen.jpg';
               t.duration = '5:32';
             }
           });
@@ -3640,7 +3646,18 @@ function quickAddSongDirectly(idx, btn) {
       }
     }
 
-    // 2. Check YouTube catalog for full video streaming
+    // 2. Check local official covers
+    let finalCover = ultraHdCover;
+    if (typeof officialCovers !== 'undefined' && officialCovers) {
+      for (const [key, covPath] of Object.entries(officialCovers)) {
+        if (lowTitle.includes(key)) {
+          finalCover = covPath;
+          break;
+        }
+      }
+    }
+
+    // 3. Check YouTube catalog for full video streaming
     if (typeof realSongCatalog !== 'undefined' && realSongCatalog) {
       for (const [key, yId] of Object.entries(realSongCatalog)) {
         if (lowTitle.includes(key)) {
@@ -3650,7 +3667,7 @@ function quickAddSongDirectly(idx, btn) {
       }
     }
 
-    // 3. Fallback to iTunes preview ONLY if neither full local audio nor YouTube stream is available
+    // 4. Fallback to iTunes preview ONLY if neither full local audio nor YouTube stream is available
     if (!matchedAudioUrl && !matchedYoutubeId) {
       matchedAudioUrl = item.previewUrl || '';
     }
@@ -3662,7 +3679,7 @@ function quickAddSongDirectly(idx, btn) {
       title: songTitle,
       artist: artistName,
       album: item.collectionName || 'Single',
-      cover: ultraHdCover,
+      cover: finalCover,
       audioUrl: matchedAudioUrl,
       youtubeId: matchedYoutubeId,
       duration: (typeof formatDurationMs === 'function' ? formatDurationMs(item.trackTimeMillis) : 'Full') || 'Full',
