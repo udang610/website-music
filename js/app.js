@@ -2148,11 +2148,6 @@ function hydrateUI() {
     coverOverlay.style.display = activePl.isLikedSpecial ? 'none' : '';
   }
 
-  const likedAvatar = document.getElementById('sidebarLikedAvatar');
-  if (likedAvatar) {
-    likedAvatar.src = state.partnerAvatar || state.yourAvatar || 'images/spotify_covers/ndey.jpeg';
-  }
-
   renderSidebarPlaylists();
 }
 
@@ -2438,10 +2433,6 @@ function renderSidebarPlaylists() {
     } else {
       libBtnLiked.classList.remove('border-[#FA8072]', 'ring-2', 'ring-[#FA8072]/30', 'scale-105');
       libBtnLiked.classList.add('border-[#FFD2DC]');
-    }
-    const likedAvatar = document.getElementById('sidebarLikedAvatar');
-    if (likedAvatar) {
-      likedAvatar.src = state.partnerAvatar || state.yourAvatar || 'images/spotify_covers/ndey.jpeg';
     }
   }
 }

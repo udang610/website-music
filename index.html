@@ -50,7 +50,7 @@
               });
             }
             if (partnerAvatar) {
-              ['navAvatarPartner', 'mobileNavAvatarPartner', 'jamAvatarPartner', 'miniJamAvatar2', 'mainJamAvatarPartner', 'showcasePartnerAvatar', 'sidebarLikedAvatar'].forEach(function(id) {
+              ['navAvatarPartner', 'mobileNavAvatarPartner', 'jamAvatarPartner', 'miniJamAvatar2', 'mainJamAvatarPartner', 'showcasePartnerAvatar'].forEach(function(id) {
                 var img = document.getElementById(id); if (img) img.src = partnerAvatar;
               });
             }
@@ -224,21 +224,15 @@
 
         <div class="hidden lg:block w-6 h-[1px] bg-[#FFE4E9] my-0.5"></div>
 
-        <!-- Liked Songs (Personalized Profile with Heart Badge) -->
+        <!-- Liked Songs (Heart Cover ala Spotify) -->
         <button onclick="openLikedSongs()" id="libBtnLiked" data-title="Liked Songs"
           data-desc="Kumpulan lagu favorit berdua" onmouseenter="showSidebarTooltip(this)"
           onmouseleave="hideSidebarTooltip()"
-          class="relative group w-11 h-11 rounded-xl overflow-visible border-2 border-[#FFD2DC] shadow-xs transition transform hover:scale-105 shrink-0">
-          <div class="w-full h-full rounded-[10px] overflow-hidden bg-[#FFF5F7]">
-            <img id="sidebarLikedAvatar"
-              src="images/spotify_covers/ndey.jpeg"
-              class="w-full h-full object-cover group-hover:scale-105 transition duration-300"
-              alt="Liked Songs Profile" />
-          </div>
-          <span
-            class="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-gradient-to-tr from-[#FA8072] to-[#E85D75] text-white flex items-center justify-center text-[8px] border-2 border-white shadow-xs drop-shadow-xs z-10 pointer-events-none">
-            <i class="fa-solid fa-heart"></i>
-          </span>
+          class="relative group w-11 h-11 rounded-xl overflow-hidden border-2 border-[#FFD2DC] shadow-xs transition transform hover:scale-105 shrink-0">
+          <img id="sidebarLikedCover"
+            src="images/spotify_covers/liked_cover.svg"
+            class="w-full h-full object-cover group-hover:scale-105 transition duration-300"
+            alt="Liked Songs" />
         </button>
 
         <!-- Dedicated Polaroid Gallery Menu -->
