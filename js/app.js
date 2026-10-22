@@ -18,7 +18,10 @@ const realAudioTracks = {
   'alexandra': 'audio/reality_club_alexandra.m4a',
   'obsessed': 'audio/zandros_limi_obsessed.m4a',
   'untungnya, hidup harus tetap berjalan': 'audio/bernadya_untungnya_hidup_harus_tetap_berjalan.m4a',
-  'peradaban': 'audio/feast_peradaban.m4a'
+  'peradaban': 'audio/feast_peradaban.m4a',
+  'pupus': 'audio/dewa19_pupus.m4a',
+  'separuh nafas': 'audio/dewa19_separuh_nafas.m4a',
+  'kangen': 'audio/dewa19_kangen.m4a'
 };
 
 // Official 1000x1000 HD Album Covers from Apple Music / iTunes
@@ -1820,6 +1823,21 @@ function loadState() {
               t.audioUrl = 'audio/seafret_atlantis.m4a';
               t.duration = '4:18';
             }
+            if (lowTitle.includes('pupus')) {
+              t.youtubeId = '7v2AJiZXHjI';
+              t.audioUrl = 'audio/dewa19_pupus.m4a';
+              t.duration = '5:05';
+            }
+            if (lowTitle.includes('separuh nafas')) {
+              t.youtubeId = '0vuBZYWZPIc';
+              t.audioUrl = 'audio/dewa19_separuh_nafas.m4a';
+              t.duration = '5:00';
+            }
+            if (lowTitle.includes('kangen')) {
+              t.youtubeId = 'NSSBwftuG7A';
+              t.audioUrl = 'audio/dewa19_kangen.m4a';
+              t.duration = '5:32';
+            }
           });
         }
       });
@@ -2728,8 +2746,19 @@ function loadTrack(index, autoPlay = true, playlistId = null) {
   updateActiveTrackUI();
   if (currentView === 'playlist') renderTracklist();
 
+  // If track matches local full audio file in realAudioTracks, prefer local file
+  const lowTitle = (track.title || '').toLowerCase();
+  for (const [key, localPath] of Object.entries(realAudioTracks)) {
+    if (lowTitle.includes(key)) {
+      track.audioUrl = localPath;
+      break;
+    }
+  }
+
+  const isItunesPreview = track.audioUrl && (track.audioUrl.includes('itunes.apple.com') || track.audioUrl.includes('audio-ssl'));
+
   // If track has direct studio audio (local file, uploaded blob, or MP3 link) -> use HTML5 audio engine
-  if (track.audioUrl) {
+  if (track.audioUrl && (!isItunesPreview || !track.youtubeId)) {
     currentEngine = 'html5';
     if (isYtReady && ytPlayer && ytPlayer.pauseVideo) {
       ytPlayer.pauseVideo();
@@ -2740,7 +2769,7 @@ function loadTrack(index, autoPlay = true, playlistId = null) {
       playAudio();
     }
   } else if (track.youtubeId) {
-    // Fallback to YouTube engine if only YouTube ID is present
+    // Fallback to YouTube engine if only YouTube ID is present or audioUrl is only an iTunes 30s snippet
     currentEngine = 'youtube';
     audio.pause();
     if (isYtReady && ytPlayer && ytPlayer.loadVideoById) {
@@ -2976,6 +3005,10 @@ audio.addEventListener('timeupdate', () => {
 
 audio.addEventListener('loadedmetadata', () => {
   if (currentEngine === 'html5' && audio.duration && isFinite(audio.duration)) {
+    // Never overwrite song duration if audio source is an iTunes 30-second snippet!
+    const isSnippet = audio.src && (audio.src.includes('audio-ssl') || audio.src.includes('itunes.apple.com'));
+    if (isSnippet) return;
+
     const dur = formatTime(audio.duration);
     const durEl = document.getElementById('durationTimeText');
     if (durEl) durEl.textContent = dur;
@@ -3593,10 +3626,21 @@ function quickAddSongDirectly(idx, btn) {
 
     const ultraHdCover = item.artworkUrl100 ? item.artworkUrl100.replace('100x100bb', '1000x1000bb') : 'images/spotify_covers/jakarta.jpg';
 
-    let matchedAudioUrl = item.previewUrl || '';
+    let matchedAudioUrl = '';
     let matchedYoutubeId = null;
     const lowTitle = songTitle.toLowerCase();
 
+    // 1. Check local full audio files first
+    if (typeof realAudioTracks !== 'undefined' && realAudioTracks) {
+      for (const [key, localPath] of Object.entries(realAudioTracks)) {
+        if (lowTitle.includes(key)) {
+          matchedAudioUrl = localPath;
+          break;
+        }
+      }
+    }
+
+    // 2. Check YouTube catalog for full video streaming
     if (typeof realSongCatalog !== 'undefined' && realSongCatalog) {
       for (const [key, yId] of Object.entries(realSongCatalog)) {
         if (lowTitle.includes(key)) {
@@ -3606,13 +3650,9 @@ function quickAddSongDirectly(idx, btn) {
       }
     }
 
-    if (!matchedYoutubeId && typeof realAudioTracks !== 'undefined' && realAudioTracks) {
-      for (const [key, localPath] of Object.entries(realAudioTracks)) {
-        if (lowTitle.includes(key)) {
-          matchedAudioUrl = localPath;
-          break;
-        }
-      }
+    // 3. Fallback to iTunes preview ONLY if neither full local audio nor YouTube stream is available
+    if (!matchedAudioUrl && !matchedYoutubeId) {
+      matchedAudioUrl = item.previewUrl || '';
     }
 
     const today = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
