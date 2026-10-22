@@ -2754,37 +2754,93 @@ function loadTrack(index, autoPlay = true, playlistId = null) {
 
   // If track matches local full audio file in realAudioTracks, prefer local file
   const lowTitle = (track.title || '').toLowerCase();
-  for (const [key, localPath] of Object.entries(realAudioTracks)) {
-    if (lowTitle.includes(key)) {
-      track.audioUrl = localPath;
-      break;
+  const lowArtist = (track.artist || '').toLowerCase();
+  const cleanSearch = `${lowTitle} ${lowArtist}`.replace(/[^a-z0-9]/g, ' ');
+
+  if (typeof realAudioTracks !== 'undefined' && realAudioTracks) {
+    for (const [key, localPath] of Object.entries(realAudioTracks)) {
+      if (lowTitle.includes(key) || cleanSearch.includes(key)) {
+        track.audioUrl = localPath;
+        break;
+      }
     }
   }
 
+  // Also check officialCovers
+  if (typeof officialCovers !== 'undefined' && officialCovers) {
+    for (const [key, covPath] of Object.entries(officialCovers)) {
+      if (lowTitle.includes(key) || cleanSearch.includes(key)) {
+        track.cover = covPath;
+        const bCover = document.getElementById('bottomTrackCover');
+        if (bCover) bCover.src = covPath;
+        const miniThumb = document.getElementById('actionMiniThumb');
+        if (miniThumb) miniThumb.src = covPath;
+        const heroCover = document.getElementById('heroVinylCover');
+        if (heroCover) heroCover.src = covPath;
+        const mobCover = document.getElementById('mobileVinylCenterArt');
+        if (mobCover) mobCover.src = covPath;
+        break;
+      }
+    }
+  }
+
+  const isMobile = (window.innerWidth < 1024) || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
   const isItunesPreview = track.audioUrl && (track.audioUrl.includes('itunes.apple.com') || track.audioUrl.includes('audio-ssl'));
 
-  // If track has direct studio audio (local file, uploaded blob, or MP3 link) -> use HTML5 audio engine
-  if (track.audioUrl && (!isItunesPreview || !track.youtubeId)) {
+  // Mobile Recovery: If track has no audioUrl (e.g. added previously without preview), fetch audio preview in background
+  if (!track.audioUrl && track.title) {
+    fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(track.artist + ' ' + track.title)}&entity=song&limit=1`)
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.results && data.results[0] && data.results[0].previewUrl) {
+          track.audioUrl = data.results[0].previewUrl;
+          if (isMobile && currentPlayingTrack === track && (!isPlaying || currentEngine !== 'youtube')) {
+            currentEngine = 'html5';
+            audio.src = track.audioUrl;
+            audio.load();
+            if (autoPlay) playAudio();
+          }
+        }
+      }).catch(() => {});
+  }
+
+  // On mobile, prioritize HTML5 audio engine if audioUrl is present, because mobile OS blocks background YouTube iframes
+  const preferHtml5 = track.audioUrl && (isMobile || !isItunesPreview || !track.youtubeId);
+
+  if (preferHtml5) {
     currentEngine = 'html5';
     if (isYtReady && ytPlayer && ytPlayer.pauseVideo) {
-      ytPlayer.pauseVideo();
+      try { ytPlayer.pauseVideo(); } catch (e) {}
     }
     stopYtScrubber();
-    audio.src = track.audioUrl;
+    if (!audio.src || !audio.src.includes(track.audioUrl)) {
+      audio.src = track.audioUrl;
+      audio.load();
+    }
     if (autoPlay) {
       playAudio();
     }
   } else if (track.youtubeId) {
-    // Fallback to YouTube engine if only YouTube ID is present or audioUrl is only an iTunes 30s snippet
+    // YouTube engine
     currentEngine = 'youtube';
-    audio.pause();
+    try { audio.pause(); } catch (e) {}
     if (isYtReady && ytPlayer && ytPlayer.loadVideoById) {
       if (autoPlay) {
         ytPlayer.loadVideoById(track.youtubeId);
       } else {
         ytPlayer.cueVideoById(track.youtubeId);
       }
+    } else if (track.audioUrl) {
+      currentEngine = 'html5';
+      audio.src = track.audioUrl;
+      audio.load();
+      if (autoPlay) playAudio();
     }
+  } else if (track.audioUrl) {
+    currentEngine = 'html5';
+    audio.src = track.audioUrl;
+    audio.load();
+    if (autoPlay) playAudio();
   }
 }
 
@@ -2792,19 +2848,28 @@ function playTrackByObject(trackObj) {
   const tracks = getActiveTracks();
   const foundIdx = tracks.findIndex(t => t.id === trackObj.id);
   if (foundIdx !== -1) {
-    loadTrack(foundIdx, true);
+    loadTrack(foundIdx, true, state.activePlaylistId);
   } else {
     // Fallback direct play
-    if (trackObj.audioUrl) {
+    currentPlayingTrack = trackObj;
+    updateActiveTrackUI();
+    const isMobile = (window.innerWidth < 1024) || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    if (trackObj.audioUrl && (isMobile || !trackObj.youtubeId)) {
       currentEngine = 'html5';
-      if (ytPlayer && ytPlayer.pauseVideo) ytPlayer.pauseVideo();
+      if (ytPlayer && ytPlayer.pauseVideo) try { ytPlayer.pauseVideo(); } catch (e) {}
       stopYtScrubber();
       audio.src = trackObj.audioUrl;
+      audio.load();
       playAudio();
     } else if (trackObj.youtubeId && isYtReady && ytPlayer) {
       currentEngine = 'youtube';
-      audio.pause();
+      try { audio.pause(); } catch (e) {}
       ytPlayer.loadVideoById(trackObj.youtubeId);
+    } else if (trackObj.audioUrl) {
+      currentEngine = 'html5';
+      audio.src = trackObj.audioUrl;
+      audio.load();
+      playAudio();
     }
   }
 }
@@ -2880,13 +2945,32 @@ function selectTrackFromList(index) {
 }
 
 function playAudio() {
-  audio.play().then(() => {
-    isPlaying = true;
-    updatePlayButtons();
-    if (currentView === 'playlist') renderTracklist();
-  }).catch(err => {
-    console.warn('Playback notice:', err);
-  });
+  if (!audio.src || audio.src === window.location.href) {
+    const track = getPlayingTrack();
+    if (track && track.audioUrl) {
+      audio.src = track.audioUrl;
+      audio.load();
+    }
+  }
+  const promise = audio.play();
+  if (promise !== undefined) {
+    promise.then(() => {
+      isPlaying = true;
+      updatePlayButtons();
+      if (currentView === 'playlist') renderTracklist();
+    }).catch(err => {
+      console.warn('Audio playback notice:', err);
+      // Fallback to YouTube if available
+      const track = getPlayingTrack();
+      if (track && track.youtubeId && isYtReady && ytPlayer && ytPlayer.loadVideoById) {
+        currentEngine = 'youtube';
+        ytPlayer.loadVideoById(track.youtubeId);
+      } else {
+        isPlaying = false;
+        updatePlayButtons();
+      }
+    });
+  }
 }
 
 function pauseAudio() {
@@ -2897,18 +2981,43 @@ function pauseAudio() {
 }
 
 function togglePlay() {
-  const tracks = getActiveTracks();
-  if (!tracks.length) return;
-
-  if (currentEngine === 'youtube' && isYtReady && ytPlayer) {
-    if (isPlaying) {
-      ytPlayer.pauseVideo();
-    } else {
-      ytPlayer.playVideo();
+  const track = getPlayingTrack();
+  if (!track) {
+    const plTracks = getPlayingTracks();
+    if (plTracks && plTracks.length) {
+      loadTrack(0, true, currentPlayingPlaylistId);
+      return;
     }
+    const actTracks = getActiveTracks();
+    if (actTracks && actTracks.length) {
+      loadTrack(0, true, state.activePlaylistId);
+      return;
+    }
+    return;
+  }
+
+  const isMobile = (window.innerWidth < 1024) || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+  if (isPlaying) {
+    if (currentEngine === 'youtube' && isYtReady && ytPlayer && ytPlayer.pauseVideo) {
+      try { ytPlayer.pauseVideo(); } catch (e) {}
+    }
+    pauseAudio();
   } else {
-    if (isPlaying) {
-      pauseAudio();
+    // If mobile or if track has direct audioUrl, prioritize HTML5 audio
+    if (isMobile && track.audioUrl) {
+      currentEngine = 'html5';
+      if (isYtReady && ytPlayer && ytPlayer.pauseVideo) {
+        try { ytPlayer.pauseVideo(); } catch (e) {}
+      }
+      stopYtScrubber();
+      if (!audio.src || audio.src === window.location.href || !audio.src.includes(track.audioUrl)) {
+        audio.src = track.audioUrl;
+        audio.load();
+      }
+      playAudio();
+    } else if (currentEngine === 'youtube' && isYtReady && ytPlayer && ytPlayer.playVideo) {
+      ytPlayer.playVideo();
     } else {
       playAudio();
     }
@@ -3640,11 +3749,13 @@ async function quickAddSongDirectly(idx, btn) {
     let matchedAudioUrl = '';
     let matchedYoutubeId = null;
     const lowTitle = songTitle.toLowerCase();
+    const lowArtist = artistName.toLowerCase();
+    const cleanSearch = `${lowTitle} ${lowArtist}`.replace(/[^a-z0-9]/g, ' ');
 
     // 1. Check local full audio files first
     if (typeof realAudioTracks !== 'undefined' && realAudioTracks) {
       for (const [key, localPath] of Object.entries(realAudioTracks)) {
-        if (lowTitle.includes(key)) {
+        if (lowTitle.includes(key) || cleanSearch.includes(key)) {
           matchedAudioUrl = localPath;
           break;
         }
@@ -3655,7 +3766,7 @@ async function quickAddSongDirectly(idx, btn) {
     let finalCover = ultraHdCover;
     if (typeof officialCovers !== 'undefined' && officialCovers) {
       for (const [key, covPath] of Object.entries(officialCovers)) {
-        if (lowTitle.includes(key)) {
+        if (lowTitle.includes(key) || cleanSearch.includes(key)) {
           finalCover = covPath;
           break;
         }
@@ -3665,7 +3776,7 @@ async function quickAddSongDirectly(idx, btn) {
     // 3. Check static YouTube catalog for full video streaming
     if (typeof realSongCatalog !== 'undefined' && realSongCatalog) {
       for (const [key, yId] of Object.entries(realSongCatalog)) {
-        if (lowTitle.includes(key)) {
+        if (lowTitle.includes(key) || cleanSearch.includes(key)) {
           matchedYoutubeId = yId;
           break;
         }
@@ -3688,9 +3799,9 @@ async function quickAddSongDirectly(idx, btn) {
       }
     }
 
-    // 5. Fallback to iTunes preview ONLY if neither full local audio nor YouTube stream is available
-    if (!matchedAudioUrl && !matchedYoutubeId) {
-      matchedAudioUrl = item.previewUrl || '';
+    // 5. CRITICAL FOR MOBILE: Always provide audioUrl fallback so mobile devices can play HTML5 audio immediately without being blocked by YouTube iframe restrictions!
+    if (!matchedAudioUrl && item.previewUrl) {
+      matchedAudioUrl = item.previewUrl;
     }
 
     const today = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
