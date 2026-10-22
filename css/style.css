@@ -221,12 +221,14 @@ input[type="range"]:hover::-webkit-slider-thumb {
     padding: 10px 10px 14px 10px;
     border-radius: 8px;
     transform: none !important;
+    margin-top: 6px;
   }
   .polaroid-tilt-left,
   .polaroid-tilt-right,
   .polaroid-tilt-subtle {
     transform: none !important;
   }
+  .polaroid-card .washi-tape,
   .polaroid-card-compact .washi-tape {
     width: 48px;
     height: 14px;

@@ -495,7 +495,7 @@
           </div>
 
           <div class="flex items-center gap-2">
-            <button onclick="clearAllPolaroids()" id="btnClearAllPolaroids"
+            <button onclick="confirmClearAllPolaroids()" id="btnClearAllPolaroids"
               class="px-3.5 py-2 rounded-xl bg-white border border-[#FFD2DC] text-[#9A737C] hover:text-rose-500 hover:border-rose-300 text-xs font-bold shadow-xs transition flex items-center gap-1.5"
               title="Hapus Semua Foto">
               <i class="fa-solid fa-trash-can text-xs"></i>
@@ -509,9 +509,9 @@
           </div>
         </div>
 
-        <!-- Polaroid Gallery Cards Grid: 2-row horizontal on mobile, full grid on desktop (>=lg) -->
+        <!-- Polaroid Gallery Cards Grid: Responsive vertical grid scrolling downward -->
         <div id="polaroidGalleryGrid"
-          class="grid grid-rows-2 grid-flow-col auto-cols-[165px] overflow-x-auto gap-3.5 p-2 pb-4 scroll-smooth scrollbar-thin lg:grid-rows-none lg:grid-flow-row lg:auto-cols-auto lg:overflow-x-visible lg:grid-cols-3 xl:grid-cols-4 lg:gap-6">
+          class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 p-2 pt-4 pb-28">
           <!-- Dynamically injected via renderPolaroidGallery() -->
         </div>
       </div>
@@ -1939,29 +1939,169 @@
     </div>
   </div>
 
+  <!-- ================= MODAL: EDIT FOTO POLAROID ================= -->
+  <div id="editPolaroidModal"
+    class="fixed inset-0 z-50 bg-black/45 backdrop-blur-xs hidden items-center justify-center p-4">
+    <div
+      class="bg-white border border-[#FFD2DC] rounded-3xl max-w-md w-full p-6 shadow-2xl relative max-h-[92vh] overflow-y-auto text-xs">
+      <div class="flex items-center justify-between mb-4 pb-3 border-b border-[#FFE4E9]">
+        <div class="flex items-center gap-2">
+          <div
+            class="w-8 h-8 rounded-xl bg-[#FFF0F3] text-[#E85D75] flex items-center justify-center border border-[#FFD2DC]">
+            <i class="fa-solid fa-pen-to-square"></i>
+          </div>
+          <div>
+            <h3 class="text-base font-extrabold text-[#3B2328]">Edit Foto Polaroid ✏️</h3>
+            <p class="text-[11px] text-[#9A737C]">Perbarui foto, cerita, atau tanggal momen ini</p>
+          </div>
+        </div>
+        <button onclick="closeEditPolaroidModal()"
+          class="w-8 h-8 rounded-full bg-[#FFF5F7] text-[#9A737C] hover:text-[#FA8072] flex items-center justify-center transition">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <form onsubmit="saveEditPolaroid(event)" class="space-y-3.5">
+        <input type="hidden" id="editPolaroidId" value="" />
+
+        <!-- Photo Input (URL or Upload) -->
+        <div>
+          <label class="font-bold text-[#3B2328] block mb-1">Ganti Foto Polaroid (Opsional)</label>
+          <div class="flex items-center gap-2">
+            <input id="editPolaroidUrl" type="url" placeholder="https://... atau upload foto baru"
+              oninput="previewEditPolaroidImage(this.value)"
+              class="flex-1 px-3.5 py-2.5 rounded-xl bg-[#FFF5F7] border border-[#FFD2DC] text-xs text-[#3B2328] focus:outline-none focus:border-[#FA8072]" />
+            <label
+              class="px-3 py-2.5 rounded-xl bg-white border border-[#FFD2DC] hover:border-[#FA8072] text-[#E85D75] font-bold cursor-pointer transition shrink-0 flex items-center gap-1.5 shadow-2xs">
+              <i class="fa-solid fa-arrow-up-from-bracket"></i>
+              <span>Upload</span>
+              <input type="file" accept="image/*" onchange="handleEditPolaroidUpload(event)" class="hidden" />
+            </label>
+          </div>
+        </div>
+
+        <!-- Polaroid Realtime Miniature Preview -->
+        <div class="flex justify-center py-2">
+          <div class="polaroid-card w-48 text-center rotate-[-1deg] shadow-md border border-[#FFE4E9]">
+            <div class="washi-tape"></div>
+            <div
+              class="w-full aspect-square bg-[#FFF5F7] rounded-sm overflow-hidden mb-2.5 border border-[#FFE4E9]/60 flex items-center justify-center">
+              <img id="editPolaroidPreviewThumb" src="" class="w-full h-full object-cover" alt="Preview" />
+            </div>
+            <p id="editPolaroidPreviewCaptionText"
+              class="font-handwriting text-lg text-[#3B2328] leading-tight px-1 truncate">
+              Cerita foto kita...
+            </p>
+            <p id="editPolaroidPreviewDateText" class="text-[10px] text-[#9A737C] font-semibold mt-1">
+              Hari ini
+            </p>
+          </div>
+        </div>
+
+        <!-- Caption / Memory Note -->
+        <div>
+          <label class="font-bold text-[#3B2328] block mb-1">Tulisan / Cerita Manis (Caption Polaroid)</label>
+          <input id="editPolaroidCaption" type="text" placeholder="Contoh: Waktu jalan sore berdua"
+            required
+            oninput="document.getElementById('editPolaroidPreviewCaptionText').textContent = this.value || 'Cerita foto kita...'"
+            class="w-full px-3.5 py-2.5 rounded-xl bg-[#FFF5F7] border border-[#FFD2DC] text-xs text-[#3B2328] focus:outline-none focus:border-[#FA8072]" />
+        </div>
+
+        <!-- Date & Location -->
+        <div class="grid grid-cols-2 gap-2.5">
+          <div>
+            <label class="font-bold text-[#3B2328] block mb-1">Tanggal</label>
+            <input id="editPolaroidDate" type="text" placeholder="Contoh: 14 Feb 2025"
+              oninput="document.getElementById('editPolaroidPreviewDateText').textContent = this.value || 'Hari ini'"
+              class="w-full px-3.5 py-2 rounded-xl bg-[#FFF5F7] border border-[#FFD2DC] text-xs text-[#3B2328] focus:outline-none focus:border-[#FA8072]" />
+          </div>
+          <div>
+            <label class="font-bold text-[#3B2328] block mb-1">Lokasi / Tempat</label>
+            <input id="editPolaroidLocation" type="text" placeholder="Contoh: Kafe Favorit"
+              class="w-full px-3.5 py-2 rounded-xl bg-[#FFF5F7] border border-[#FFD2DC] text-xs text-[#3B2328] focus:outline-none focus:border-[#FA8072]" />
+          </div>
+        </div>
+
+        <div class="pt-2 flex items-center justify-end gap-2 border-t border-[#FFE4E9]">
+          <button type="button" onclick="closeEditPolaroidModal()"
+            class="px-4 py-2.5 rounded-xl bg-[#FFF5F7] text-[#9A737C] font-bold hover:bg-[#FFE4E9] transition">
+            Batal
+          </button>
+          <button type="submit"
+            class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#FA8072] to-[#E85D75] text-white font-bold shadow-md shadow-[#FA8072]/30 hover:opacity-95 transition flex items-center gap-1.5">
+            <i class="fa-solid fa-check"></i>
+            <span>Simpan Perubahan</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ================= MODAL: KONFIRMASI HAPUS POLAROID ================= -->
+  <div id="confirmDeletePolaroidModal"
+    class="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs hidden items-center justify-center p-4">
+    <div
+      class="bg-white border border-[#FFD2DC] rounded-3xl max-w-sm w-full p-6 shadow-2xl relative text-center">
+      <div
+        class="w-14 h-14 rounded-2xl bg-[#FFF0F3] text-rose-500 border border-[#FFD2DC] flex items-center justify-center mx-auto mb-3 shadow-xs">
+        <i class="fa-solid fa-trash-can text-2xl"></i>
+      </div>
+      <h3 id="confirmDeletePolaroidTitle" class="text-base font-extrabold text-[#3B2328]">Hapus Foto Polaroid?</h3>
+      <p id="confirmDeletePolaroidDesc" class="text-xs text-[#9A737C] mt-1.5 mb-5 leading-relaxed">
+        Foto kenangan ini akan dihapus dari galeri memori berdua. Yakin ingin menghapusnya?
+      </p>
+
+      <div class="flex items-center justify-center gap-2.5">
+        <button type="button" onclick="closeConfirmDeletePolaroidModal()"
+          class="flex-1 py-2.5 rounded-xl bg-[#FFF5F7] text-[#9A737C] font-bold text-xs hover:bg-[#FFE4E9] transition">
+          Batal
+        </button>
+        <button type="button" onclick="executeDeletePolaroid()"
+          class="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-rose-500 to-red-600 text-white font-bold text-xs shadow-md shadow-rose-500/25 hover:opacity-95 transition flex items-center justify-center gap-1.5">
+          <i class="fa-solid fa-trash-can text-xs"></i>
+          <span id="confirmDeletePolaroidBtnText">Ya, Hapus</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- ================= MODAL 6: ZOOM / DETAIL FOTO POLAROID ================= -->
   <div id="polaroidDetailModal"
     class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4"
     onclick="closePolaroidDetailModal()">
     <div onclick="event.stopPropagation()"
-      class="polaroid-card max-w-sm sm:max-w-md w-full transform -rotate-1 relative shadow-2xl p-4 sm:p-5 pb-8 sm:pb-9">
+      class="polaroid-card max-w-sm sm:max-w-md w-full transform -rotate-1 relative shadow-2xl p-4 sm:p-5 pb-6 sm:pb-7">
       <div class="washi-tape"></div>
       <button onclick="closePolaroidDetailModal()"
         class="absolute -top-3 -right-3 w-8 h-8 rounded-full bg-white text-[#3B2328] hover:text-[#FA8072] shadow-md flex items-center justify-center font-bold z-30">
         <i class="fa-solid fa-xmark text-sm"></i>
       </button>
 
-      <div class="w-full h-80 sm:h-96 rounded-lg overflow-hidden bg-neutral-100 mb-4 border border-[#FFD2DC]/50">
-        <img id="detailPolaroidImg" src="" class="w-full h-full object-cover" alt="Detail Polaroid" />
+      <div class="w-full aspect-square sm:aspect-4/3 max-h-[55vh] rounded-lg overflow-hidden bg-neutral-900/5 mb-3 border border-[#FFD2DC]/50 flex items-center justify-center">
+        <img id="detailPolaroidImg" src="" class="w-full h-full object-contain sm:object-cover" alt="Detail Polaroid" />
       </div>
 
-      <div class="text-center px-2">
+      <div class="text-center px-2 mb-3">
         <p id="detailPolaroidCaption" class="font-handwriting text-2xl sm:text-3xl text-[#3B2328] leading-tight"></p>
-        <div class="flex items-center justify-center gap-2 mt-2 text-xs font-semibold text-[#9A737C]">
+        <div class="flex items-center justify-center gap-2 mt-1.5 text-xs font-semibold text-[#9A737C]">
           <span id="detailPolaroidDate"></span>
           <span>•</span>
           <span id="detailPolaroidLocation"></span>
         </div>
+      </div>
+
+      <!-- Action buttons in Detail Modal -->
+      <div class="flex items-center justify-center gap-2 pt-3 border-t border-[#FFE4E9]">
+        <button type="button" onclick="openEditFromDetail()"
+          class="px-4 py-2 rounded-xl bg-[#FFF5F7] border border-[#FFD2DC] text-[#3B2328] hover:text-[#FA8072] hover:border-[#FA8072] text-xs font-bold transition flex items-center gap-1.5 shadow-2xs">
+          <i class="fa-solid fa-pen-to-square text-[#FA8072]"></i>
+          <span>Edit Foto</span>
+        </button>
+        <button type="button" onclick="confirmDeleteFromDetail()"
+          class="px-4 py-2 rounded-xl bg-[#FFF5F7] border border-[#FFD2DC] text-[#9A737C] hover:text-rose-500 hover:border-rose-300 text-xs font-bold transition flex items-center gap-1.5 shadow-2xs">
+          <i class="fa-solid fa-trash-can text-rose-500"></i>
+          <span>Hapus</span>
+        </button>
       </div>
     </div>
   </div>

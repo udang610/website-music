@@ -4052,6 +4052,9 @@ function downloadCurrentTrack() {
 }
 
 // ================= DEDICATED POLAROID MEMORIES GALLERY ENGINE =================
+let pendingDeletePolaroidId = null;
+let currentDetailPolaroidId = null;
+
 function renderPolaroidGallery() {
   const container = document.getElementById('polaroidGalleryGrid');
   if (!container) return;
@@ -4083,34 +4086,37 @@ function renderPolaroidGallery() {
   container.innerHTML = memories.map((item, idx) => {
     const tiltClass = (typeof window !== 'undefined' && window.innerWidth < 1024) ? '' : tilts[idx % tilts.length];
     return `
-      <div class="polaroid-card polaroid-card-compact lg:polaroid-card w-full shrink-0 lg:shrink ${tiltClass} group cursor-pointer" onclick="viewPolaroidDetail('${item.id}')">
+      <div class="polaroid-card w-full ${tiltClass} group cursor-pointer transition-all duration-300" onclick="viewPolaroidDetail('${item.id}')">
         <!-- Washi Tape -->
         <div class="washi-tape"></div>
 
-        <!-- Image Frame -->
-        <div class="w-full h-28 sm:h-32 lg:h-52 xl:h-56 bg-neutral-100 rounded-sm overflow-hidden mb-1.5 lg:mb-3 relative border border-neutral-200/60">
+        <!-- Image Frame (Square 1:1, Never Cropped or Squished) -->
+        <div class="w-full aspect-square bg-[#FFF5F7] rounded-sm overflow-hidden mb-2 sm:mb-2.5 relative border border-[#FFE4E9] flex items-center justify-center">
           <img src="${item.imageUrl}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500" alt="Polaroid photo" loading="lazy" />
           
-          <!-- Hover Overlay with Zoom & Delete Buttons -->
-          <div class="absolute inset-0 bg-black/35 opacity-0 group-hover:opacity-100 transition flex items-center justify-center gap-2" onclick="event.stopPropagation()">
-            <button onclick="viewPolaroidDetail('${item.id}')" class="w-7 h-7 lg:w-8 lg:h-8 rounded-full bg-white text-[#3B2328] hover:text-[#FA8072] flex items-center justify-center shadow-md transition" title="Lihat Foto Penuh">
-              <i class="fa-solid fa-expand text-[10px] lg:text-xs"></i>
+          <!-- Hover / Focus Overlay with Zoom, Edit & Delete Buttons -->
+          <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center gap-2 p-2" onclick="event.stopPropagation()">
+            <button onclick="viewPolaroidDetail('${item.id}')" class="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white text-[#3B2328] hover:text-[#FA8072] flex items-center justify-center shadow-md transition" title="Lihat Foto Penuh">
+              <i class="fa-solid fa-expand text-[10px] sm:text-xs"></i>
             </button>
-            <button onclick="deletePolaroid('${item.id}')" class="w-7 h-7 lg:w-8 lg:h-8 rounded-full bg-white text-[#9A737C] hover:text-rose-500 flex items-center justify-center shadow-md transition" title="Hapus Polaroid">
-              <i class="fa-solid fa-trash-can text-[10px] lg:text-xs"></i>
+            <button onclick="openEditPolaroidModal('${item.id}')" class="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white text-[#3B2328] hover:text-[#FA8072] flex items-center justify-center shadow-md transition" title="Edit Polaroid">
+              <i class="fa-solid fa-pen-to-square text-[10px] sm:text-xs"></i>
+            </button>
+            <button onclick="confirmDeletePolaroid('${item.id}')" class="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white text-rose-500 hover:bg-rose-50 flex items-center justify-center shadow-md transition" title="Hapus Polaroid">
+              <i class="fa-solid fa-trash-can text-[10px] sm:text-xs"></i>
             </button>
           </div>
         </div>
 
-        <!-- Handwritten Caption -->
-        <p class="font-handwriting text-sm sm:text-base lg:text-xl text-[#3B2328] text-center leading-snug px-1 truncate lg:line-clamp-2">
+        <!-- Handwritten Caption (Multi-line comfortable reading, no harsh cutoff) -->
+        <p class="font-handwriting text-base sm:text-lg lg:text-xl text-[#3B2328] text-center leading-snug px-1 line-clamp-2 min-h-[2.5rem] flex items-center justify-center">
           ${item.caption || 'Kenangan manis berdua ✦'}
         </p>
 
         <!-- Date & Location Footer -->
-        <div class="flex items-center justify-between text-[10px] lg:text-[11px] font-semibold text-[#9A737C] mt-1 lg:mt-2 pt-1 lg:pt-2 border-t border-[#FFF0F3] px-1">
-          <span class="truncate max-w-[80px] lg:max-w-none">${item.date || 'Sweet moment'}</span>
-          <span class="text-[#FA8072] truncate max-w-[70px] lg:max-w-[120px]">${item.location || 'Special place'}</span>
+        <div class="flex items-center justify-between text-[10px] sm:text-[11px] font-semibold text-[#9A737C] mt-1.5 pt-1.5 border-t border-[#FFF0F3] px-1">
+          <span class="truncate max-w-[50%]">${item.date || 'Sweet moment'}</span>
+          <span class="text-[#FA8072] truncate max-w-[48%] text-right">${item.location || 'Special place'}</span>
         </div>
       </div>
     `;
@@ -4189,29 +4195,192 @@ function saveNewPolaroid(event) {
   showToastNotification('Foto polaroid baru berhasil disimpan ke Galeri! ✨', 'success');
 }
 
-function deletePolaroid(id) {
-  // Directly delete without browser confirm popup
-  state.polaroidMemories = (state.polaroidMemories || []).filter(p => p.id !== id);
+// ================= POLAROID EDIT ENGINE =================
+function openEditPolaroidModal(id) {
+  const pol = (state.polaroidMemories || []).find(p => p.id === id);
+  if (!pol) {
+    showToastNotification('Foto polaroid tidak ditemukan', 'error');
+    return;
+  }
+  const modal = document.getElementById('editPolaroidModal');
+  if (!modal) return;
+
+  document.getElementById('editPolaroidId').value = pol.id;
+  document.getElementById('editPolaroidUrl').value = pol.imageUrl || '';
+  document.getElementById('editPolaroidCaption').value = pol.caption || '';
+  document.getElementById('editPolaroidDate').value = pol.date || '';
+  document.getElementById('editPolaroidLocation').value = pol.location || '';
+  document.getElementById('editPolaroidPreviewThumb').src = pol.imageUrl || '';
+  document.getElementById('editPolaroidPreviewCaptionText').textContent = pol.caption || 'Cerita foto kita...';
+  document.getElementById('editPolaroidPreviewDateText').textContent = pol.date || 'Hari ini';
+
+  modal.classList.remove('hidden');
+  modal.classList.add('flex');
+}
+
+function closeEditPolaroidModal() {
+  const modal = document.getElementById('editPolaroidModal');
+  if (modal) {
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+  }
+}
+
+function previewEditPolaroidImage(url) {
+  if (url && url.trim()) {
+    document.getElementById('editPolaroidPreviewThumb').src = url.trim();
+  }
+}
+
+function handleEditPolaroidUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function (e) {
+    const dataUrl = e.target.result;
+    document.getElementById('editPolaroidUrl').value = dataUrl;
+    document.getElementById('editPolaroidPreviewThumb').src = dataUrl;
+  };
+  reader.readAsDataURL(file);
+}
+
+function saveEditPolaroid(event) {
+  event.preventDefault();
+  const id = document.getElementById('editPolaroidId').value;
+  const pol = (state.polaroidMemories || []).find(p => p.id === id);
+  if (!pol) {
+    showToastNotification('Gagal menemukan data polaroid', 'error');
+    return;
+  }
+
+  const url = document.getElementById('editPolaroidUrl').value.trim() || document.getElementById('editPolaroidPreviewThumb').src;
+  const caption = document.getElementById('editPolaroidCaption').value.trim();
+  const date = document.getElementById('editPolaroidDate').value.trim() || 'Hari ini';
+  const location = document.getElementById('editPolaroidLocation').value.trim() || 'Tempat Spesial';
+
+  if (!caption) {
+    showToastNotification('Tulis cerita untuk foto ini ya', 'error');
+    return;
+  }
+
+  pol.imageUrl = url || pol.imageUrl;
+  pol.caption = caption;
+  pol.date = date;
+  pol.location = location;
+
   localStorage.setItem('romantic_music_polaroid_memories', JSON.stringify(state.polaroidMemories));
   saveState();
   triggerSupabaseSync();
+  closeEditPolaroidModal();
   renderPolaroidGallery();
-  showToastNotification('Foto polaroid telah dihapus', 'info');
+
+  // If detail modal is open for this item, refresh it
+  if (currentDetailPolaroidId === id) {
+    viewPolaroidDetail(id);
+  }
+
+  showToastNotification('Foto polaroid berhasil diperbarui! ✨', 'success');
+}
+
+function openEditFromDetail() {
+  if (!currentDetailPolaroidId) return;
+  closePolaroidDetailModal();
+  openEditPolaroidModal(currentDetailPolaroidId);
+}
+
+// ================= POLAROID DELETE CONFIRMATION ENGINE =================
+function confirmDeletePolaroid(id) {
+  pendingDeletePolaroidId = id;
+  const pol = (state.polaroidMemories || []).find(p => p.id === id);
+  const titleEl = document.getElementById('confirmDeletePolaroidTitle');
+  const descEl = document.getElementById('confirmDeletePolaroidDesc');
+  const btnTextEl = document.getElementById('confirmDeletePolaroidBtnText');
+
+  if (titleEl) titleEl.textContent = 'Hapus Foto Polaroid?';
+  if (descEl) {
+    descEl.textContent = pol?.caption
+      ? `Apakah kamu yakin ingin menghapus foto "${pol.caption}" dari galeri kenangan?`
+      : 'Foto kenangan ini akan dihapus dari galeri memori berdua. Yakin ingin menghapusnya?';
+  }
+  if (btnTextEl) btnTextEl.textContent = 'Ya, Hapus';
+
+  const modal = document.getElementById('confirmDeletePolaroidModal');
+  if (modal) {
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+  }
+}
+
+function confirmClearAllPolaroids() {
+  pendingDeletePolaroidId = '__ALL__';
+  const titleEl = document.getElementById('confirmDeletePolaroidTitle');
+  const descEl = document.getElementById('confirmDeletePolaroidDesc');
+  const btnTextEl = document.getElementById('confirmDeletePolaroidBtnText');
+
+  if (titleEl) titleEl.textContent = 'Hapus Semua Foto?';
+  if (descEl) descEl.textContent = 'Semua foto polaroid kenangan manis berdua akan dihapus. Tindakan ini tidak dapat dibatalkan. Yakin ingin menghapus semuanya?';
+  if (btnTextEl) btnTextEl.textContent = 'Hapus Semua';
+
+  const modal = document.getElementById('confirmDeletePolaroidModal');
+  if (modal) {
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+  }
+}
+
+function confirmDeleteFromDetail() {
+  if (!currentDetailPolaroidId) return;
+  confirmDeletePolaroid(currentDetailPolaroidId);
+}
+
+function closeConfirmDeletePolaroidModal() {
+  pendingDeletePolaroidId = null;
+  const modal = document.getElementById('confirmDeletePolaroidModal');
+  if (modal) {
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+  }
+}
+
+function executeDeletePolaroid() {
+  const targetId = pendingDeletePolaroidId;
+  closeConfirmDeletePolaroidModal();
+  if (!targetId) return;
+
+  if (targetId === '__ALL__') {
+    state.polaroidMemories = [];
+    localStorage.setItem('romantic_music_polaroid_memories', JSON.stringify([]));
+    saveState();
+    triggerSupabaseSync();
+    closePolaroidDetailModal();
+    renderPolaroidGallery();
+    showToastNotification('Seluruh foto polaroid telah dihapus', 'info');
+  } else {
+    state.polaroidMemories = (state.polaroidMemories || []).filter(p => p.id !== targetId);
+    localStorage.setItem('romantic_music_polaroid_memories', JSON.stringify(state.polaroidMemories));
+    saveState();
+    triggerSupabaseSync();
+    if (currentDetailPolaroidId === targetId) {
+      closePolaroidDetailModal();
+    }
+    renderPolaroidGallery();
+    showToastNotification('Foto polaroid telah dihapus', 'info');
+  }
+}
+
+// Deprecated direct fallbacks in case called externally
+function deletePolaroid(id) {
+  confirmDeletePolaroid(id);
 }
 
 function clearAllPolaroids() {
-  // Directly clear without browser confirm popup
-  state.polaroidMemories = [];
-  localStorage.setItem('romantic_music_polaroid_memories', JSON.stringify([]));
-  saveState();
-  triggerSupabaseSync();
-  renderPolaroidGallery();
-  showToastNotification('Seluruh foto polaroid telah dihapus', 'info');
+  confirmClearAllPolaroids();
 }
 
 function viewPolaroidDetail(id) {
   const pol = (state.polaroidMemories || []).find(p => p.id === id);
   if (!pol) return;
+  currentDetailPolaroidId = id;
   document.getElementById('detailPolaroidImg').src = pol.imageUrl;
   document.getElementById('detailPolaroidCaption').textContent = `"${pol.caption || 'Momen manis kita'}"`;
   document.getElementById('detailPolaroidDate').textContent = pol.date || 'Sweet Day';
@@ -4225,6 +4394,7 @@ function viewPolaroidDetail(id) {
 }
 
 function closePolaroidDetailModal() {
+  currentDetailPolaroidId = null;
   const modal = document.getElementById('polaroidDetailModal');
   if (modal) {
     modal.classList.add('hidden');
