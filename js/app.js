@@ -1968,12 +1968,11 @@ function getAllLikedTracks() {
 
 function getLikedSongsPlaylist() {
   const tracks = getAllLikedTracks();
-  const profileCover = (typeof state !== 'undefined' && state && (state.partnerAvatar || state.yourAvatar)) || 'images/spotify_covers/ndey.jpeg';
   return {
     id: 'pl-liked',
     title: 'Liked Songs',
     desc: 'Kumpulan lagu favorit pilihan berdua',
-    cover: profileCover,
+    cover: 'images/spotify_covers/liked_cover.svg',
     isLikedSpecial: true,
     tracks: tracks
   };
@@ -2142,6 +2141,11 @@ function hydrateUI() {
   }
   if (btnEdit) {
     btnEdit.style.display = activePl.isLikedSpecial ? 'none' : '';
+  }
+
+  const coverOverlay = document.getElementById('heroCoverChangeOverlay');
+  if (coverOverlay) {
+    coverOverlay.style.display = activePl.isLikedSpecial ? 'none' : '';
   }
 
   const likedAvatar = document.getElementById('sidebarLikedAvatar');
