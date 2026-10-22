@@ -1968,11 +1968,12 @@ function getAllLikedTracks() {
 
 function getLikedSongsPlaylist() {
   const tracks = getAllLikedTracks();
+  const profileCover = (typeof state !== 'undefined' && state && (state.partnerAvatar || state.yourAvatar)) || 'images/spotify_covers/ndey.jpeg';
   return {
     id: 'pl-liked',
     title: 'Liked Songs',
     desc: 'Kumpulan lagu favorit pilihan berdua',
-    cover: 'images/spotify_covers/liked_songs.jpg',
+    cover: profileCover,
     isLikedSpecial: true,
     tracks: tracks
   };
@@ -2143,6 +2144,11 @@ function hydrateUI() {
     btnEdit.style.display = activePl.isLikedSpecial ? 'none' : '';
   }
 
+  const likedAvatar = document.getElementById('sidebarLikedAvatar');
+  if (likedAvatar) {
+    likedAvatar.src = state.partnerAvatar || state.yourAvatar || 'images/spotify_covers/ndey.jpeg';
+  }
+
   renderSidebarPlaylists();
 }
 
@@ -2185,6 +2191,18 @@ function navigateTo(view, playlistId = null) {
       btnJam.className = 'w-11 h-11 rounded-xl bg-gradient-to-br from-[#FA8072] to-[#E85D75] text-white flex items-center justify-center shadow-md shadow-[#FA8072]/30 scale-105 transition relative';
     } else {
       btnJam.className = 'w-11 h-11 rounded-xl bg-[#FFF0F3] border border-[#FFD2DC] flex items-center justify-center text-[#FA8072] hover:bg-[#FFE4E9] hover:scale-105 transition relative';
+    }
+  }
+
+  const libBtnLiked = document.getElementById('libBtnLiked');
+  if (libBtnLiked) {
+    const isLikedActive = state.activePlaylistId === 'pl-liked' && view === 'playlist';
+    if (isLikedActive) {
+      libBtnLiked.classList.add('border-[#FA8072]', 'ring-2', 'ring-[#FA8072]/30', 'scale-105');
+      libBtnLiked.classList.remove('border-[#FFD2DC]');
+    } else {
+      libBtnLiked.classList.remove('border-[#FA8072]', 'ring-2', 'ring-[#FA8072]/30', 'scale-105');
+      libBtnLiked.classList.add('border-[#FFD2DC]');
     }
   }
 
@@ -2406,6 +2424,22 @@ function renderSidebarPlaylists() {
       </button>
     `;
   }).join('');
+
+  const libBtnLiked = document.getElementById('libBtnLiked');
+  if (libBtnLiked) {
+    const isLikedActive = state.activePlaylistId === 'pl-liked' && currentView === 'playlist';
+    if (isLikedActive) {
+      libBtnLiked.classList.add('border-[#FA8072]', 'ring-2', 'ring-[#FA8072]/30', 'scale-105');
+      libBtnLiked.classList.remove('border-[#FFD2DC]');
+    } else {
+      libBtnLiked.classList.remove('border-[#FA8072]', 'ring-2', 'ring-[#FA8072]/30', 'scale-105');
+      libBtnLiked.classList.add('border-[#FFD2DC]');
+    }
+    const likedAvatar = document.getElementById('sidebarLikedAvatar');
+    if (likedAvatar) {
+      likedAvatar.src = state.partnerAvatar || state.yourAvatar || 'images/spotify_covers/ndey.jpeg';
+    }
+  }
 }
 
 // ================= CREATE & DELETE PLAYLIST =================
