@@ -1355,11 +1355,15 @@
       <div class="flex items-center justify-between mb-4">
         <div>
           <h3 class="text-lg font-extrabold text-[#3B2328]">Tambah Lagu ke Playlist</h3>
-          <p class="text-xs text-[#9A737C]">Cari lagu online otomatis lengkap dengan cover HD, atau masukkan link MP3
-            sendiri</p>
+          <div class="flex items-center gap-2 mt-1">
+            <span class="text-xs text-[#9A737C]">Simpan ke:</span>
+            <select id="targetPlaylistSelect"
+              class="text-xs font-bold text-[#FA8072] bg-[#FFF5F7] border border-[#FFD2DC] rounded-xl px-2.5 py-1 focus:outline-none focus:border-[#FA8072] cursor-pointer">
+            </select>
+          </div>
         </div>
         <button onclick="closeAddSongModal()"
-          class="w-8 h-8 rounded-full bg-[#FFF5F7] text-[#9A737C] hover:text-[#E85D75] flex items-center justify-center">
+          class="w-8 h-8 rounded-full bg-[#FFF5F7] text-[#9A737C] hover:text-[#E85D75] flex items-center justify-center transition">
           <i class="fa-solid fa-xmark"></i>
         </button>
       </div>

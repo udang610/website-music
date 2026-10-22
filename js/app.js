@@ -3500,8 +3500,8 @@ async function searchItunesSong() {
                 <i class="fa-solid fa-play text-[10px] ml-0.5"></i>
               </button>
             ` : ''}
-            <button type="button" onclick="quickAddOnlineSongToPlaylist(${idx})" class="px-3 py-1.5 rounded-full bg-gradient-to-r from-[#FA8072] to-[#E85D75] hover:opacity-95 text-white text-[11px] font-bold flex items-center gap-1 shadow-xs transition active:scale-95 cursor-pointer">
-              <i class="fa-solid fa-folder-plus text-xs"></i> Tambah
+            <button type="button" onclick="quickAddSongDirectly(${idx}, this)" class="px-3 py-1.5 rounded-full bg-gradient-to-r from-[#FA8072] to-[#E85D75] hover:opacity-95 text-white text-[11px] font-bold flex items-center gap-1 shadow-xs transition active:scale-95 cursor-pointer">
+              <i class="fa-solid fa-plus text-xs"></i> Tambah
             </button>
           </div>
         </div>
@@ -3512,7 +3512,7 @@ async function searchItunesSong() {
   }
 }
 
-function quickAddOnlineSongToPlaylist(idx) {
+function quickAddSongDirectly(idx, btn) {
   if (itunesAudioPreviewObj) {
     itunesAudioPreviewObj.pause();
     itunesAudioPreviewObj = null;
@@ -3520,11 +3520,45 @@ function quickAddOnlineSongToPlaylist(idx) {
   const item = currentItunesSearchResults[idx];
   if (!item) return;
 
+  // Read target playlist from dropdown or active playlist
+  const targetSelect = document.getElementById('targetPlaylistSelect');
+  const targetPlId = (targetSelect && targetSelect.value) ? targetSelect.value : (state.activePlaylistId || 'pl-ours');
+  let targetPl = (state.playlists || []).find(p => p.id === targetPlId);
+  if (!targetPl) {
+    targetPl = (state.playlists || [])[0];
+  }
+  if (!targetPl) {
+    showToastNotification('Playlist tujuan tidak ditemukan', 'error');
+    return;
+  }
+  if (!Array.isArray(targetPl.tracks)) {
+    targetPl.tracks = [];
+  }
+
+  const songTitle = (item.trackName || 'Lagu Baru').trim();
+  const artistName = (item.artistName || 'Artis').trim();
+
+  // Check if song already exists in target playlist
+  const alreadyExists = targetPl.tracks.some(t =>
+    (t.title && t.title.toLowerCase().trim() === songTitle.toLowerCase()) &&
+    (t.artist && t.artist.toLowerCase().trim() === artistName.toLowerCase())
+  );
+
+  if (alreadyExists) {
+    if (btn) {
+      btn.innerHTML = '<i class="fa-solid fa-check text-xs"></i> Sudah Ada';
+      btn.className = 'px-3 py-1.5 rounded-full bg-emerald-500 text-white text-[11px] font-bold flex items-center gap-1 shadow-xs cursor-default';
+      btn.disabled = true;
+    }
+    showToastNotification(`"${songTitle}" sudah ada di playlist "${targetPl.title}"! ✨`, 'info');
+    return;
+  }
+
   const ultraHdCover = item.artworkUrl100 ? item.artworkUrl100.replace('100x100bb', '1000x1000bb') : 'images/spotify_covers/jakarta.jpg';
 
   let matchedAudioUrl = item.previewUrl || '';
   let matchedYoutubeId = null;
-  const lowTitle = (item.trackName || '').toLowerCase();
+  const lowTitle = songTitle.toLowerCase();
   for (const [key, yId] of Object.entries(realSongCatalog)) {
     if (lowTitle.includes(key)) {
       matchedYoutubeId = yId;
@@ -3532,22 +3566,56 @@ function quickAddOnlineSongToPlaylist(idx) {
     }
   }
 
+  if (!matchedYoutubeId) {
+    for (const [key, localPath] of Object.entries(realAudioTracks)) {
+      if (lowTitle.includes(key)) {
+        matchedAudioUrl = localPath;
+        break;
+      }
+    }
+  }
+
+  const today = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
   const trackObj = {
     id: `t-online-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-    title: item.trackName || 'Lagu Baru',
-    artist: item.artistName || 'Artis',
+    title: songTitle,
+    artist: artistName,
     album: item.collectionName || 'Single',
     cover: ultraHdCover,
     audioUrl: matchedAudioUrl,
     youtubeId: matchedYoutubeId,
-    duration: formatDurationMs(item.trackTimeMillis),
-    memory: `Lagu spesial dari album "${item.collectionName || item.trackName}" ✦`,
+    duration: formatDurationMs(item.trackTimeMillis) || 'Full',
+    memory: `Lagu spesial dari album "${item.collectionName || songTitle}" ✦`,
+    dateAdded: today,
     liked: false
   };
 
-  closeAddSongModal();
-  openAddToPlaylistModal(trackObj);
-  showToastNotification(`Pilih playlist tujuan untuk "${trackObj.title}" ✨`, 'info');
+  targetPl.tracks.push(trackObj);
+  saveState();
+  triggerSupabaseSync();
+
+  // Immediate UI reflection in the background
+  if (currentView === 'playlist' && state.activePlaylistId === targetPl.id) {
+    renderTracklist();
+  }
+  hydrateUI();
+  renderSidebarPlaylists();
+  if (typeof renderHomeFavoritesList === 'function') renderHomeFavoritesList();
+  if (typeof renderHomePlaylistsGrid === 'function') renderHomePlaylistsGrid();
+
+  // Button feedback state
+  if (btn) {
+    btn.innerHTML = '<i class="fa-solid fa-check text-xs"></i> Ditambahkan';
+    btn.className = 'px-3 py-1.5 rounded-full bg-[#1DB954] text-white text-[11px] font-bold flex items-center gap-1 shadow-xs cursor-default';
+    btn.disabled = true;
+  }
+
+  showToastNotification(`✓ "${songTitle}" berhasil ditambahkan ke "${targetPl.title}"! 🎵`, 'success');
+}
+
+function quickAddOnlineSongToPlaylist(idx) {
+  quickAddSongDirectly(idx, null);
 }
 
 function selectItunesResult(title, artist, cover) {
@@ -3679,7 +3747,9 @@ function saveNewSong(e) {
   const title = document.getElementById('inputSongTitle').value.trim();
   const artist = document.getElementById('inputSongArtist').value.trim();
   const memory = document.getElementById('inputSongMemory').value.trim();
-  const activePl = getActivePlaylist();
+  const targetPlSelect = document.getElementById('targetPlaylistSelect');
+  const targetPlId = (targetPlSelect && targetPlSelect.value) ? targetPlSelect.value : state.activePlaylistId;
+  const activePl = (state.playlists || []).find(p => p.id === targetPlId) || getActivePlaylist();
   const cover = document.getElementById('inputSongCover').value.trim() || activePl.cover;
   let audioInput = document.getElementById('inputSongAudio').value.trim();
 
@@ -3755,6 +3825,21 @@ function openAddSongModal() {
   document.getElementById('inputSongAudio').value = '';
   const badge = document.getElementById('fullAudioSelectedBadge');
   if (badge) badge.classList.add('hidden');
+
+  // Populate target playlist dropdown with active playlist pre-selected
+  const targetSelect = document.getElementById('targetPlaylistSelect');
+  if (targetSelect && state.playlists) {
+    const activeId = (state.activePlaylistId && state.activePlaylistId !== 'pl-liked')
+      ? state.activePlaylistId
+      : (state.playlists[0]?.id || 'pl-ours');
+
+    targetSelect.innerHTML = state.playlists.map(p => {
+      const isSel = (p.id === activeId) ? 'selected' : '';
+      const safeTitle = (p.title || p.id).replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      return `<option value="${p.id}" ${isSel}>${safeTitle}</option>`;
+    }).join('');
+  }
+
   document.getElementById('addSongModal').classList.remove('hidden');
   document.getElementById('addSongModal').classList.add('flex');
 }
