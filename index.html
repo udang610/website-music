@@ -1342,9 +1342,9 @@
   <!-- Hidden HTML5 Audio Element -->
   <audio id="audioPlayer" preload="metadata"></audio>
 
-  <!-- Hidden YouTube Official Audio Engine -->
+  <!-- Hidden YouTube Official Audio Engine (Kept in viewport so mobile browsers do not suspend iframe) -->
   <div id="ytAudioPlayerContainer"
-    style="position: fixed; bottom: -200px; right: -200px; width: 10px; height: 10px; opacity: 0.001; pointer-events: none; z-index: -99;">
+    style="position: fixed; top: 0; left: 0; width: 1px; height: 1px; opacity: 0.001; pointer-events: none; z-index: -1;">
     <div id="ytPlayer"></div>
   </div>
 
@@ -2268,10 +2268,10 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <!-- Database & Realtime Sync Layer (v2 Normalized) -->
-  <script src="js/db.js?v=20261022_v7"></script>
+  <script src="js/db.js?v=20261022_v8"></script>
 
   <!-- App Script -->
-  <script src="js/app.js?v=20261022_v7"></script>
+  <script src="js/app.js?v=20261022_v8"></script>
 </body>
 
 </html>

@@ -6,6 +6,10 @@ const STORAGE_KEY = 'romantic_spotify_v15_all_covers_synced';
 
 // Verified Genuine Studio Audio Tracks stored locally
 const realAudioTracks = {
+  'from the start': 'audio/laufey_from_the_start.m4a',
+  'last night on earth': 'audio/green_day_last_night_on_earth.m4a',
+  'apocalypse': 'audio/cigarettes_after_sex_apocalypse.m4a',
+  'i think they call this love': 'audio/matthew_ifield_i_think_they_call_this_love.m4a',
   'those eyes': 'audio/new_west_those_eyes.m4a',
   'atlantis': 'audio/seafret_atlantis.m4a',
   'terbuang dalam waktu': 'audio/barasuara_terbuang_dalam_waktu.m4a',
@@ -26,6 +30,10 @@ const realAudioTracks = {
 
 // Official 1000x1000 HD Album Covers from Apple Music / iTunes
 const officialCovers = {
+  'from the start': 'images/covers/laufey_from_the_start.jpg',
+  'last night on earth': 'images/covers/green_day_last_night_on_earth.jpg',
+  'apocalypse': 'images/covers/cigarettes_after_sex_apocalypse.jpg',
+  'i think they call this love': 'images/covers/matthew_ifield_i_think_they_call_this_love.jpg',
   'those eyes': 'images/covers/those_eyes.jpg',
   'atlantis': 'images/covers/atlantis.jpg',
   'terbuang dalam waktu': 'images/covers/terbuang_dalam_waktu.jpg',
@@ -2784,30 +2792,37 @@ function loadTrack(index, autoPlay = true, playlistId = null) {
     }
   }
 
-  const isMobile = (window.innerWidth < 1024) || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-  const isItunesPreview = track.audioUrl && (track.audioUrl.includes('itunes.apple.com') || track.audioUrl.includes('audio-ssl'));
+  // If track has a 30s preview link but also has youtubeId, strip the 30s link so full song plays!
+  if (track.audioUrl && (track.audioUrl.includes('AudioPreview') || track.audioUrl.includes('itunes.apple.com') || track.audioUrl.includes('audio-ssl'))) {
+    if (track.youtubeId) {
+      track.audioUrl = '';
+    }
+  }
 
-  // Mobile Recovery: If track has no audioUrl (e.g. added previously without preview), fetch audio preview in background
-  if (!track.audioUrl && track.title) {
-    fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(track.artist + ' ' + track.title)}&entity=song&limit=1`)
+  // If track has neither audioUrl nor youtubeId, dynamically resolve full YouTube track
+  if (!track.audioUrl && !track.youtubeId && track.title) {
+    const qStr = `${track.artist || ''} ${track.title || ''}`.trim();
+    fetch(`/api/search-youtube?q=${encodeURIComponent(qStr)}`)
       .then(res => res.json())
       .then(data => {
-        if (data && data.results && data.results[0] && data.results[0].previewUrl) {
-          track.audioUrl = data.results[0].previewUrl;
-          if (isMobile && currentPlayingTrack === track && (!isPlaying || currentEngine !== 'youtube')) {
-            currentEngine = 'html5';
-            audio.src = track.audioUrl;
-            audio.load();
-            if (autoPlay) playAudio();
+        if (data && data.youtubeId) {
+          track.youtubeId = data.youtubeId;
+          if (currentPlayingTrack === track && !isPlaying) {
+            currentEngine = 'youtube';
+            if (isYtReady && ytPlayer && ytPlayer.loadVideoById) {
+              ytPlayer.loadVideoById(track.youtubeId);
+            }
           }
         }
       }).catch(() => {});
   }
 
-  // On mobile, prioritize HTML5 audio engine if audioUrl is present, because mobile OS blocks background YouTube iframes
-  const preferHtml5 = track.audioUrl && (isMobile || !isItunesPreview || !track.youtubeId);
+  // Check audio sources:
+  // 1. Is it a real local full audio file?
+  const isLocalFullAudio = track.audioUrl && (track.audioUrl.startsWith('audio/') || track.audioUrl.startsWith('blob:'));
 
-  if (preferHtml5) {
+  if (isLocalFullAudio) {
+    // Play full studio local file via HTML5
     currentEngine = 'html5';
     if (isYtReady && ytPlayer && ytPlayer.pauseVideo) {
       try { ytPlayer.pauseVideo(); } catch (e) {}
@@ -2821,7 +2836,7 @@ function loadTrack(index, autoPlay = true, playlistId = null) {
       playAudio();
     }
   } else if (track.youtubeId) {
-    // YouTube engine
+    // 2. Play full studio track via YouTube (NEVER 30s preview when YouTube full track is present!)
     currentEngine = 'youtube';
     try { audio.pause(); } catch (e) {}
     if (isYtReady && ytPlayer && ytPlayer.loadVideoById) {
@@ -2830,17 +2845,28 @@ function loadTrack(index, autoPlay = true, playlistId = null) {
       } else {
         ytPlayer.cueVideoById(track.youtubeId);
       }
-    } else if (track.audioUrl) {
-      currentEngine = 'html5';
-      audio.src = track.audioUrl;
-      audio.load();
-      if (autoPlay) playAudio();
+    } else {
+      setTimeout(() => {
+        if (isYtReady && ytPlayer && ytPlayer.loadVideoById) {
+          if (autoPlay) ytPlayer.loadVideoById(track.youtubeId);
+          else ytPlayer.cueVideoById(track.youtubeId);
+        }
+      }, 300);
     }
   } else if (track.audioUrl) {
+    // 3. Last fallback: only if no local audio AND no YouTube stream was found
     currentEngine = 'html5';
-    audio.src = track.audioUrl;
-    audio.load();
-    if (autoPlay) playAudio();
+    if (isYtReady && ytPlayer && ytPlayer.pauseVideo) {
+      try { ytPlayer.pauseVideo(); } catch (e) {}
+    }
+    stopYtScrubber();
+    if (!audio.src || !audio.src.includes(track.audioUrl)) {
+      audio.src = track.audioUrl;
+      audio.load();
+    }
+    if (autoPlay) {
+      playAudio();
+    }
   }
 }
 
@@ -2996,27 +3022,13 @@ function togglePlay() {
     return;
   }
 
-  const isMobile = (window.innerWidth < 1024) || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-
   if (isPlaying) {
     if (currentEngine === 'youtube' && isYtReady && ytPlayer && ytPlayer.pauseVideo) {
       try { ytPlayer.pauseVideo(); } catch (e) {}
     }
     pauseAudio();
   } else {
-    // If mobile or if track has direct audioUrl, prioritize HTML5 audio
-    if (isMobile && track.audioUrl) {
-      currentEngine = 'html5';
-      if (isYtReady && ytPlayer && ytPlayer.pauseVideo) {
-        try { ytPlayer.pauseVideo(); } catch (e) {}
-      }
-      stopYtScrubber();
-      if (!audio.src || audio.src === window.location.href || !audio.src.includes(track.audioUrl)) {
-        audio.src = track.audioUrl;
-        audio.load();
-      }
-      playAudio();
-    } else if (currentEngine === 'youtube' && isYtReady && ytPlayer && ytPlayer.playVideo) {
+    if (currentEngine === 'youtube' && isYtReady && ytPlayer && ytPlayer.playVideo) {
       ytPlayer.playVideo();
     } else {
       playAudio();
