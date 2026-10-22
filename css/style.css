@@ -216,9 +216,16 @@ input[type="range"]:hover::-webkit-slider-thumb {
   transform: rotate(-0.8deg);
 }
 @media (max-width: 1023px) {
+  .polaroid-card,
   .polaroid-card-compact {
-    padding: 8px 8px 12px 8px;
-    border-radius: 6px;
+    padding: 10px 10px 14px 10px;
+    border-radius: 8px;
+    transform: none !important;
+  }
+  .polaroid-tilt-left,
+  .polaroid-tilt-right,
+  .polaroid-tilt-subtle {
+    transform: none !important;
   }
   .polaroid-card-compact .washi-tape {
     width: 48px;

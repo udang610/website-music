@@ -1,363 +1,7 @@
 // ================= REAL AUDIO ENGINE & STATE =================
 const STORAGE_KEY = 'romantic_spotify_v15_all_covers_synced';
 
-// ================= SUPABASE CLOUD DATABASE CONFIG =================
-const SUPABASE_URL = 'https://onikjvzkbhpbubnqjmib.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9uaWtqdnprYmhwYnVibnFqbWliIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI1NjEyMzgsImV4cCI6MjEwODEzNzIzOH0.VvnY63Ysf3q73_owAdYVeBn96rQEkhDZyqwY4s3W1Gc';
-
-let supabaseClient = null;
-function getSupabaseClient() {
-  if (!supabaseClient && window.supabase && typeof window.supabase.createClient === 'function') {
-    try {
-      supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-      console.log('✦ Supabase Cloud Database Connected!');
-    } catch (e) {
-      console.warn('Supabase initialization error:', e);
-    }
-  }
-  return supabaseClient;
-}
-
-let supabaseSyncTimer = null;
-let isApplyingRemoteState = false;
-
-function triggerSupabaseSync() {
-  if (isApplyingRemoteState) return;
-  const client = getSupabaseClient();
-  if (!client) return;
-
-  clearTimeout(supabaseSyncTimer);
-  supabaseSyncTimer = setTimeout(() => {
-    pushStateToSupabase();
-  }, 500);
-}
-
-async function pushStateToSupabase() {
-  const client = getSupabaseClient();
-  if (!client) return;
-
-  try {
-    const oursPl = (state && state.playlists) ? (state.playlists.find(p => p.id === 'pl-ours') || state.playlists[0]) : null;
-
-    // Sanitize playlists to prevent large local base64 audio/blobs from exceeding cloud payload limits
-    const sanitizedPlaylists = (state.playlists || []).map(pl => ({
-      id: pl.id,
-      title: pl.title,
-      desc: pl.desc || '',
-      cover: pl.cover || '',
-      tracks: (pl.tracks || []).map(t => ({
-        id: t.id,
-        title: t.title,
-        artist: t.artist,
-        album: t.album || '',
-        memory: t.memory || '',
-        dateAdded: t.dateAdded || '',
-        duration: t.duration || 'Full',
-        liked: !!t.liked,
-        cover: t.cover || '',
-        youtubeId: t.youtubeId || null,
-        audioUrl: (t.audioUrl && t.audioUrl.startsWith('data:')) ? '' : (t.audioUrl || '')
-      }))
-    }));
-
-    const syncPayload = {
-      pinCode: state.pinCode,
-      yourName: state.yourName,
-      partnerName: state.partnerName,
-      yourAvatar: state.yourAvatar,
-      partnerAvatar: state.partnerAvatar,
-      loveNote: state.loveNote,
-      polaroidMemories: state.polaroidMemories || [],
-      jamMessages: state.jamMessages || [],
-      activePlaylistId: state.activePlaylistId,
-      targetPlaylistId: 'pl-ours',
-      playlistTitle: oursPl ? oursPl.title : '',
-      playlistDesc: oursPl ? oursPl.desc : '',
-      playlistCover: oursPl ? oursPl.cover : '',
-      playlists: sanitizedPlaylists
-    };
-
-    const { error } = await client
-      .from('app_config')
-      .upsert({
-        id: 'romantic_music_state',
-        data: syncPayload,
-        updated_at: new Date().toISOString()
-      });
-
-    if (error) {
-      console.warn('Supabase save warning:', error);
-    } else {
-      console.log('✦ State & Playlists successfully synced to Supabase Cloud!');
-    }
-  } catch (err) {
-    console.warn('pushStateToSupabase error:', err);
-  }
-}
-
-function applyRemoteState(remoteData) {
-  if (!remoteData || typeof remoteData !== 'object') return;
-  isApplyingRemoteState = true;
-  try {
-    let changed = false;
-
-    if (remoteData.pinCode && remoteData.pinCode !== state.pinCode) {
-      state.pinCode = remoteData.pinCode;
-      try { localStorage.setItem('romantic_music_custom_pin', remoteData.pinCode); } catch (e) { }
-      changed = true;
-    }
-
-    if (remoteData.yourName && remoteData.yourName !== state.yourName) {
-      state.yourName = remoteData.yourName;
-      changed = true;
-    }
-
-    if (remoteData.partnerName && remoteData.partnerName !== state.partnerName) {
-      state.partnerName = remoteData.partnerName;
-      changed = true;
-    }
-
-    if (remoteData.yourAvatar && remoteData.yourAvatar !== state.yourAvatar) {
-      state.yourAvatar = remoteData.yourAvatar;
-      changed = true;
-    }
-
-    if (remoteData.partnerAvatar && remoteData.partnerAvatar !== state.partnerAvatar) {
-      state.partnerAvatar = remoteData.partnerAvatar;
-      changed = true;
-    }
-
-    if (remoteData.loveNote !== undefined && remoteData.loveNote !== state.loveNote) {
-      state.loveNote = remoteData.loveNote;
-      changed = true;
-    }
-
-    if (remoteData.polaroidMemories && JSON.stringify(remoteData.polaroidMemories) !== JSON.stringify(state.polaroidMemories)) {
-      state.polaroidMemories = remoteData.polaroidMemories;
-      try { localStorage.setItem('romantic_music_polaroid_memories', JSON.stringify(remoteData.polaroidMemories)); } catch (e) { }
-      changed = true;
-    }
-
-    if (remoteData.jamMessages && JSON.stringify(remoteData.jamMessages) !== JSON.stringify(state.jamMessages)) {
-      state.jamMessages = remoteData.jamMessages;
-      changed = true;
-    }
-
-    // Sync Playlists and Custom Tracks across devices (Mobile <-> Desktop)
-    if (Array.isArray(remoteData.playlists) && remoteData.playlists.length > 0) {
-      remoteData.playlists.forEach(remotePl => {
-        let localPl = state.playlists.find(p => p.id === remotePl.id);
-        if (!localPl) {
-          // New playlist created from another device
-          localPl = {
-            id: remotePl.id,
-            title: remotePl.title,
-            desc: remotePl.desc || '',
-            cover: remotePl.cover || '',
-            tracks: []
-          };
-          state.playlists.push(localPl);
-          changed = true;
-        } else {
-          if (remotePl.title && localPl.title !== remotePl.title) {
-            localPl.title = remotePl.title;
-            changed = true;
-          }
-          if (remotePl.desc !== undefined && localPl.desc !== remotePl.desc) {
-            localPl.desc = remotePl.desc;
-            changed = true;
-          }
-          if (remotePl.cover && localPl.cover !== remotePl.cover) {
-            localPl.cover = remotePl.cover;
-            changed = true;
-          }
-        }
-
-        // Merge and synchronize tracks in this playlist
-        if (Array.isArray(remotePl.tracks)) {
-          if (!localPl.tracks) localPl.tracks = [];
-
-          // Check for any tracks present in remote that are missing locally
-          remotePl.tracks.forEach(remTrack => {
-            const remKey = remTrack.id || `${remTrack.title}-${remTrack.artist}`;
-            const exists = localPl.tracks.some(locTrack => {
-              const locKey = locTrack.id || `${locTrack.title}-${locTrack.artist}`;
-              return locKey.toLowerCase() === remKey.toLowerCase();
-            });
-
-            if (!exists) {
-              console.log(`✦ Syncing new track from remote into "${localPl.title}":`, remTrack.title);
-              localPl.tracks.push({ ...remTrack });
-              changed = true;
-            } else {
-              // Update liked state if changed remotely
-              const locTrack = localPl.tracks.find(t => (t.id && t.id === remTrack.id) || (t.title === remTrack.title && t.artist === remTrack.artist));
-              if (locTrack && locTrack.liked !== remTrack.liked && remTrack.liked !== undefined) {
-                locTrack.liked = remTrack.liked;
-                changed = true;
-              }
-            }
-          });
-        }
-      });
-    } else {
-      // Fallback for legacy cloud payload without full playlists array
-      const targetPlId = remoteData.targetPlaylistId || 'pl-ours';
-      const targetPl = state.playlists.find(p => p.id === targetPlId);
-      const localPlTime = state.playlistsUpdatedAt || Number(localStorage.getItem('romantic_music_playlists_updated_at')) || 0;
-      const remotePlTime = Number(remoteData.playlistsUpdatedAt) || 0;
-      const canApplyRemotePlaylistMeta = (remotePlTime > localPlTime) || !localPlTime;
-      if (targetPl && canApplyRemotePlaylistMeta) {
-        if (remoteData.playlistTitle && targetPl.title !== remoteData.playlistTitle) {
-          targetPl.title = remoteData.playlistTitle;
-          changed = true;
-        }
-        if (remoteData.playlistDesc !== undefined && targetPl.desc !== remoteData.playlistDesc) {
-          targetPl.desc = remoteData.playlistDesc;
-          changed = true;
-        }
-        if (remoteData.playlistCover && targetPl.cover !== remoteData.playlistCover) {
-          targetPl.cover = remoteData.playlistCover;
-          changed = true;
-        }
-      }
-    }
-
-    // Auto-heal: Only restore corrupted playlist title if affected by legacy duplicate bug (never touch custom covers!)
-    state.playlists.forEach(pl => {
-      if (pl.id !== 'pl-ours') {
-        const defaultPl = defaultState.playlists.find(dp => dp.id === pl.id);
-        if (defaultPl && pl.title === 'ours') {
-          console.log(`✦ Restoring corrupted playlist title ${pl.id} to original default: ${defaultPl.title}`);
-          pl.title = defaultPl.title;
-          pl.desc = defaultPl.desc;
-          changed = true;
-        }
-      }
-    });
-
-    if (changed) {
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-        const profileConfig = {
-          yourName: state.yourName,
-          partnerName: state.partnerName,
-          yourAvatar: state.yourAvatar,
-          partnerAvatar: state.partnerAvatar,
-          loveNote: state.loveNote
-        };
-        localStorage.setItem('romantic_music_profile_config', JSON.stringify(profileConfig));
-      } catch (e) { }
-
-      if (typeof hydrateUI === 'function') hydrateUI();
-      if (typeof populateProfileShowcaseView === 'function') populateProfileShowcaseView();
-      if (typeof renderSidebarPlaylists === 'function') renderSidebarPlaylists();
-      if (currentView === 'home' && typeof renderHomeView === 'function') renderHomeView();
-      else if (currentView === 'playlist' && typeof renderTracklist === 'function') renderTracklist();
-      else if (currentView === 'jam' && typeof updateMainJamView === 'function') {
-        updateMainJamView();
-        if (typeof renderJamChat === 'function') renderJamChat();
-      } else if (currentView === 'gallery' && typeof renderPolaroidGallery === 'function') {
-        renderPolaroidGallery();
-      }
-    }
-  } finally {
-    isApplyingRemoteState = false;
-  }
-}
-
-async function initSupabaseSync() {
-  const client = getSupabaseClient();
-  if (!client) return;
-
-  try {
-    const { data, error } = await client
-      .from('app_config')
-      .select('data')
-      .eq('id', 'romantic_music_state')
-      .maybeSingle();
-
-    if (error) {
-      console.warn('Supabase fetch error:', error);
-    } else if (data && data.data && Object.keys(data.data).length > 0 && !data.data.test) {
-      const cloudData = data.data;
-
-      // Check whether local state has customized data or newer timestamp BEFORE applying cloud data
-      const localProfileTime = state.profileUpdatedAt || Number(localStorage.getItem('romantic_music_profile_updated_at')) || 0;
-      const remoteProfileTime = Number(cloudData.profileUpdatedAt) || 0;
-      const localCustomPin = localStorage.getItem('romantic_music_custom_pin') || (state.pinCode !== '1402' ? state.pinCode : null);
-      const localCustomProfile = localStorage.getItem('romantic_music_profile_config');
-      let parsedProfile = null;
-      if (localCustomProfile) {
-        try { parsedProfile = JSON.parse(localCustomProfile); } catch (e) { }
-      }
-
-      const localHasCustomProfile = (localCustomPin && localCustomPin !== '1402') ||
-                                    (parsedProfile && parsedProfile.yourName && parsedProfile.yourName !== 'nadeyy ★') ||
-                                    (parsedProfile && parsedProfile.partnerName && parsedProfile.partnerName !== 'sayang') ||
-                                    (parsedProfile && parsedProfile.yourAvatar && !parsedProfile.yourAvatar.includes('profile_nadeyy.jpg')) ||
-                                    (state.yourName && state.yourName !== 'nadeyy ★') ||
-                                    (state.pinCode && state.pinCode !== '1402');
-
-      const cloudIsDefaultProfile = (!cloudData.pinCode || cloudData.pinCode === '1402') && 
-                                    (!cloudData.yourName || cloudData.yourName === 'nadeyy ★');
-
-      const preserveLocalProfile = (localProfileTime > remoteProfileTime) || (localHasCustomProfile && cloudIsDefaultProfile);
-
-      if (preserveLocalProfile) {
-        console.log('✦ Preserving newer/customized local profile and syncing up to Supabase...');
-        if (localCustomPin) state.pinCode = localCustomPin;
-        if (parsedProfile) {
-          if (parsedProfile.yourName) state.yourName = parsedProfile.yourName;
-          if (parsedProfile.partnerName) state.partnerName = parsedProfile.partnerName;
-          if (parsedProfile.yourAvatar) state.yourAvatar = parsedProfile.yourAvatar;
-          if (parsedProfile.partnerAvatar) state.partnerAvatar = parsedProfile.partnerAvatar;
-          if (parsedProfile.loveNote) state.loveNote = parsedProfile.loveNote;
-        }
-        state.profileUpdatedAt = Math.max(localProfileTime, Date.now());
-        cloudData.pinCode = state.pinCode;
-        cloudData.yourName = state.yourName;
-        cloudData.partnerName = state.partnerName;
-        cloudData.yourAvatar = state.yourAvatar;
-        cloudData.partnerAvatar = state.partnerAvatar;
-        cloudData.loveNote = state.loveNote;
-        cloudData.profileUpdatedAt = state.profileUpdatedAt;
-
-        applyRemoteState(cloudData);
-        await pushStateToSupabase();
-      } else {
-        console.log('✦ Retrieved existing Cloud state from Supabase!');
-        applyRemoteState(cloudData);
-      }
-    } else {
-      console.log('✦ Cloud database is empty or uninitialized, pushing local state...');
-      await pushStateToSupabase();
-    }
-  } catch (err) {
-    console.warn('initSupabaseSync error:', err);
-  }
-
-  // Subscribe to Realtime Updates
-  try {
-    client
-      .channel('public:app_config')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'app_config', filter: 'id=eq.romantic_music_state' },
-        (payload) => {
-          if (payload.new && payload.new.data) {
-            console.log('✦ Incoming Realtime update from Supabase:', payload.new.data);
-            applyRemoteState(payload.new.data);
-          }
-        }
-      )
-      .subscribe((status) => {
-        console.log('✦ Supabase Realtime channel status:', status);
-      });
-  } catch (e) {
-    console.warn('Supabase realtime subscribe error:', e);
-  }
-}
+// Cloud sync is handled by js/db.js (window.MusicDB) — normalized Supabase tables, per-row writes.
 
 
 // Verified Genuine Studio Audio Tracks stored locally
@@ -395,12 +39,12 @@ const officialCovers = {
 };
 
 const defaultState = {
-  pinCode: '1402',
-  yourName: 'nadeyy ★',
-  partnerName: 'sayang',
-  yourAvatar: 'images/spotify_covers/profile_nadeyy.jpg',
-  partnerAvatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150&auto=format&fit=crop&q=80',
-  loveNote: "Hai sayang,\nSetiap lagu di dalam playlist ini punya potongan cerita tentang kita. Kapan pun kamu kangen atau lagi capek, putar lagu-lagu ini ya. Kita juga bisa nyalain fitur Listening Together biar berasa dengerin bareng terus! I love you more than words can say 🤍",
+  pinCode: '1806',
+  yourName: 'Dhafin',
+  partnerName: 'Nadia',
+  yourAvatar: 'images/spotify_covers/me.jpeg',
+  partnerAvatar: 'images/spotify_covers/ndey.jpeg',
+  loveNote: "Hai Nadey,\nSetiap lagu di dalam playlist ini punya potongan cerita tentang kita. Kapan pun kamu kangen atau lagi capek, putar lagu-lagu ini ya. Kita juga bisa nyalain fitur Listening Together biar berasa dengerin bareng terus! I love you more than words can say 🤍",
   activePlaylistId: 'pl-ours',
   playlists: [
     {
@@ -1858,36 +1502,7 @@ const defaultState = {
     { sender: 'partner', text: 'Sayang, lagunya sekarang pakai cover album official dan lagunya asli semua 🥺💕 Cantik banget!', time: '19:42' },
     { sender: 'you', text: 'Iyaa! Tampilannya jadi berasa kayak Spotify Premium asli ✨', time: '19:43' }
   ],
-  polaroidMemories: [
-    {
-      id: 'pol-1',
-      imageUrl: 'https://images.unsplash.com/photo-1518199266791-5375a83190b7?w=600&auto=format&fit=crop&q=80',
-      caption: 'Malam penuh bintang & lampu hati kita ✨💕',
-      date: '14 Feb 2025',
-      location: 'Under the Stars'
-    },
-    {
-      id: 'pol-2',
-      imageUrl: 'https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?w=600&auto=format&fit=crop&q=80',
-      caption: 'Tanganmu yang selalu menghangatkan tanganku 🤍',
-      date: '28 Mei 2025',
-      location: 'Sunset Walk'
-    },
-    {
-      id: 'pol-3',
-      imageUrl: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=600&auto=format&fit=crop&q=80',
-      caption: 'Suara ombak dan cerita tanpa akhir bareng kamu 🌊',
-      date: '10 Juli 2025',
-      location: 'Pantai Indah'
-    },
-    {
-      id: 'pol-4',
-      imageUrl: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=600&auto=format&fit=crop&q=80',
-      caption: 'Senyum tercantik yang selalu bikin hari-hariku cerah 🌸',
-      date: '24 Sep 2025',
-      location: 'Little Cafe'
-    }
-  ]
+  polaroidMemories: []
 };
 
 let state = loadState();
@@ -2112,8 +1727,12 @@ function loadState() {
       } catch (e) {
         parsed.polaroidMemories = [];
       }
-    } else if (parsed.polaroidMemories === undefined || parsed.polaroidMemories === null) {
-      parsed.polaroidMemories = defaultState.polaroidMemories;
+    }
+    // Automatically purge old dummy sample photos (pol-1 to pol-4 or unsplash) from local cache
+    if (Array.isArray(parsed.polaroidMemories)) {
+      parsed.polaroidMemories = parsed.polaroidMemories.filter(p => !['pol-1', 'pol-2', 'pol-3', 'pol-4'].includes(p?.id) && !(p?.imageUrl && p.imageUrl.includes('images.unsplash.com')));
+    } else {
+      parsed.polaroidMemories = [];
     }
 
     // Deduplicate playlist IDs & auto-repair any corrupted default playlists
@@ -2226,11 +1845,109 @@ function saveState() {
     console.warn('Could not save profile config:', err);
   }
 
-  // Automatically sync updated state (including added/removed songs and playlists) to Supabase Cloud
-  if (typeof triggerSupabaseSync === 'function') {
-    triggerSupabaseSync();
+  // Automatically sync updated state via MusicDB (per-row cloud sync)
+  if (window.MusicDB && typeof window.MusicDB.scheduleFlush === 'function') {
+    window.MusicDB.scheduleFlush();
   }
 }
+
+function triggerSupabaseSync() {
+  if (window.MusicDB && typeof window.MusicDB.scheduleFlush === 'function') {
+    window.MusicDB.scheduleFlush();
+  }
+}
+
+async function pushStateToSupabase() {
+  if (window.MusicDB && typeof window.MusicDB.flushNow === 'function') {
+    return await window.MusicDB.flushNow();
+  }
+}
+
+function initSupabaseSync() {
+  if (!window.MusicDB || typeof window.MusicDB.init !== 'function') {
+    console.warn('✦ [MusicDB] Layer not loaded, continuing offline.');
+    return;
+  }
+  window.MusicDB.init({
+    getState: () => state,
+    getDefaults: () => defaultState,
+    applyCloudState: (cloudState) => {
+      if (!cloudState) return;
+      if (cloudState.pinCode !== undefined) state.pinCode = cloudState.pinCode;
+      if (cloudState.yourName !== undefined) state.yourName = cloudState.yourName;
+      if (cloudState.partnerName !== undefined) state.partnerName = cloudState.partnerName;
+      if (cloudState.yourAvatar !== undefined) state.yourAvatar = cloudState.yourAvatar;
+      if (cloudState.partnerAvatar !== undefined) state.partnerAvatar = cloudState.partnerAvatar;
+      if (cloudState.loveNote !== undefined) state.loveNote = cloudState.loveNote;
+      if (Array.isArray(cloudState.polaroidMemories)) state.polaroidMemories = cloudState.polaroidMemories;
+      if (Array.isArray(cloudState.jamMessages)) state.jamMessages = cloudState.jamMessages;
+
+      if (Array.isArray(cloudState.playlists) && cloudState.playlists.length > 0) {
+        const special = (state.playlists || []).filter(p => p.isLikedSpecial || p.id === 'pl-liked');
+        state.playlists = [...cloudState.playlists, ...special];
+      }
+
+      // Sync local cache
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        localStorage.setItem('romantic_music_custom_pin', state.pinCode);
+        localStorage.setItem('romantic_music_polaroid_memories', JSON.stringify(state.polaroidMemories));
+        localStorage.setItem('romantic_music_profile_config', JSON.stringify({
+          yourName: state.yourName,
+          partnerName: state.partnerName,
+          yourAvatar: state.yourAvatar,
+          partnerAvatar: state.partnerAvatar,
+          loveNote: state.loveNote
+        }));
+      } catch (e) { }
+
+      // Re-hydrate UI with authoritative cloud state
+      if (typeof hydrateUI === 'function') hydrateUI();
+      if (typeof populateProfileShowcaseView === 'function') populateProfileShowcaseView();
+      if (typeof renderSidebarPlaylists === 'function') renderSidebarPlaylists();
+      if (currentView === 'home' && typeof renderHomeView === 'function') renderHomeView();
+      else if (currentView === 'playlist' && typeof renderTracklist === 'function') renderTracklist();
+      else if (currentView === 'jam' && typeof updateMainJamView === 'function') {
+        updateMainJamView();
+        if (typeof renderJamChat === 'function') renderJamChat();
+      } else if (currentView === 'gallery' && typeof renderPolaroidGallery === 'function') {
+        renderPolaroidGallery();
+      }
+    },
+    onRemoteChange: (table) => {
+      if (table === 'couple_profile') {
+        if (typeof hydrateUI === 'function') hydrateUI();
+        if (typeof populateProfileShowcaseView === 'function') populateProfileShowcaseView();
+        if (currentView === 'home' && typeof renderHomeView === 'function') renderHomeView();
+        else if (currentView === 'jam' && typeof updateMainJamView === 'function') updateMainJamView();
+      } else if (table === 'polaroids') {
+        if (typeof renderPolaroidGallery === 'function') renderPolaroidGallery();
+        const statPol = document.getElementById('heroStatsPolaroidCount');
+        if (statPol) statPol.textContent = (state.polaroidMemories || []).length;
+      } else if (table === 'playlists' || table === 'tracks') {
+        if (typeof renderSidebarPlaylists === 'function') renderSidebarPlaylists();
+        if (currentView === 'playlist' && typeof renderTracklist === 'function') renderTracklist();
+        else if (currentView === 'home' && typeof renderHomeView === 'function') renderHomeView();
+      } else if (table === 'jam_messages') {
+        if (typeof renderJamChat === 'function') renderJamChat();
+        if (typeof renderMainJamChat === 'function') renderMainJamChat();
+      }
+    },
+    onLocalMediaUploaded: () => {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        localStorage.setItem('romantic_music_polaroid_memories', JSON.stringify(state.polaroidMemories));
+      } catch (e) { }
+    },
+    onSynced: () => {
+      console.log('✦ [MusicDB] Synchronized with cloud.');
+    },
+    onSyncError: (err) => {
+      console.warn('✦ [MusicDB] Sync error:', err);
+    }
+  });
+}
+
 
 function getAllLikedTracks() {
   const allLiked = [];
@@ -2752,7 +2469,7 @@ function deleteCurrentPlaylist() {
 function unlockApp() {
   const input = document.getElementById('pinInput');
   const val = (input?.value || '').trim();
-  const validPin = localStorage.getItem('romantic_music_custom_pin') || state.pinCode || '1402';
+  const validPin = localStorage.getItem('romantic_music_custom_pin') || state.pinCode || '1806';
 
   if (val === validPin) {
     try {
@@ -3987,7 +3704,7 @@ function toggleShowcasePin() {
   const pinDisplay = document.getElementById('showcasePinDisplay');
   const pinText = document.getElementById('showcasePinActionText');
   const pinIcon = document.getElementById('showcasePinIcon');
-  const activePin = localStorage.getItem('romantic_music_custom_pin') || state.pinCode || '1402';
+  const activePin = localStorage.getItem('romantic_music_custom_pin') || state.pinCode || '1806';
 
   isShowcasePinRevealed = !isShowcasePinRevealed;
   if (isShowcasePinRevealed) {
@@ -4023,7 +3740,7 @@ function switchToProfileShowcaseMode() {
 
 function openProfileModal() {
   if (document.getElementById('setPinCode')) {
-    document.getElementById('setPinCode').value = localStorage.getItem('romantic_music_custom_pin') || state.pinCode || '1402';
+    document.getElementById('setPinCode').value = localStorage.getItem('romantic_music_custom_pin') || state.pinCode || '1806';
   }
   if (document.getElementById('setYourName')) document.getElementById('setYourName').value = state.yourName || '';
   if (document.getElementById('setPartnerName')) document.getElementById('setPartnerName').value = state.partnerName || '';
@@ -4100,7 +3817,7 @@ async function saveProfileOnlySettings(e) {
   }
 
   try {
-    const newPin = (document.getElementById('setPinCode')?.value || '').trim() || '1402';
+    const newPin = (document.getElementById('setPinCode')?.value || '').trim() || '1806';
     state.pinCode = newPin;
 
     let rawYourAvatar = (document.getElementById('setYourAvatar')?.value || '').trim();
@@ -4364,7 +4081,7 @@ function renderPolaroidGallery() {
   const tilts = ['polaroid-tilt-left', 'polaroid-tilt-right', 'polaroid-tilt-subtle', ''];
 
   container.innerHTML = memories.map((item, idx) => {
-    const tiltClass = tilts[idx % tilts.length];
+    const tiltClass = (typeof window !== 'undefined' && window.innerWidth < 1024) ? '' : tilts[idx % tilts.length];
     return `
       <div class="polaroid-card polaroid-card-compact lg:polaroid-card w-full shrink-0 lg:shrink ${tiltClass} group cursor-pointer" onclick="viewPolaroidDetail('${item.id}')">
         <!-- Washi Tape -->

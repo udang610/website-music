@@ -19,6 +19,55 @@
   <!-- Custom Aesthetics Stylesheet & YouTube IFrame API -->
   <link rel="stylesheet" href="css/style.css" />
   <script src="https://www.youtube.com/iframe_api"></script>
+
+  <!-- Instant Pre-Hydration: Eliminate flash of default configuration on refresh -->
+  <script>
+    (function () {
+      try {
+        var raw = localStorage.getItem('romantic_music_profile_config') || localStorage.getItem('romantic_spotify_v15_all_covers_synced');
+        if (raw) {
+          var p = JSON.parse(raw);
+          var yourName = p.yourName;
+          var partnerName = p.partnerName;
+          var yourAvatar = p.yourAvatar;
+          var partnerAvatar = p.partnerAvatar;
+          var loveNote = p.loveNote;
+
+          function fastApply() {
+            if (yourName) {
+              ['heroCuratorName', 'jamNameYou', 'mainJamNameYou', 'showcaseYourName'].forEach(function(id) {
+                var el = document.getElementById(id); if (el) el.textContent = yourName;
+              });
+            }
+            if (partnerName) {
+              ['jamNamePartner', 'miniPartnerStatusName', 'mainJamNamePartner', 'showcasePartnerName'].forEach(function(id) {
+                var el = document.getElementById(id); if (el) el.textContent = partnerName;
+              });
+            }
+            if (yourAvatar) {
+              ['heroCuratorAvatar', 'navAvatarYou', 'mobileNavAvatarYou', 'jamAvatarYou', 'miniJamAvatar1', 'mainJamAvatarYou', 'showcaseYourAvatar'].forEach(function(id) {
+                var img = document.getElementById(id); if (img) img.src = yourAvatar;
+              });
+            }
+            if (partnerAvatar) {
+              ['navAvatarPartner', 'mobileNavAvatarPartner', 'jamAvatarPartner', 'miniJamAvatar2', 'mainJamAvatarPartner', 'showcasePartnerAvatar'].forEach(function(id) {
+                var img = document.getElementById(id); if (img) img.src = partnerAvatar;
+              });
+            }
+            if (loveNote) {
+              var ln = document.getElementById('loveNoteDisplay'); if (ln) ln.textContent = loveNote;
+            }
+          }
+
+          if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', fastApply, { once: true });
+          } else {
+            fastApply();
+          }
+        }
+      } catch (e) { }
+    })();
+  </script>
 </head>
 
 <body class="h-[100dvh] max-h-[100dvh] overflow-hidden flex flex-col select-none bg-[#FFF5F7]">
@@ -132,10 +181,10 @@
       <div onclick="openProfileModal()"
         class="flex items-center -space-x-2 cursor-pointer pl-1 hover:scale-105 transition"
         title="Profil Kita & Konfigurasi">
-        <img id="navAvatarYou" src="images/spotify_covers/profile_nadeyy.jpg"
+        <img id="navAvatarYou" src="images/spotify_covers/me.jpeg"
           class="w-8 h-8 rounded-full object-cover border-2 border-white shadow" alt="You" />
         <img id="navAvatarPartner"
-          src="https://images.unsplash.com/photo-1517841905240-472988babdf9?w=120&auto=format&fit=crop&q=80"
+          src="images/spotify_covers/ndey.jpeg"
           class="w-8 h-8 rounded-full object-cover border-2 border-[#FA8072] shadow" alt="Partner" />
       </div>
     </div>
@@ -353,13 +402,13 @@
               ✦ jakarta.
             </h1>
             <p id="heroPlaylistDesc" class="text-sm text-[#4A2C32] font-medium mb-3">
-              a special night over the city lights &lt;3 — curated by nadeyy
+              after rain and lean with u &lt;3 — curated with infinite love
             </p>
             <div
               class="flex flex-wrap items-center justify-center md:justify-start gap-2 text-xs font-bold text-[#3B2328]">
-              <img id="heroCuratorAvatar" src="images/spotify_covers/profile_nadeyy.jpg"
+              <img id="heroCuratorAvatar" src="images/spotify_covers/me.jpeg"
                 class="w-6 h-6 rounded-full object-cover border border-white shadow-sm" alt="Curator" />
-              <span id="heroCuratorName" class="hover:underline cursor-pointer">sayangmu ★</span>
+              <span id="heroCuratorName" class="hover:underline cursor-pointer">Dhafin</span>
               <span>•</span>
               <span id="heroStatsCount" class="font-semibold text-[#5E3A42]">61 songs, infinite love</span>
             </div>
@@ -507,7 +556,7 @@
               class="flex items-center gap-4 bg-white/15 backdrop-blur-md px-5 py-3.5 rounded-3xl border border-white/25 shadow-inner shrink-0">
               <div class="text-center">
                 <div class="relative inline-block">
-                  <img id="mainJamAvatarYou" src="images/spotify_covers/profile_nadeyy.jpg"
+                  <img id="mainJamAvatarYou" src="images/spotify_covers/me.jpeg"
                     class="w-14 h-14 sm:w-16 sm:h-16 rounded-full object-cover border-2 border-white shadow-md"
                     alt="You" />
                   <span
@@ -515,7 +564,7 @@
                     <i class="fa-solid fa-headphones"></i>
                   </span>
                 </div>
-                <p id="mainJamNameYou" class="text-xs font-bold text-white mt-1 truncate max-w-[80px]">nadeyy ★</p>
+                <p id="mainJamNameYou" class="text-xs font-bold text-white mt-1 truncate max-w-[80px]">Dhafin</p>
               </div>
 
               <!-- Animated Soundwave Connector -->
@@ -534,7 +583,7 @@
               <div class="text-center">
                 <div class="relative inline-block">
                   <img id="mainJamAvatarPartner"
-                    src="https://images.unsplash.com/photo-1517841905240-472988babdf9?w=120&auto=format&fit=crop&q=80"
+                    src="images/spotify_covers/ndey.jpeg"
                     class="w-14 h-14 sm:w-16 sm:h-16 rounded-full object-cover border-2 border-white shadow-md"
                     alt="Partner" />
                   <span
@@ -542,7 +591,7 @@
                     <i class="fa-solid fa-heart"></i>
                   </span>
                 </div>
-                <p id="mainJamNamePartner" class="text-xs font-bold text-white mt-1 truncate max-w-[80px]">sayang</p>
+                <p id="mainJamNamePartner" class="text-xs font-bold text-white mt-1 truncate max-w-[80px]">Nadia</p>
               </div>
             </div>
           </div>
@@ -825,15 +874,15 @@
           class="mx-3 mb-3 p-3.5 rounded-2xl bg-gradient-to-r from-[#FFF0F3] to-[#FFE4E9]/70 border border-[#FFD2DC] flex items-center justify-between">
           <div class="flex items-center gap-3">
             <div class="flex -space-x-2">
-              <img id="miniJamAvatar1" src="images/spotify_covers/profile_nadeyy.jpg"
+              <img id="miniJamAvatar1" src="images/spotify_covers/me.jpeg"
                 class="w-8 h-8 rounded-full object-cover ring-2 ring-white" />
               <img id="miniJamAvatar2"
-                src="https://images.unsplash.com/photo-1517841905240-472988babdf9?w=100&auto=format&fit=crop&q=80"
+                src="images/spotify_covers/ndey.jpeg"
                 class="w-8 h-8 rounded-full object-cover ring-2 ring-[#FA8072] live-ring" />
             </div>
             <div>
               <p class="text-xs font-bold text-[#3B2328] flex items-center gap-1.5">
-                <span id="miniPartnerStatusName">Alya</span> sedang mendengarkan
+                <span id="miniPartnerStatusName">Nadia</span> sedang mendengarkan
               </p>
               <p class="text-[11px] text-[#9A737C]">Sinkronisasi real-time aktif • 100% Match</p>
             </div>
@@ -865,7 +914,7 @@
           <div class="flex items-center justify-center gap-4 my-2">
             <div class="text-center">
               <div class="relative inline-block">
-                <img id="jamAvatarYou" src="images/spotify_covers/profile_nadeyy.jpg"
+                <img id="jamAvatarYou" src="images/spotify_covers/me.jpeg"
                   class="w-12 h-12 rounded-full object-cover border-2 border-white shadow-md" />
                 <span
                   class="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-emerald-400 border-2 border-white flex items-center justify-center text-[8px] text-white">
@@ -888,14 +937,14 @@
             <div class="text-center">
               <div class="relative inline-block">
                 <img id="jamAvatarPartner"
-                  src="https://images.unsplash.com/photo-1517841905240-472988babdf9?w=120&auto=format&fit=crop&q=80"
+                  src="images/spotify_covers/ndey.jpeg"
                   class="w-12 h-12 rounded-full object-cover border-2 border-white shadow-md" />
                 <span
                   class="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-emerald-400 border-2 border-white flex items-center justify-center text-[8px] text-white">
                   <i class="fa-solid fa-heart"></i>
                 </span>
               </div>
-              <p id="jamNamePartner" class="text-[11px] font-bold mt-1">Sayang</p>
+              <p id="jamNamePartner" class="text-[11px] font-bold mt-1">Nadia</p>
             </div>
           </div>
 
@@ -1235,7 +1284,7 @@
           class="hidden sm:inline-block text-[#9A737C] hover:text-[#FA8072] text-sm transition" title="Shuffle">
           <i class="fa-solid fa-shuffle"></i>
         </button>
-        <button onclick="prevTrack()" class="hidden sm:inline-block text-[#3B2328] hover:text-[#FA8072] text-base transition" title="Previous">
+        <button onclick="prevTrack()" class="inline-block text-[#3B2328] hover:text-[#FA8072] text-base transition shrink-0" title="Previous">
           <i class="fa-solid fa-backward-step"></i>
         </button>
         <button onclick="togglePlay()"
@@ -1482,7 +1531,7 @@
             <!-- Your Avatar -->
             <div class="flex flex-col items-center">
               <div class="relative">
-                <img id="showcaseYourAvatar" src="images/spotify_covers/profile_nadeyy.jpg"
+                <img id="showcaseYourAvatar" src="images/spotify_covers/me.jpeg"
                   class="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover border-4 border-white shadow-md"
                   alt="You" />
                 <span
@@ -1491,7 +1540,7 @@
                 </span>
               </div>
               <p id="showcaseYourName" class="text-xs font-extrabold text-[#3B2328] mt-1.5 truncate max-w-[100px]">
-                nadeyy ★</p>
+                Dhafin</p>
               <span class="text-[10px] text-[#9A737C]">Curator</span>
             </div>
 
@@ -1499,7 +1548,7 @@
             <div class="flex flex-col items-center">
               <div class="relative">
                 <img id="showcasePartnerAvatar"
-                  src="https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150&auto=format&fit=crop&q=80"
+                  src="images/spotify_covers/ndey.jpeg"
                   class="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover border-4 border-white shadow-md"
                   alt="Partner" />
                 <span
@@ -1508,7 +1557,7 @@
                 </span>
               </div>
               <p id="showcasePartnerName" class="text-xs font-extrabold text-[#3B2328] mt-1.5 truncate max-w-[100px]">
-                sayang</p>
+                Nadia</p>
               <span class="text-[10px] text-[#9A737C]">Beloved</span>
             </div>
           </div>
@@ -2052,8 +2101,11 @@
   <!-- Supabase Client for Cloud Database & Realtime Sync -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
+  <!-- Database & Realtime Sync Layer (v2 Normalized) -->
+  <script src="js/db.js?v=20261022_v1"></script>
+
   <!-- App Script -->
-  <script src="js/app.js?v=20261021_v4"></script>
+  <script src="js/app.js?v=20261022_v1"></script>
 </body>
 
 </html>
