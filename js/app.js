@@ -38,6 +38,29 @@ const officialCovers = {
   'peradaban': 'images/covers/peradaban.jpg'
 };
 
+// Verified YouTube Official Audio Catalog
+const realSongCatalog = {
+  'those eyes': '1-xGerv5FOk',
+  'atlantis': 'gVAy3IZiL0s',
+  'terbuang dalam waktu': 'J40iXb6D_24',
+  'best part': 'hKgl5-lkT8U',
+  'mistikus cinta': 'qZdYnlWJlPw',
+  'dua sejoli': 'IU_v67PFnqk',
+  'pupus': '1YxVpvdj27c',
+  'separuh nafas': 'a8mFfM4aU9k',
+  'kangen': 'O6fM0z8y1d4',
+  'aku milikmu': 'w9yYQyN5WpA',
+  'i wanna be yours': 'nyuo9-OjNNg',
+  'sialan': 'z-kZ8u7sJqM',
+  'back to friends': 'Jg6nBf62X7U',
+  'alexandra': 'G-8g7l0eC8w',
+  'obsessed': 'pB6-s3o114w',
+  'untungnya, hidup harus tetap berjalan': 'p5oK8Qk3i2g',
+  'peradaban': '2kZ7Q9e8k0o'
+};
+
+const defaultFullAudioPool = Object.values(realAudioTracks);
+
 const defaultState = {
   pinCode: '1806',
   yourName: 'Dhafin',
@@ -3513,110 +3536,130 @@ async function searchItunesSong() {
 }
 
 function quickAddSongDirectly(idx, btn) {
-  if (itunesAudioPreviewObj) {
-    itunesAudioPreviewObj.pause();
-    itunesAudioPreviewObj = null;
-  }
-  const item = currentItunesSearchResults[idx];
-  if (!item) return;
-
-  // Read target playlist from dropdown or active playlist
-  const targetSelect = document.getElementById('targetPlaylistSelect');
-  const targetPlId = (targetSelect && targetSelect.value) ? targetSelect.value : (state.activePlaylistId || 'pl-ours');
-  let targetPl = (state.playlists || []).find(p => p.id === targetPlId);
-  if (!targetPl) {
-    targetPl = (state.playlists || [])[0];
-  }
-  if (!targetPl) {
-    showToastNotification('Playlist tujuan tidak ditemukan', 'error');
-    return;
-  }
-  if (!Array.isArray(targetPl.tracks)) {
-    targetPl.tracks = [];
-  }
-
-  const songTitle = (item.trackName || 'Lagu Baru').trim();
-  const artistName = (item.artistName || 'Artis').trim();
-
-  // Check if song already exists in target playlist
-  const alreadyExists = targetPl.tracks.some(t =>
-    (t.title && t.title.toLowerCase().trim() === songTitle.toLowerCase()) &&
-    (t.artist && t.artist.toLowerCase().trim() === artistName.toLowerCase())
-  );
-
-  if (alreadyExists) {
-    if (btn) {
-      btn.innerHTML = '<i class="fa-solid fa-check text-xs"></i> Sudah Ada';
-      btn.className = 'px-3 py-1.5 rounded-full bg-emerald-500 text-white text-[11px] font-bold flex items-center gap-1 shadow-xs cursor-default';
-      btn.disabled = true;
+  try {
+    if (itunesAudioPreviewObj) {
+      itunesAudioPreviewObj.pause();
+      itunesAudioPreviewObj = null;
     }
-    showToastNotification(`"${songTitle}" sudah ada di playlist "${targetPl.title}"! ✨`, 'info');
-    return;
-  }
+    const idxNum = parseInt(idx, 10);
+    const item = (currentItunesSearchResults && currentItunesSearchResults[idxNum]) 
+      ? currentItunesSearchResults[idxNum] 
+      : null;
 
-  const ultraHdCover = item.artworkUrl100 ? item.artworkUrl100.replace('100x100bb', '1000x1000bb') : 'images/spotify_covers/jakarta.jpg';
-
-  let matchedAudioUrl = item.previewUrl || '';
-  let matchedYoutubeId = null;
-  const lowTitle = songTitle.toLowerCase();
-  for (const [key, yId] of Object.entries(realSongCatalog)) {
-    if (lowTitle.includes(key)) {
-      matchedYoutubeId = yId;
-      break;
+    if (!item) {
+      showToastNotification('Data lagu tidak ditemukan dari hasil pencarian', 'error');
+      return;
     }
-  }
 
-  if (!matchedYoutubeId) {
-    for (const [key, localPath] of Object.entries(realAudioTracks)) {
-      if (lowTitle.includes(key)) {
-        matchedAudioUrl = localPath;
-        break;
+    // Read target playlist from dropdown or active playlist
+    const targetSelect = document.getElementById('targetPlaylistSelect');
+    let targetPlId = (targetSelect && targetSelect.value) ? targetSelect.value : (state.activePlaylistId || 'pl-ours');
+    if (targetPlId === 'pl-liked') {
+      targetPlId = 'pl-ours';
+    }
+
+    let targetPl = (state.playlists || []).find(p => p.id === targetPlId);
+    if (!targetPl) {
+      targetPl = (state.playlists || []).find(p => p.id === 'pl-ours') || (state.playlists || [])[0];
+    }
+    if (!targetPl) {
+      showToastNotification('Playlist tujuan tidak ditemukan', 'error');
+      return;
+    }
+    if (!Array.isArray(targetPl.tracks)) {
+      targetPl.tracks = [];
+    }
+
+    const songTitle = (item.trackName || 'Lagu Baru').trim();
+    const artistName = (item.artistName || 'Artis').trim();
+
+    // Check if song already exists in target playlist
+    const alreadyExists = targetPl.tracks.some(t =>
+      (t.title && t.title.toLowerCase().trim() === songTitle.toLowerCase()) &&
+      (t.artist && t.artist.toLowerCase().trim() === artistName.toLowerCase())
+    );
+
+    const buttonEl = btn ? (btn.closest('button') || btn) : null;
+
+    if (alreadyExists) {
+      if (buttonEl) {
+        buttonEl.innerHTML = '<i class="fa-solid fa-check text-xs"></i> Sudah Ada';
+        buttonEl.className = 'px-3 py-1.5 rounded-full bg-emerald-500 text-white text-[11px] font-bold flex items-center gap-1 shadow-xs cursor-default';
+        buttonEl.disabled = true;
+      }
+      showToastNotification(`"${songTitle}" sudah ada di playlist "${targetPl.title}"! ✨`, 'info');
+      return;
+    }
+
+    const ultraHdCover = item.artworkUrl100 ? item.artworkUrl100.replace('100x100bb', '1000x1000bb') : 'images/spotify_covers/jakarta.jpg';
+
+    let matchedAudioUrl = item.previewUrl || '';
+    let matchedYoutubeId = null;
+    const lowTitle = songTitle.toLowerCase();
+
+    if (typeof realSongCatalog !== 'undefined' && realSongCatalog) {
+      for (const [key, yId] of Object.entries(realSongCatalog)) {
+        if (lowTitle.includes(key)) {
+          matchedYoutubeId = yId;
+          break;
+        }
       }
     }
+
+    if (!matchedYoutubeId && typeof realAudioTracks !== 'undefined' && realAudioTracks) {
+      for (const [key, localPath] of Object.entries(realAudioTracks)) {
+        if (lowTitle.includes(key)) {
+          matchedAudioUrl = localPath;
+          break;
+        }
+      }
+    }
+
+    const today = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
+    const trackObj = {
+      id: `t-online-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+      title: songTitle,
+      artist: artistName,
+      album: item.collectionName || 'Single',
+      cover: ultraHdCover,
+      audioUrl: matchedAudioUrl,
+      youtubeId: matchedYoutubeId,
+      duration: (typeof formatDurationMs === 'function' ? formatDurationMs(item.trackTimeMillis) : 'Full') || 'Full',
+      memory: `Lagu spesial dari album "${item.collectionName || songTitle}" ✦`,
+      dateAdded: today,
+      liked: false
+    };
+
+    targetPl.tracks.push(trackObj);
+    saveState();
+    triggerSupabaseSync();
+
+    // Immediate UI reflection in the background
+    if (currentView === 'playlist' && state.activePlaylistId === targetPl.id) {
+      if (typeof renderTracklist === 'function') renderTracklist();
+    }
+    if (typeof hydrateUI === 'function') hydrateUI();
+    if (typeof renderSidebarPlaylists === 'function') renderSidebarPlaylists();
+    if (typeof renderHomeFavoritesList === 'function') renderHomeFavoritesList();
+    if (typeof renderHomePlaylistsGrid === 'function') renderHomePlaylistsGrid();
+
+    // Button feedback state
+    if (buttonEl) {
+      buttonEl.innerHTML = '<i class="fa-solid fa-check text-xs"></i> Ditambahkan';
+      buttonEl.className = 'px-3 py-1.5 rounded-full bg-[#1DB954] text-white text-[11px] font-bold flex items-center gap-1 shadow-xs cursor-default';
+      buttonEl.disabled = true;
+    }
+
+    showToastNotification(`✓ "${songTitle}" berhasil ditambahkan ke "${targetPl.title}"! 🎵`, 'success');
+  } catch (err) {
+    console.error('Error adding song directly:', err);
+    showToastNotification('Terjadi kendala: ' + err.message, 'error');
   }
-
-  const today = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-
-  const trackObj = {
-    id: `t-online-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-    title: songTitle,
-    artist: artistName,
-    album: item.collectionName || 'Single',
-    cover: ultraHdCover,
-    audioUrl: matchedAudioUrl,
-    youtubeId: matchedYoutubeId,
-    duration: formatDurationMs(item.trackTimeMillis) || 'Full',
-    memory: `Lagu spesial dari album "${item.collectionName || songTitle}" ✦`,
-    dateAdded: today,
-    liked: false
-  };
-
-  targetPl.tracks.push(trackObj);
-  saveState();
-  triggerSupabaseSync();
-
-  // Immediate UI reflection in the background
-  if (currentView === 'playlist' && state.activePlaylistId === targetPl.id) {
-    renderTracklist();
-  }
-  hydrateUI();
-  renderSidebarPlaylists();
-  if (typeof renderHomeFavoritesList === 'function') renderHomeFavoritesList();
-  if (typeof renderHomePlaylistsGrid === 'function') renderHomePlaylistsGrid();
-
-  // Button feedback state
-  if (btn) {
-    btn.innerHTML = '<i class="fa-solid fa-check text-xs"></i> Ditambahkan';
-    btn.className = 'px-3 py-1.5 rounded-full bg-[#1DB954] text-white text-[11px] font-bold flex items-center gap-1 shadow-xs cursor-default';
-    btn.disabled = true;
-  }
-
-  showToastNotification(`✓ "${songTitle}" berhasil ditambahkan ke "${targetPl.title}"! 🎵`, 'success');
 }
 
-function quickAddOnlineSongToPlaylist(idx) {
-  quickAddSongDirectly(idx, null);
-}
+window.quickAddSongDirectly = quickAddSongDirectly;
+window.quickAddOnlineSongToPlaylist = quickAddSongDirectly;
 
 function selectItunesResult(title, artist, cover) {
   document.getElementById('inputSongTitle').value = title;
