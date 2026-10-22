@@ -3574,7 +3574,7 @@ async function searchItunesSong() {
   }
 }
 
-function quickAddSongDirectly(idx, btn) {
+async function quickAddSongDirectly(idx, btn) {
   try {
     if (itunesAudioPreviewObj) {
       itunesAudioPreviewObj.pause();
@@ -3630,6 +3630,11 @@ function quickAddSongDirectly(idx, btn) {
       return;
     }
 
+    // Temporary loading indicator on button
+    if (buttonEl) {
+      buttonEl.innerHTML = '<i class="fa-solid fa-spinner animate-spin text-xs"></i> Memproses...';
+    }
+
     const ultraHdCover = item.artworkUrl100 ? item.artworkUrl100.replace('100x100bb', '1000x1000bb') : 'images/spotify_covers/jakarta.jpg';
 
     let matchedAudioUrl = '';
@@ -3657,7 +3662,7 @@ function quickAddSongDirectly(idx, btn) {
       }
     }
 
-    // 3. Check YouTube catalog for full video streaming
+    // 3. Check static YouTube catalog for full video streaming
     if (typeof realSongCatalog !== 'undefined' && realSongCatalog) {
       for (const [key, yId] of Object.entries(realSongCatalog)) {
         if (lowTitle.includes(key)) {
@@ -3667,7 +3672,23 @@ function quickAddSongDirectly(idx, btn) {
       }
     }
 
-    // 4. Fallback to iTunes preview ONLY if neither full local audio nor YouTube stream is available
+    // 4. Dynamic YouTube resolution: Automatically resolve full song from YouTube API in real time!
+    if (!matchedAudioUrl && !matchedYoutubeId) {
+      try {
+        const queryStr = `${artistName} ${songTitle}`;
+        const ytRes = await fetch(`/api/search-youtube?q=${encodeURIComponent(queryStr)}`);
+        if (ytRes.ok) {
+          const ytData = await ytRes.json();
+          if (ytData && ytData.youtubeId) {
+            matchedYoutubeId = ytData.youtubeId;
+          }
+        }
+      } catch (ytErr) {
+        console.warn('Dynamic YouTube stream notice:', ytErr);
+      }
+    }
+
+    // 5. Fallback to iTunes preview ONLY if neither full local audio nor YouTube stream is available
     if (!matchedAudioUrl && !matchedYoutubeId) {
       matchedAudioUrl = item.previewUrl || '';
     }
