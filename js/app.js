@@ -78,7 +78,7 @@ const realSongCatalog = {
 const defaultFullAudioPool = Object.values(realAudioTracks);
 
 const defaultState = {
-  pinCode: '1806',
+  pinCode: '1006',
   yourName: 'Dhafin',
   partnerName: 'Nadia',
   yourAvatar: 'images/spotify_covers/me.jpeg',
@@ -1537,12 +1537,73 @@ const defaultState = {
       ]
     }
   ],
-  jamMessages: [
-    { sender: 'partner', text: 'Sayang, lagunya sekarang pakai cover album official dan lagunya asli semua 🥺💕 Cantik banget!', time: '19:42' },
-    { sender: 'you', text: 'Iyaa! Tampilannya jadi berasa kayak Spotify Premium asli ✨', time: '19:43' }
-  ],
+  jamMessages: [],
   polaroidMemories: []
 };
+
+// ================= DUAL ACCOUNTS & ACCESS CONFIGURATION =================
+// Dhafin (PIN: 1006) & Nadia (PIN: 1809)
+const ACCOUNTS = {
+  '1006': {
+    id: 'dhafin',
+    name: 'Dhafin',
+    pin: '1006',
+    avatar: 'images/spotify_covers/me.jpeg',
+    role: 'Curator',
+    partnerId: 'nadia',
+    partnerName: 'Nadia',
+    partnerAvatar: 'images/spotify_covers/ndey.jpeg',
+    partnerRole: 'Beloved'
+  },
+  '1809': {
+    id: 'nadia',
+    name: 'Nadia',
+    pin: '1809',
+    avatar: 'images/spotify_covers/ndey.jpeg',
+    role: 'Beloved',
+    partnerId: 'dhafin',
+    partnerName: 'Dhafin',
+    partnerAvatar: 'images/spotify_covers/me.jpeg',
+    partnerRole: 'Curator'
+  }
+};
+
+function getCurrentAccount() {
+  const savedUserId = localStorage.getItem('romantic_current_user') || 'dhafin';
+  if (savedUserId === 'nadia') return ACCOUNTS['1809'];
+  return ACCOUNTS['1006'];
+}
+
+function applyAccountIdentity(account) {
+  if (!account) return;
+  state.yourName = account.name;
+  state.yourAvatar = account.avatar;
+  state.partnerName = account.partnerName;
+  state.partnerAvatar = account.partnerAvatar;
+  try {
+    localStorage.setItem('romantic_current_user', account.id);
+  } catch (e) { }
+
+  if (typeof hydrateUI === 'function') hydrateUI();
+  if (typeof updateMainJamView === 'function') updateMainJamView();
+  if (typeof populateProfileShowcaseView === 'function') populateProfileShowcaseView();
+}
+
+function selectLoginProfile(userId) {
+  const pinInput = document.getElementById('pinInput');
+  const btnDhafin = document.getElementById('lockProfileBtnDhafin');
+  const btnNadia = document.getElementById('lockProfileBtnNadia');
+  if (userId === 'nadia') {
+    if (btnNadia) btnNadia.classList.add('bg-[#FFF0F3]', 'border-[#E85D75]');
+    if (btnDhafin) btnDhafin.classList.remove('bg-[#FFF0F3]', 'border-[#FA8072]');
+  } else {
+    if (btnDhafin) btnDhafin.classList.add('bg-[#FFF0F3]', 'border-[#FA8072]');
+    if (btnNadia) btnNadia.classList.remove('bg-[#FFF0F3]', 'border-[#E85D75]');
+  }
+  if (pinInput) {
+    pinInput.focus();
+  }
+}
 
 let state = loadState();
 let currentView = 'home';
@@ -1913,6 +1974,24 @@ function loadState() {
       window.__pendingPresetPurgeSync = true;
     }
 
+    // Dual accounts identity consistency: Dhafin (1006) / Nadia (1809)
+    const activeUserId = localStorage.getItem('romantic_current_user') || 'dhafin';
+    const acc = activeUserId === 'nadia' ? ACCOUNTS['1809'] : ACCOUNTS['1006'];
+    if (acc) {
+      parsed.yourName = acc.name;
+      parsed.yourAvatar = acc.avatar;
+      parsed.partnerName = acc.partnerName;
+      parsed.partnerAvatar = acc.partnerAvatar;
+    }
+
+    // Default room chat is strictly empty unless user has joined an active room
+    if (!localStorage.getItem('romantic_jam_room_id')) {
+      parsed.jamMessages = [];
+    }
+    if (Array.isArray(parsed.jamMessages)) {
+      parsed.jamMessages = parsed.jamMessages.filter(m => m && !String(m.text || '').includes('pakai cover album official'));
+    }
+
     const mergedState = { ...defaultState, ...parsed };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(mergedState));
     return mergedState;
@@ -2053,6 +2132,11 @@ function initSupabaseSync() {
     onPlaybackSync: (payload) => {
       if (typeof handleRemotePlaybackSync === 'function') {
         handleRemotePlaybackSync(payload);
+      }
+    },
+    onChatMessage: (payload) => {
+      if (typeof handleRemoteChatMessage === 'function') {
+        handleRemoteChatMessage(payload);
       }
     },
     onPresenceSync: (presences) => {
@@ -2618,16 +2702,21 @@ function deleteCurrentPlaylist() {
   }
 }
 
-// ================= LOCK SCREEN (SIMPLE & CLEAN) =================
+// ================= LOCK SCREEN (DUAL ACCOUNTS: DHAFIN 1006 / NADIA 1809) =================
 function unlockApp() {
   const input = document.getElementById('pinInput');
   const val = (input?.value || '').trim();
-  const validPin = localStorage.getItem('romantic_music_custom_pin') || state.pinCode || '1806';
+  const matchedAccount = ACCOUNTS[val];
 
-  if (val === validPin) {
+  if (matchedAccount) {
     try {
       localStorage.setItem('romantic_music_unlocked', 'true');
+      localStorage.setItem('romantic_current_user', matchedAccount.id);
     } catch (e) { }
+
+    applyAccountIdentity(matchedAccount);
+
+    showToastNotification(`Selamat datang kembali, ${matchedAccount.name}! 💕`, 'success');
 
     const lock = document.getElementById('lockScreen');
     if (lock) {
@@ -2639,7 +2728,10 @@ function unlockApp() {
     }
   } else {
     const err = document.getElementById('pinError');
-    if (err) err.classList.remove('hidden');
+    if (err) {
+      err.textContent = 'PIN belum tepat. Masukkan PIN Dhafin (1006) atau Nadia (1809) 🥺';
+      err.classList.remove('hidden');
+    }
 
     const wrapper = document.getElementById('pinInputWrapper');
     if (wrapper) {
@@ -2666,7 +2758,8 @@ function logOutApp() {
     localStorage.removeItem('romantic_music_unlocked');
   } catch (e) { }
 
-  closeSettingsModal();
+  if (typeof closeProfileModal === 'function') closeProfileModal();
+  if (typeof closeSettingsModal === 'function') closeSettingsModal();
   if (isPlaying) {
     togglePlay();
   }
@@ -3569,7 +3662,7 @@ document.addEventListener('click', (e) => {
 let isRemotePlaybackSync = false;
 let remoteSyncUnlockTimer = null;
 let seekDebounceTimer = null;
-let currentJamRoomId = localStorage.getItem('romantic_jam_room_id') || 'LUV-2407';
+let currentJamRoomId = '';
 
 function initJamRoomSession() {
   const urlParams = new URLSearchParams(window.location.search);
@@ -3583,6 +3676,11 @@ function initJamRoomSession() {
         showToastNotification(`Terhubung ke Jam Room: ${currentJamRoomId} 💕`, 'success');
       }, 700);
     }
+  } else {
+    // Secara default room chat kosong & user harus membuat room baru atau memasukkan ID Room
+    currentJamRoomId = '';
+    localStorage.removeItem('romantic_jam_room_id');
+    state.jamMessages = [];
   }
 
   if (currentJamRoomId && window.MusicDB && typeof window.MusicDB.connectJamRoom === 'function') {
@@ -3596,22 +3694,43 @@ function renderJamRoomUI() {
   const disconnectedBar = document.getElementById('jamDisconnectedBar');
   const activeCodeEl = document.getElementById('jamActiveRoomCode');
   const syncBadge = document.getElementById('jamSessionSyncBadge');
+  const chatInput = document.getElementById('mainJamChatInput');
+  const chatSendBtn = document.getElementById('mainJamChatSendBtn');
 
   if (currentJamRoomId) {
     if (connectedBar) connectedBar.classList.remove('hidden');
     if (disconnectedBar) disconnectedBar.classList.add('hidden');
     if (activeCodeEl) activeCodeEl.textContent = currentJamRoomId;
     if (syncBadge) syncBadge.textContent = '100% Synced';
+    if (chatInput) {
+      chatInput.disabled = false;
+      chatInput.placeholder = 'Ketik pesan untuk pasanganmu...';
+    }
+    if (chatSendBtn) chatSendBtn.disabled = false;
   } else {
     if (connectedBar) connectedBar.classList.add('hidden');
     if (disconnectedBar) disconnectedBar.classList.remove('hidden');
     if (syncBadge) syncBadge.textContent = 'Mode Pribadi';
+    if (chatInput) {
+      chatInput.disabled = true;
+      chatInput.placeholder = 'Buat atau gabung room di atas untuk mulai chat...';
+    }
+    if (chatSendBtn) chatSendBtn.disabled = true;
   }
+
+  renderMainJamChat();
 }
 
 function joinJamRoom(roomId) {
   const clean = String(roomId || '').trim().toUpperCase();
   if (!clean) return;
+
+  if (currentJamRoomId !== clean) {
+    // Masuk ke room baru: bersihkan chat sebelumnya agar selalu mulai bersih
+    state.jamMessages = [];
+    saveState();
+  }
+
   currentJamRoomId = clean;
   localStorage.setItem('romantic_jam_room_id', currentJamRoomId);
   if (window.MusicDB && typeof window.MusicDB.connectJamRoom === 'function') {
@@ -3642,16 +3761,46 @@ function createRandomJamRoom() {
   const pfx = prefixes[Math.floor(Math.random() * prefixes.length)];
   const num = Math.floor(1000 + Math.random() * 9000);
   joinJamRoom(`${pfx}-${num}`);
+  showToastNotification(`Room baru dibuat: ${currentJamRoomId} 💕 Bagikan link atau kodenya ke pasanganmu!`, 'success');
 }
 
 function leaveCurrentJamRoom() {
   currentJamRoomId = '';
   localStorage.removeItem('romantic_jam_room_id');
+  state.jamMessages = [];
+  saveState();
   if (window.MusicDB && typeof window.MusicDB.leaveJamRoom === 'function') {
     window.MusicDB.leaveJamRoom();
   }
   renderJamRoomUI();
   showToastNotification('Mode pribadi aktif. Kamu telah keluar dari sesi bersama.', 'info');
+}
+
+function handleRemoteChatMessage(payload) {
+  if (!payload || !currentJamRoomId) return;
+  if (payload.roomId && payload.roomId !== currentJamRoomId) return;
+
+  const currentAcc = getCurrentAccount();
+  if (payload.senderId && payload.senderId === currentAcc.id) return; // abaikan pesan sendiri
+
+  if (!state.jamMessages) state.jamMessages = [];
+  if (payload.id && state.jamMessages.some(m => m.id === payload.id)) return;
+
+  state.jamMessages.push({
+    id: payload.id,
+    roomId: payload.roomId,
+    senderId: payload.senderId,
+    senderName: payload.senderName || currentAcc.partnerName,
+    senderAvatar: payload.senderAvatar || currentAcc.partnerAvatar,
+    sender: 'partner',
+    text: payload.text,
+    time: payload.time || getCurrentTimeStr()
+  });
+
+  saveState();
+  renderMainJamChat();
+  renderJamChat();
+  sendFloatingReaction('💌', false);
 }
 
 function broadcastPlaybackState(action, position, playingStatus) {
@@ -3966,8 +4115,15 @@ function simulatePartnerChatReply(userMessage) {
     `Lagu ini tenang banget dan punya banyak memori.`
   ];
   const reply = sweetReplies[Math.floor(Math.random() * sweetReplies.length)];
+  const currentAcc = getCurrentAccount();
 
+  if (!state.jamMessages) state.jamMessages = [];
   state.jamMessages.push({
+    id: 'msg-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
+    roomId: currentJamRoomId,
+    senderId: currentAcc.partnerId,
+    senderName: currentAcc.partnerName,
+    senderAvatar: currentAcc.partnerAvatar,
     sender: 'partner',
     text: reply,
     time: getCurrentTimeStr()
@@ -4551,15 +4707,21 @@ let isShowcasePinRevealed = false;
 function populateProfileShowcaseView() {
   const activePl = getActivePlaylist();
 
+  const currentAcc = getCurrentAccount();
   const yourAv = document.getElementById('showcaseYourAvatar');
-  if (yourAv) yourAv.src = state.yourAvatar;
+  if (yourAv) yourAv.src = currentAcc.avatar;
   const partnerAv = document.getElementById('showcasePartnerAvatar');
-  if (partnerAv) partnerAv.src = state.partnerAvatar;
+  if (partnerAv) partnerAv.src = currentAcc.partnerAvatar;
 
   const yourName = document.getElementById('showcaseYourName');
-  if (yourName) yourName.textContent = state.yourName;
+  if (yourName) yourName.textContent = currentAcc.name;
+  const yourRole = document.getElementById('showcaseYourRole');
+  if (yourRole) yourRole.textContent = currentAcc.role;
+
   const partnerName = document.getElementById('showcasePartnerName');
-  if (partnerName) partnerName.textContent = state.partnerName;
+  if (partnerName) partnerName.textContent = currentAcc.partnerName;
+  const partnerRole = document.getElementById('showcasePartnerRole');
+  if (partnerRole) partnerRole.textContent = currentAcc.partnerRole;
 
   const plCover = document.getElementById('showcasePlaylistCover');
   if (plCover) plCover.src = activePl.cover;
@@ -4598,11 +4760,10 @@ function toggleShowcasePin() {
   const pinDisplay = document.getElementById('showcasePinDisplay');
   const pinText = document.getElementById('showcasePinActionText');
   const pinIcon = document.getElementById('showcasePinIcon');
-  const activePin = localStorage.getItem('romantic_music_custom_pin') || state.pinCode || '1806';
 
   isShowcasePinRevealed = !isShowcasePinRevealed;
   if (isShowcasePinRevealed) {
-    if (pinDisplay) pinDisplay.textContent = `${activePin} (PIN Aktif)`;
+    if (pinDisplay) pinDisplay.textContent = 'Dhafin: 1006 | Nadia: 1809';
     if (pinText) pinText.textContent = 'Sembunyi';
     if (pinIcon) pinIcon.className = 'fa-regular fa-eye-slash';
   } else {
@@ -5333,7 +5494,34 @@ function renderMainJamChat() {
   const container = document.getElementById('mainJamChatContainer');
   if (!container) return;
 
+  if (!currentJamRoomId) {
+    container.innerHTML = `
+      <div class="flex flex-col items-center justify-center h-full text-center p-6 text-[#9A737C]">
+        <div class="w-12 h-12 rounded-full bg-[#FFF0F3] border border-[#FFD2DC] flex items-center justify-center text-[#FA8072] mb-3 text-lg">
+          <i class="fa-solid fa-door-open"></i>
+        </div>
+        <p class="text-xs font-bold text-[#3B2328]">Belum Terhubung ke Room</p>
+        <p class="text-[11px] text-[#9A737C] mt-1 max-w-[240px]">Room chat secara default kosong. Klik <b>"+ Buat Baru"</b> atau masukkan ID Room di atas untuk mulai mengobrol & mendengarkan musik bersama 💕</p>
+      </div>
+    `;
+    return;
+  }
+
   const messages = state.jamMessages || [];
+  if (messages.length === 0) {
+    container.innerHTML = `
+      <div class="flex flex-col items-center justify-center h-full text-center p-6 text-[#9A737C]">
+        <div class="w-12 h-12 rounded-full bg-[#FFF0F3] border border-[#FFD2DC] flex items-center justify-center text-[#FA8072] mb-3 text-lg">
+          <i class="fa-solid fa-sparkles"></i>
+        </div>
+        <p class="text-xs font-bold text-[#3B2328]">Room Sesi Aktif: <span class="font-mono text-[#FA8072]">${currentJamRoomId}</span></p>
+        <p class="text-[11px] text-[#9A737C] mt-1 max-w-[250px]">Kirim pesan pertama ke pasanganmu atau mulai putar lagu bersama 🎵</p>
+      </div>
+    `;
+    return;
+  }
+
+  const currentAcc = getCurrentAccount();
   container.innerHTML = messages.map(msg => {
     if (msg.sender === 'system') {
       return `
@@ -5342,18 +5530,24 @@ function renderMainJamChat() {
         </div>
       `;
     }
-    const isYou = msg.sender === 'you';
+    const isYou = (msg.senderId && msg.senderId === currentAcc.id) || (msg.sender === 'you' && (!msg.senderId || msg.senderId === currentAcc.id));
+    const senderName = isYou ? currentAcc.name : (msg.senderName || currentAcc.partnerName);
+    const senderAvatar = isYou ? currentAcc.avatar : (msg.senderAvatar || currentAcc.partnerAvatar);
+
     return `
-      <div class="flex flex-col ${isYou ? 'items-end' : 'items-start'}">
-        <div class="flex items-center gap-1.5 mb-0.5">
-          <span class="text-[10px] font-bold ${isYou ? 'text-[#FA8072]' : 'text-[#7A4E58]'}">${isYou ? state.yourName : state.partnerName}</span>
-          <span class="text-[9px] text-[#9A737C]">${msg.time}</span>
-        </div>
-        <div class="px-3.5 py-2 rounded-2xl max-w-[85%] text-xs leading-relaxed ${isYou
-        ? 'bg-gradient-to-r from-[#FA8072] to-[#E85D75] text-white rounded-tr-none shadow-xs'
-        : 'bg-[#FFF0F3] border border-[#FFD2DC] text-[#3B2328] rounded-tl-none shadow-xs'
-      }">
-          ${msg.text}
+      <div class="flex items-end gap-2 mb-2 ${isYou ? 'flex-row-reverse' : 'flex-row'}">
+        <img src="${senderAvatar}" class="w-6 h-6 rounded-full object-cover border border-[#FFD2DC] shrink-0 mb-1 shadow-xs" alt="${senderName}" />
+        <div class="flex flex-col ${isYou ? 'items-end' : 'items-start'} max-w-[80%]">
+          <div class="flex items-center gap-1.5 mb-0.5 px-1">
+            <span class="text-[10px] font-bold ${isYou ? 'text-[#FA8072]' : 'text-[#7A4E58]'}">${senderName}</span>
+            <span class="text-[9px] text-[#9A737C]">${msg.time}</span>
+          </div>
+          <div class="px-3.5 py-2 rounded-2xl text-xs leading-relaxed ${isYou
+            ? 'bg-gradient-to-r from-[#FA8072] to-[#E85D75] text-white rounded-tr-none shadow-xs'
+            : 'bg-[#FFF0F3] border border-[#FFD2DC] text-[#3B2328] rounded-tl-none shadow-xs'
+          }">
+            ${msg.text}
+          </div>
         </div>
       </div>
     `;
@@ -5362,18 +5556,39 @@ function renderMainJamChat() {
 }
 
 function sendMainJamChatMessage(event) {
-  event.preventDefault();
+  if (event) event.preventDefault();
+  if (!currentJamRoomId) {
+    showToastNotification('Silakan buat atau gabung room terlebih dahulu', 'warning');
+    return;
+  }
+
   const input = document.getElementById('mainJamChatInput');
-  const text = input.value.trim();
+  const text = (input?.value || '').trim();
   if (!text) return;
 
+  const currentAcc = getCurrentAccount();
   const now = new Date();
   const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
 
+  const msg = {
+    id: 'msg-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
+    roomId: currentJamRoomId,
+    senderId: currentAcc.id,
+    senderName: currentAcc.name,
+    senderAvatar: currentAcc.avatar,
+    sender: 'you',
+    text: text,
+    time: timeStr
+  };
+
   if (!state.jamMessages) state.jamMessages = [];
-  state.jamMessages.push({ sender: 'you', text, time: timeStr });
+  state.jamMessages.push(msg);
   saveState();
-  triggerSupabaseSync();
+
+  if (window.MusicDB && typeof window.MusicDB.broadcastChatMessage === 'function') {
+    window.MusicDB.broadcastChatMessage(msg);
+  }
+
   input.value = '';
   renderMainJamChat();
   renderJamChat();

@@ -670,6 +670,16 @@
       }
     });
 
+    jamChannel.on('broadcast', { event: 'chat_message' }, ({ payload }) => {
+      if (payload && payload.senderDeviceId !== DEVICE_SESSION_ID && hooks.onChatMessage) {
+        try {
+          hooks.onChatMessage(payload);
+        } catch (e) {
+          console.warn('[MusicDB] onChatMessage error:', e);
+        }
+      }
+    });
+
     jamChannel.on('presence', { event: 'sync' }, () => {
       if (hooks.onPresenceSync) {
         try {
@@ -720,6 +730,26 @@
       return true;
     } catch (e) {
       console.warn('[MusicDB] broadcastPlayback error:', e);
+      return false;
+    }
+  }
+
+  function broadcastChatMessage(payload) {
+    if (!jamChannel || !activeJamRoomId) return false;
+    try {
+      jamChannel.send({
+        type: 'broadcast',
+        event: 'chat_message',
+        payload: {
+          ...payload,
+          roomId: activeJamRoomId,
+          senderDeviceId: DEVICE_SESSION_ID,
+          sentAt: Date.now()
+        }
+      });
+      return true;
+    } catch (e) {
+      console.warn('[MusicDB] broadcastChatMessage error:', e);
       return false;
     }
   }
@@ -813,6 +843,7 @@
     flushNow,
     isReady: () => ready,
     broadcastPlayback,
+    broadcastChatMessage,
     connectJamRoom,
     leaveJamRoom,
     getActiveJamRoomId: () => activeJamRoomId,
