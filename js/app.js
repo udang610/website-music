@@ -1591,15 +1591,6 @@ function applyAccountIdentity(account) {
 
 function selectLoginProfile(userId) {
   const pinInput = document.getElementById('pinInput');
-  const btnDhafin = document.getElementById('lockProfileBtnDhafin');
-  const btnNadia = document.getElementById('lockProfileBtnNadia');
-  if (userId === 'nadia') {
-    if (btnNadia) btnNadia.classList.add('bg-[#FFF0F3]', 'border-[#E85D75]');
-    if (btnDhafin) btnDhafin.classList.remove('bg-[#FFF0F3]', 'border-[#FA8072]');
-  } else {
-    if (btnDhafin) btnDhafin.classList.add('bg-[#FFF0F3]', 'border-[#FA8072]');
-    if (btnNadia) btnNadia.classList.remove('bg-[#FFF0F3]', 'border-[#E85D75]');
-  }
   if (pinInput) {
     pinInput.focus();
   }
