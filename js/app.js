@@ -2200,6 +2200,7 @@ window.addEventListener('DOMContentLoaded', () => {
   hydrateItunesCovers();
   checkUrlPlayParam();
   initSupabaseSync();
+  initJamRoomSession();
 });
 
 // Fetch HD album covers without touching audio streams
@@ -3025,6 +3026,18 @@ function updateActiveTrackUI() {
       ? '<i class="fa-solid fa-heart text-[#FF4D6D]"></i>'
       : '<i class="fa-regular fa-heart text-[#9A737C]"></i>';
   }
+
+  // Dedicated Listening Together View Card (Selalu sinkron dengan player bawah & canvas!)
+  const mainJamCover = document.getElementById('mainJamCurrentCover');
+  if (mainJamCover) mainJamCover.src = track.cover;
+  const mainJamTitle = document.getElementById('mainJamCurrentTitle');
+  if (mainJamTitle) mainJamTitle.textContent = track.title;
+  const mainJamArtist = document.getElementById('mainJamCurrentArtist');
+  if (mainJamArtist) mainJamArtist.textContent = track.artist;
+  const mainJamPlayIcon = document.getElementById('mainJamPlayIcon');
+  if (mainJamPlayIcon) {
+    mainJamPlayIcon.className = isPlaying ? 'fa-solid fa-pause text-lg' : 'fa-solid fa-play text-lg ml-0.5';
+  }
 }
 
 function selectTrackFromList(index) {
@@ -3556,9 +3569,94 @@ document.addEventListener('click', (e) => {
 let isRemotePlaybackSync = false;
 let remoteSyncUnlockTimer = null;
 let seekDebounceTimer = null;
+let currentJamRoomId = localStorage.getItem('romantic_jam_room_id') || 'LUV-2407';
+
+function initJamRoomSession() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const roomParam = urlParams.get('room');
+  if (roomParam) {
+    const cleanParam = decodeURIComponent(roomParam).trim().toUpperCase();
+    if (cleanParam) {
+      currentJamRoomId = cleanParam;
+      localStorage.setItem('romantic_jam_room_id', currentJamRoomId);
+      setTimeout(() => {
+        showToastNotification(`Terhubung ke Jam Room: ${currentJamRoomId} 💕`, 'success');
+      }, 700);
+    }
+  }
+
+  if (currentJamRoomId && window.MusicDB && typeof window.MusicDB.connectJamRoom === 'function') {
+    window.MusicDB.connectJamRoom(currentJamRoomId);
+  }
+  renderJamRoomUI();
+}
+
+function renderJamRoomUI() {
+  const connectedBar = document.getElementById('jamConnectedBar');
+  const disconnectedBar = document.getElementById('jamDisconnectedBar');
+  const activeCodeEl = document.getElementById('jamActiveRoomCode');
+  const syncBadge = document.getElementById('jamSessionSyncBadge');
+
+  if (currentJamRoomId) {
+    if (connectedBar) connectedBar.classList.remove('hidden');
+    if (disconnectedBar) disconnectedBar.classList.add('hidden');
+    if (activeCodeEl) activeCodeEl.textContent = currentJamRoomId;
+    if (syncBadge) syncBadge.textContent = '100% Synced';
+  } else {
+    if (connectedBar) connectedBar.classList.add('hidden');
+    if (disconnectedBar) disconnectedBar.classList.remove('hidden');
+    if (syncBadge) syncBadge.textContent = 'Mode Pribadi';
+  }
+}
+
+function joinJamRoom(roomId) {
+  const clean = String(roomId || '').trim().toUpperCase();
+  if (!clean) return;
+  currentJamRoomId = clean;
+  localStorage.setItem('romantic_jam_room_id', currentJamRoomId);
+  if (window.MusicDB && typeof window.MusicDB.connectJamRoom === 'function') {
+    window.MusicDB.connectJamRoom(currentJamRoomId);
+  }
+  renderJamRoomUI();
+  showToastNotification(`Berhasil bergabung ke Sesi: ${currentJamRoomId} ✦`, 'success');
+
+  // Broadcast current track to partner if host is playing
+  if (isPlaying) {
+    broadcastPlaybackState('PLAY', audio.currentTime || 0, true);
+  }
+}
+
+function joinJamRoomFromInput() {
+  const input = document.getElementById('inputJamRoomId');
+  const val = input ? input.value.trim() : '';
+  if (!val) {
+    showToastNotification('Silakan masukkan ID Room terlebih dahulu', 'warning');
+    return;
+  }
+  joinJamRoom(val);
+  if (input) input.value = '';
+}
+
+function createRandomJamRoom() {
+  const prefixes = ['LUV', 'JAM', 'NDEY', 'DHAF', 'LOVE'];
+  const pfx = prefixes[Math.floor(Math.random() * prefixes.length)];
+  const num = Math.floor(1000 + Math.random() * 9000);
+  joinJamRoom(`${pfx}-${num}`);
+}
+
+function leaveCurrentJamRoom() {
+  currentJamRoomId = '';
+  localStorage.removeItem('romantic_jam_room_id');
+  if (window.MusicDB && typeof window.MusicDB.leaveJamRoom === 'function') {
+    window.MusicDB.leaveJamRoom();
+  }
+  renderJamRoomUI();
+  showToastNotification('Mode pribadi aktif. Kamu telah keluar dari sesi bersama.', 'info');
+}
 
 function broadcastPlaybackState(action, position, playingStatus) {
   if (isRemotePlaybackSync) return;
+  if (!currentJamRoomId) return; // Mode pribadi: jangan broadcast jika belum join room!
   if (typeof syncModeActive !== 'undefined' && !syncModeActive) return;
 
   const track = getPlayingTrack();
@@ -3581,7 +3679,8 @@ function broadcastPlaybackState(action, position, playingStatus) {
       playlistId: currentPlayingPlaylistId,
       position: curPos,
       isPlaying: isCurrentlyPlaying,
-      senderName: state.yourName || 'Pasangan'
+      senderName: state.yourName || 'Pasangan',
+      roomId: currentJamRoomId
     });
   }
 }
@@ -3594,7 +3693,8 @@ function scheduleBroadcastSeek(targetSec) {
 }
 
 function handleRemotePlaybackSync(payload) {
-  if (!payload || !syncModeActive) return;
+  if (!payload || !syncModeActive || !currentJamRoomId) return;
+  if (payload.roomId && payload.roomId !== currentJamRoomId) return; // Abaikan paket dari room lain!
   const myDeviceId = window.MusicDB && window.MusicDB.getDeviceId ? window.MusicDB.getDeviceId() : null;
   if (payload.senderDeviceId && myDeviceId && payload.senderDeviceId === myDeviceId) return;
 
@@ -3884,10 +3984,10 @@ function simulatePartnerSweetAction() {
 }
 
 function copyInviteLink() {
-  const code = document.getElementById('jamRoomCode')?.textContent || 'LUV-2407';
+  const code = currentJamRoomId || document.getElementById('jamActiveRoomCode')?.textContent || 'LUV-2407';
   const url = `${window.location.origin}${window.location.pathname}?room=${code}`;
   navigator.clipboard.writeText(url).then(() => {
-    showToastNotification('Link Jam Session berhasil disalin!', 'success');
+    showToastNotification(`Link Jam Session (${code}) disalin!`, 'success');
   }).catch(() => {
     alert(`Salin link sesi berdua: ${url}`);
   });
@@ -5199,7 +5299,7 @@ function closePolaroidDetailModal() {
 
 // ================= DEDICATED LISTENING TOGETHER VIEW HELPERS =================
 function updateMainJamView() {
-  const currentTrack = getActiveTracks()[currentIndex] || {};
+  const currentTrack = getPlayingTrack() || getActiveTracks()[currentIndex] || {};
   const currentCover = currentTrack.cover || 'images/spotify_covers/jakarta.jpg';
   const coverEl = document.getElementById('mainJamCurrentCover');
   if (coverEl) coverEl.src = currentCover;
@@ -5212,7 +5312,7 @@ function updateMainJamView() {
 
   const playIcon = document.getElementById('mainJamPlayIcon');
   if (playIcon) {
-    playIcon.className = isPlaying ? 'fa-solid fa-pause text-xl' : 'fa-solid fa-play text-xl ml-0.5';
+    playIcon.className = isPlaying ? 'fa-solid fa-pause text-lg' : 'fa-solid fa-play text-lg ml-0.5';
   }
 
   const youAv = document.getElementById('mainJamAvatarYou');
@@ -5226,6 +5326,7 @@ function updateMainJamView() {
   if (namePartner) namePartner.textContent = state.partnerName;
 
   renderMainJamChat();
+  renderJamRoomUI();
 }
 
 function renderMainJamChat() {

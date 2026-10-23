@@ -640,15 +640,79 @@
   }
 
   const DEVICE_SESSION_ID = 'dev-' + Math.random().toString(36).slice(2, 9) + '-' + Date.now();
+  let jamChannel = null;
+  let activeJamRoomId = null;
+
+  function connectJamRoom(roomId) {
+    const cleanId = String(roomId || '').trim().toUpperCase();
+    if (!cleanId) return false;
+
+    const cli = getClient();
+    if (!cli) return false;
+
+    if (jamChannel) {
+      try { cli.removeChannel(jamChannel); } catch (e) {}
+      jamChannel = null;
+    }
+
+    activeJamRoomId = cleanId;
+    jamChannel = cli.channel(`jam-room-${cleanId}`, {
+      config: { broadcast: { self: false } }
+    });
+
+    jamChannel.on('broadcast', { event: 'playback_sync' }, ({ payload }) => {
+      if (payload && payload.senderDeviceId !== DEVICE_SESSION_ID && hooks.onPlaybackSync) {
+        try {
+          hooks.onPlaybackSync(payload);
+        } catch (e) {
+          console.warn('[MusicDB] onPlaybackSync error:', e);
+        }
+      }
+    });
+
+    jamChannel.on('presence', { event: 'sync' }, () => {
+      if (hooks.onPresenceSync) {
+        try {
+          const presences = jamChannel.presenceState();
+          hooks.onPresenceSync(presences);
+        } catch (e) {}
+      }
+    });
+
+    jamChannel.subscribe(status => {
+      console.log(`✦ [MusicDB] Jam Room (${cleanId}) Realtime:`, status);
+      if (status === 'SUBSCRIBED') {
+        const userState = hooks.getState ? hooks.getState() : {};
+        jamChannel.track({
+          deviceId: DEVICE_SESSION_ID,
+          userName: userState.yourName || 'Partner',
+          roomId: cleanId,
+          onlineAt: Date.now()
+        });
+      }
+    });
+    return true;
+  }
+
+  function leaveJamRoom() {
+    const cli = getClient();
+    if (jamChannel && cli) {
+      try { cli.removeChannel(jamChannel); } catch (e) {}
+    }
+    jamChannel = null;
+    activeJamRoomId = null;
+    console.log('✦ [MusicDB] Left Jam Room. Private playback active.');
+  }
 
   function broadcastPlayback(payload) {
-    if (!channel) return false;
+    if (!jamChannel || !activeJamRoomId) return false;
     try {
-      channel.send({
+      jamChannel.send({
         type: 'broadcast',
         event: 'playback_sync',
         payload: {
           ...payload,
+          roomId: activeJamRoomId,
           senderDeviceId: DEVICE_SESSION_ID,
           sentAt: Date.now()
         }
@@ -662,50 +726,17 @@
 
   function subscribe() {
     if (channel) return;
-    channel = client.channel('music-db-v2', {
-      config: {
-        broadcast: { self: false }
-      }
-    });
+    channel = client.channel('music-db-v2');
 
-    // 1. Database table sync
+    // 1. Database table sync (selalu aktif untuk data, playlist, memori, profil)
     Object.values(T).forEach(table => {
       channel.on('postgres_changes', { event: '*', schema: 'public', table }, (payload) => {
         try { handleRemote(table, payload); } catch (e) { console.warn('[MusicDB] realtime handler error:', e); }
       });
     });
 
-    // 2. Realtime broadcast for Spotify Jam playback sync (instant WebSockets)
-    channel.on('broadcast', { event: 'playback_sync' }, ({ payload }) => {
-      if (payload && payload.senderDeviceId !== DEVICE_SESSION_ID && hooks.onPlaybackSync) {
-        try {
-          hooks.onPlaybackSync(payload);
-        } catch (e) {
-          console.warn('[MusicDB] onPlaybackSync error:', e);
-        }
-      }
-    });
-
-    // 3. Realtime presence to detect online devices
-    channel.on('presence', { event: 'sync' }, () => {
-      if (hooks.onPresenceSync) {
-        try {
-          const presences = channel.presenceState();
-          hooks.onPresenceSync(presences);
-        } catch (e) {}
-      }
-    });
-
     channel.subscribe(status => {
-      console.log('✦ [MusicDB] Realtime:', status);
-      if (status === 'SUBSCRIBED') {
-        const userState = hooks.getState ? hooks.getState() : {};
-        channel.track({
-          deviceId: DEVICE_SESSION_ID,
-          userName: userState.yourName || 'Partner',
-          onlineAt: Date.now()
-        });
-      }
+      console.log('✦ [MusicDB] DB Sync Realtime:', status);
     });
   }
 
@@ -782,6 +813,9 @@
     flushNow,
     isReady: () => ready,
     broadcastPlayback,
+    connectJamRoom,
+    leaveJamRoom,
+    getActiveJamRoomId: () => activeJamRoomId,
     getDeviceId: () => DEVICE_SESSION_ID
   };
 })();

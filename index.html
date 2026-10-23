@@ -542,15 +542,42 @@
                 Kamu dan pasangan terhubung dalam sesi musik yang sama. Tersinkronisasi real-time!
               </p>
 
-              <!-- Room Code & Quick Invite Bar -->
-              <div class="mt-4 flex flex-wrap items-center justify-center md:justify-start gap-2 text-xs">
-                <span class="text-white/80 text-[11px]">Kode Sesi:</span>
-                <span
-                  class="px-2.5 py-1 rounded-lg bg-white/25 font-mono font-bold tracking-wider text-white text-[11px]">LUV-2407</span>
-                <button onclick="copyInviteLink()"
-                  class="px-3 py-1 rounded-lg bg-white text-[#FA8072] font-bold hover:bg-[#FFF0F3] shadow-xs transition flex items-center gap-1.5 text-xs">
-                  <i class="fa-solid fa-copy"></i> Salin Link Jam
-                </button>
+              <!-- Room Code & Join/Leave Bar -->
+              <div id="jamRoomControlBox" class="mt-4 flex flex-wrap items-center justify-center md:justify-start gap-2.5 text-xs">
+                <!-- State 1: When connected to room -->
+                <div id="jamConnectedBar" class="flex flex-wrap items-center gap-2">
+                  <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/25 border border-white/30 font-mono font-bold text-white text-xs">
+                    <span class="w-2 h-2 rounded-full bg-emerald-300 animate-pulse"></span>
+                    Room: <span id="jamActiveRoomCode">LUV-2407</span>
+                  </span>
+                  <button onclick="copyInviteLink()"
+                    class="px-3 py-1.5 rounded-xl bg-white text-[#FA8072] font-bold hover:bg-[#FFF0F3] shadow-xs transition flex items-center gap-1.5 text-xs cursor-pointer">
+                    <i class="fa-solid fa-copy"></i> Salin Link
+                  </button>
+                  <button onclick="leaveCurrentJamRoom()"
+                    class="px-3 py-1.5 rounded-xl bg-white/20 hover:bg-white/30 text-white font-bold transition flex items-center gap-1.5 text-xs cursor-pointer"
+                    title="Keluar dari sesi berdua dan kembali ke mode pribadi">
+                    <i class="fa-solid fa-arrow-right-from-bracket"></i> Keluar Room
+                  </button>
+                </div>
+
+                <!-- State 2: When in private mode (not connected to room) -->
+                <div id="jamDisconnectedBar" class="hidden flex flex-wrap items-center gap-2">
+                  <div class="relative">
+                    <input id="inputJamRoomId" type="text" placeholder="ID ROOM (cth: LUV-2407)" maxlength="16"
+                      class="px-3.5 py-1.5 rounded-xl bg-white/25 border border-white/40 text-white placeholder-white/70 font-mono font-bold text-xs focus:outline-none focus:bg-white/35 uppercase w-48 shadow-inner"
+                      onkeydown="if(event.key === 'Enter') joinJamRoomFromInput()" />
+                  </div>
+                  <button onclick="joinJamRoomFromInput()"
+                    class="px-3.5 py-1.5 rounded-xl bg-white text-[#FA8072] font-bold hover:bg-[#FFF0F3] shadow-xs transition flex items-center gap-1 text-xs cursor-pointer">
+                    <i class="fa-solid fa-link"></i> Gabung Sesi
+                  </button>
+                  <button onclick="createRandomJamRoom()"
+                    class="px-3 py-1.5 rounded-xl bg-white/20 hover:bg-white/30 text-white font-bold transition text-xs cursor-pointer"
+                    title="Buat Room ID acak">
+                    + Buat Baru
+                  </button>
+                </div>
               </div>
             </div>
 
