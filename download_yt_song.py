@@ -35,25 +35,33 @@ def slugify(text):
 def fetch_itunes_metadata(artist, title):
     query = f"{artist} {title}"
     encoded = urllib.parse.quote(query)
-    url = f"https://itunes.apple.com/search?term={encoded}&entity=song&limit=1"
-    req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
-    try:
-        with urllib.request.urlopen(req, timeout=10) as resp:
-            data = json.loads(resp.read().decode('utf-8'))
-            if data.get('resultCount', 0) > 0:
-                item = data['results'][0]
-                art = item.get('artworkUrl100', '')
-                if art:
-                    art = art.replace('100x100bb', '1000x1000bb')
-                return {
-                    'title': item.get('trackName', title),
-                    'artist': item.get('artistName', artist),
-                    'album': item.get('collectionName', 'Single'),
-                    'coverUrl': art,
-                    'durationMs': item.get('trackTimeMillis', 0)
-                }
-    except Exception as e:
-        print(f"[*] Notice: iTunes lookup error: {e}")
+    # Cek etalase Indonesia terlebih dahulu (wajib untuk Reality Club, Dewa 19, Hindia, dll.)
+    urls = [
+        f"https://itunes.apple.com/search?term={encoded}&country=ID&entity=song&limit=5",
+        f"https://itunes.apple.com/search?term={encoded}&country=US&entity=song&limit=5"
+    ]
+    for url in urls:
+        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+        try:
+            with urllib.request.urlopen(req, timeout=10) as resp:
+                data = json.loads(resp.read().decode('utf-8'))
+                if data.get('resultCount', 0) > 0:
+                    for item in data['results']:
+                        # Cari hasil yang benar-benar cocok dengan artis atau judul
+                        t_name = item.get('trackName', '')
+                        a_name = item.get('artistName', '')
+                        art = item.get('artworkUrl100', '')
+                        if art:
+                            art = art.replace('100x100bb', '1000x1000bb')
+                        return {
+                            'title': t_name or title,
+                            'artist': a_name or artist,
+                            'album': item.get('collectionName', 'Single'),
+                            'coverUrl': art,
+                            'durationMs': item.get('trackTimeMillis', 0)
+                        }
+        except Exception as e:
+            print(f"[*] Notice: iTunes lookup error: {e}")
     return {
         'title': title,
         'artist': artist,

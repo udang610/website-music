@@ -45,19 +45,19 @@ def get_itunes_cover(title, artist):
     clean_a = re.sub(r'\[.*?\]|\(.*?\)', '', artist).strip()
     query = f"{clean_a} {clean_t}"
     encoded = urllib.parse.quote(query)
-    url = f"https://itunes.apple.com/search?term={encoded}&entity=song&limit=1"
-    
-    req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
-    try:
-        with urllib.request.urlopen(req, timeout=8) as res:
-            data = json.loads(res.read().decode('utf-8'))
-            if data.get('resultCount', 0) > 0:
-                item = data['results'][0]
-                art = item.get('artworkUrl100', '')
-                if art:
-                    return art.replace('100x100bb.jpg', '1000x1000bb.jpg')
-    except Exception as e:
-        pass
+    for country in ['ID', 'US']:
+        url = f"https://itunes.apple.com/search?term={encoded}&country={country}&entity=song&limit=3"
+        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+        try:
+            with urllib.request.urlopen(req, timeout=8) as res:
+                data = json.loads(res.read().decode('utf-8'))
+                if data.get('resultCount', 0) > 0:
+                    for item in data['results']:
+                        art = item.get('artworkUrl100', '')
+                        if art:
+                            return art.replace('100x100bb.jpg', '1000x1000bb.jpg').replace('100x100bb', '1000x1000bb')
+        except Exception as e:
+            pass
     return None
 
 def download_file(url, target_path):

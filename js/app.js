@@ -6,6 +6,12 @@ const STORAGE_KEY = 'romantic_spotify_v15_all_covers_synced';
 
 // Verified Genuine Studio Audio Tracks stored locally
 const realAudioTracks = {
+  'a night to remember': 'audio/beabadoobee_a_night_to_remember.m4a',
+  'kiss me more': 'audio/doja_cat_kiss_me_more.m4a',
+  'snooze': 'audio/sza_snooze.m4a',
+  'always': 'audio/daniel_caesar_always.m4a',
+  'thank you for hijacking my existential crisis': 'audio/reality_club_thank_you_for_hijacking_my_existential_crisis.m4a',
+  'close to you': 'audio/reality_club_close_to_you.m4a',
   'from the start': 'audio/laufey_from_the_start.m4a',
   'last night on earth': 'audio/green_day_last_night_on_earth.m4a',
   'apocalypse': 'audio/cigarettes_after_sex_apocalypse.m4a',
@@ -31,6 +37,12 @@ const realAudioTracks = {
 
 // Official 1000x1000 HD Album Covers from Apple Music / iTunes
 const officialCovers = {
+  'a night to remember': 'images/covers/beabadoobee_a_night_to_remember.jpg',
+  'kiss me more': 'images/covers/doja_cat_kiss_me_more.jpg',
+  'snooze': 'images/covers/sza_snooze.jpg',
+  'always': 'images/covers/daniel_caesar_always.jpg',
+  'thank you for hijacking my existential crisis': 'images/covers/reality_club_thank_you_for_hijacking_my_existential_crisis.jpg',
+  'close to you': 'images/covers/reality_club_close_to_you.jpg',
   'from the start': 'images/covers/laufey_from_the_start.jpg',
   'last night on earth': 'images/covers/green_day_last_night_on_earth.jpg',
   'apocalypse': 'images/covers/cigarettes_after_sex_apocalypse.jpg',
@@ -3352,12 +3364,32 @@ audio.addEventListener('loadedmetadata', () => {
 
 audio.addEventListener('ended', () => {
   if (currentEngine === 'html5') {
+    const track = getPlayingTrack();
+    const isSnippet = track && track.audioUrl && (track.audioUrl.includes('audio-ssl') || track.audioUrl.includes('itunes.apple.com'));
+    if (isSnippet) {
+      isPlaying = false;
+      updatePlayButtons();
+      showToastNotification('Cuplikan resmi 30 detik selesai. Jalankan script python untuk audio full! 🎵', 'info');
+      return;
+    }
     if (isRepeat) {
       audio.currentTime = 0;
       playAudio();
     } else {
       nextTrack();
     }
+  }
+});
+
+audio.addEventListener('error', (e) => {
+  console.warn('HTML5 Audio error event:', e);
+  const track = getPlayingTrack();
+  if (track && track.youtubeId && isYtReady && ytPlayer && ytPlayer.loadVideoById) {
+    currentEngine = 'youtube';
+    ytPlayer.loadVideoById(track.youtubeId);
+  } else {
+    isPlaying = false;
+    updatePlayButtons();
   }
 });
 
@@ -4735,8 +4767,14 @@ function saveNewSong(e) {
   }
 
   let finalAudioUrl = audioInput;
-  if (!finalYoutubeId && (!finalAudioUrl || finalAudioUrl.includes('audio-ssl.itunes.apple.com'))) {
-    finalAudioUrl = defaultFullAudioPool[Math.floor(Math.random() * defaultFullAudioPool.length)];
+  if (!finalYoutubeId && typeof realAudioTracks !== 'undefined' && realAudioTracks) {
+    const lowT = title.toLowerCase();
+    for (const [key, localPath] of Object.entries(realAudioTracks)) {
+      if (lowT.includes(key)) {
+        finalAudioUrl = localPath;
+        break;
+      }
+    }
   }
 
   const today = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
