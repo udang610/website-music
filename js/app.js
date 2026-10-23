@@ -1623,18 +1623,22 @@ let syncModeActive = true;
 
 // Player Dual Engines
 const audio = document.getElementById('audioPlayer');
-let currentEngine = 'youtube'; // 'youtube' or 'html5'
+let currentEngine = 'html5'; // default to html5 for instant local studio audio
 let ytPlayer = null;
 let isYtReady = false;
 let ytScrubTimer = null;
 
 // ================= YOUTUBE REAL AUDIO ENGINE =================
 window.onYouTubeIframeAPIReady = function () {
+  const curTrack = (typeof getPlayingTrack === 'function') ? getPlayingTrack() : null;
+  const initialYtId = (curTrack && curTrack.youtubeId) ? curTrack.youtubeId : '';
+
   ytPlayer = new YT.Player('ytPlayer', {
     height: '10',
     width: '10',
-    videoId: '1-xGerv5FOk',
+    videoId: initialYtId,
     playerVars: {
+      autoplay: 0,
       playsinline: 1,
       controls: 0,
       disablekb: 1,
@@ -1646,6 +1650,10 @@ window.onYouTubeIframeAPIReady = function () {
       onReady: () => {
         isYtReady = true;
         console.log('YouTube Real Audio Engine ready');
+        const t = (typeof getPlayingTrack === 'function') ? getPlayingTrack() : null;
+        if (t && t.youtubeId && ytPlayer && ytPlayer.cueVideoById) {
+          try { ytPlayer.cueVideoById(t.youtubeId); } catch (e) {}
+        }
       },
       onStateChange: (event) => {
         if (event.data === YT.PlayerState.PLAYING) {
@@ -2078,6 +2086,11 @@ function initSupabaseSync() {
       if (Array.isArray(cloudState.playlists) && cloudState.playlists.length > 0) {
         const special = (state.playlists || []).filter(p => p.isLikedSpecial || p.id === 'pl-liked');
         state.playlists = [...cloudState.playlists, ...special];
+
+        // Pulihkan history lagu terakhir sesuai urutan playlist cloud terbaru jika player sedang idle
+        if (!isPlaying && typeof restoreLastPlayedTrack === 'function') {
+          restoreLastPlayedTrack(false);
+        }
       }
 
       // Bersihkan catatan preset lama yang masih tersimpan di cloud, lalu sinkronkan balik
@@ -2236,6 +2249,53 @@ function openLikedSongs() {
   navigateTo('playlist', 'pl-liked');
 }
 
+// Pulihkan history lagu terakhir yang benar-benar pernah dimainkan user
+function restoreLastPlayedTrack(autoPlay = false) {
+  try {
+    const rawLast = localStorage.getItem('romantic_music_last_played');
+    if (!rawLast) return false;
+    const last = JSON.parse(rawLast);
+    if (!last) return false;
+
+    // Cari playlist tujuan
+    let targetPl = null;
+    if (last.playlistId) {
+      if (last.playlistId === 'pl-liked') {
+        targetPl = getLikedSongsPlaylist();
+      } else {
+        targetPl = (state.playlists || []).find(p => p.id === last.playlistId);
+      }
+    }
+    if (!targetPl) {
+      targetPl = (state.playlists && state.playlists[0]) || defaultState.playlists[0];
+    }
+    if (!targetPl || !targetPl.tracks || !targetPl.tracks.length) return false;
+
+    // Cari track di dalam playlist target: cek ID -> cek Title -> cek numeric index
+    let tIdx = -1;
+    if (last.trackId) {
+      tIdx = targetPl.tracks.findIndex(t => t.id === last.trackId);
+    }
+    if (tIdx === -1 && last.trackTitle) {
+      const lowT = last.trackTitle.toLowerCase().trim();
+      tIdx = targetPl.tracks.findIndex(t => t.title && t.title.toLowerCase().trim() === lowT);
+    }
+    if (tIdx === -1 && typeof last.trackIndex === 'number' && targetPl.tracks[last.trackIndex]) {
+      tIdx = last.trackIndex;
+    }
+
+    if (tIdx !== -1) {
+      currentPlayingPlaylistId = targetPl.id;
+      state.activePlaylistId = targetPl.id;
+      loadTrack(tIdx, autoPlay, targetPl.id);
+      return true;
+    }
+  } catch (e) {
+    console.warn('[MusicDB] Error restoring last played track:', e);
+  }
+  return false;
+}
+
 // ================= INITIALIZATION =================
 window.addEventListener('DOMContentLoaded', () => {
   // Check persisted login / unlock session
@@ -2252,40 +2312,10 @@ window.addEventListener('DOMContentLoaded', () => {
   hydrateUI();
   navigateTo('home');
 
-  // Detect and restore last played song
-  let restored = false;
-  try {
-    const rawLast = localStorage.getItem('romantic_music_last_played');
-    if (rawLast) {
-      const last = JSON.parse(rawLast);
-      if (last && last.playlistId) {
-        const pl = state.playlists.find(p => p.id === last.playlistId) || state.playlists[0];
-        if (pl && pl.tracks && pl.tracks.length > 0) {
-          let tIdx = -1;
-          if (last.trackId) {
-            tIdx = pl.tracks.findIndex(t => t.id === last.trackId);
-          }
-          if (tIdx === -1 && last.trackTitle) {
-            tIdx = pl.tracks.findIndex(t => t.title && t.title.toLowerCase().trim() === last.trackTitle.toLowerCase().trim());
-          }
-          if (tIdx === -1 && typeof last.trackIndex === 'number' && pl.tracks[last.trackIndex]) {
-            tIdx = last.trackIndex;
-          }
-          if (tIdx !== -1) {
-            currentPlayingPlaylistId = pl.id;
-            state.activePlaylistId = pl.id;
-            loadTrack(tIdx, false, pl.id);
-            restored = true;
-          }
-        }
-      }
-    }
-  } catch (e) {
-    console.warn('Error restoring last played track:', e);
-  }
-
-  if (!restored) {
-    loadTrack(0, false);
+  // Pulihkan history lagu terakhir
+  const restored = restoreLastPlayedTrack(false);
+  if (!restored && state.playlists && state.playlists[0] && state.playlists[0].tracks && state.playlists[0].tracks.length > 0) {
+    loadTrack(0, false, state.playlists[0].id);
   }
 
   renderJamChat();
@@ -2835,10 +2865,10 @@ function renderTracklist() {
   container.innerHTML = filtered.map((track, displayIdx) => {
     const currentPlaying = getPlayingTrack();
     const isPlayingThisPlaylist = currentPlayingPlaylistId === state.activePlaylistId;
-    const isCurrent = isPlayingThisPlaylist && (
-      (currentPlaying && (currentPlaying.id === track.id || currentPlaying.title.toLowerCase() === track.title.toLowerCase())) ||
-      track.originalIndex === currentPlayingIndex
-    );
+    const isCurrent = isPlayingThisPlaylist && Boolean(currentPlaying && (
+      (track.id && currentPlaying.id === track.id) ||
+      (track.title && currentPlaying.title && track.title.toLowerCase().trim() === currentPlaying.title.toLowerCase().trim())
+    ));
     return `
       <div onclick="selectTrackFromList(${track.originalIndex})"
         class="track-row group grid grid-cols-12 gap-3 items-center px-3 py-2.5 rounded-xl cursor-pointer transition ${isCurrent ? 'bg-[#FFE4E9]/70 text-[#E85D75]' : 'hover:bg-[#FFF5F7]'}">
@@ -3142,14 +3172,21 @@ function updateActiveTrackUI() {
 }
 
 function selectTrackFromList(index) {
+  const tracks = getActiveTracks();
+  const targetTrack = tracks[index];
+  const currentPlaying = getPlayingTrack();
+  const isSameTrack = Boolean(currentPlaying && targetTrack && (
+    (targetTrack.id && currentPlaying.id === targetTrack.id) ||
+    (targetTrack.title && currentPlaying.title && targetTrack.title.toLowerCase().trim() === currentPlaying.title.toLowerCase().trim())
+  ));
   const isPlayingThisPlaylist = currentPlayingPlaylistId === state.activePlaylistId;
-  if (isPlayingThisPlaylist && index === currentPlayingIndex) {
+
+  if (isPlayingThisPlaylist && isSameTrack && isPlaying) {
     togglePlay();
   } else {
     loadTrack(index, true, state.activePlaylistId);
-    const tracks = getActiveTracks();
-    if (syncModeActive && tracks[index]) {
-      broadcastJamSystemNote(`🎧 Kamu memutar "${tracks[index].title}" untuk didengarkan berdua`);
+    if (syncModeActive && targetTrack) {
+      broadcastJamSystemNote(`🎧 Kamu memutar "${targetTrack.title}" untuk didengarkan berdua`);
     }
   }
   // Buka tampilan piringan hitam estetik secara detail jika di mobile
