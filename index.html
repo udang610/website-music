@@ -1292,15 +1292,15 @@
             <i class="fa-solid fa-magnifying-glass text-[#FA8072]"></i>
             <span>Cari Lagu Online & Cover Official</span>
           </span>
-          <span class="text-[10px] px-2 py-0.5 rounded-full bg-white text-[#FA8072] font-bold border border-[#FFD2DC]">
-            iTunes & Apple Music HD
+          <span class="text-[10px] px-2.5 py-0.5 rounded-full bg-white text-[#FA8072] font-bold border border-[#FFD2DC]">
+            Lengkap: Indonesia & Global (HD)
           </span>
         </label>
         <div class="flex gap-2">
           <div class="relative flex-1">
             <i class="fa-solid fa-music absolute left-3.5 top-1/2 -translate-y-1/2 text-[#9A737C] text-xs"></i>
             <input id="itunesSearchQuery" type="text"
-              placeholder="Ketik judul lagu atau artis (cth: Dewa 19, Sheila On 7, New West, Bruno Mars)..."
+              placeholder="Cari lagu atau artis (cth: Reality Club, Dewa 19, Taylor Swift, Hindia)..."
               onkeydown="if(event.key==='Enter'){event.preventDefault(); searchItunesSong();}"
               class="w-full pl-9 pr-3.5 py-2.5 rounded-xl bg-white border border-[#FFD2DC] text-xs text-[#3B2328] placeholder-[#9A737C] focus:outline-none focus:border-[#FA8072] shadow-xs" />
           </div>
@@ -1469,7 +1469,7 @@
             <i class="fa-solid fa-xmark text-sm"></i>
           </button>
 
-          <!-- Dual Avatars -->
+          <!-- Dual Avatars with Online Status Indicator -->
           <div class="flex items-center justify-center gap-8 sm:gap-12 my-3">
             <!-- Your Avatar -->
             <div class="flex flex-col items-center">
@@ -1477,6 +1477,9 @@
                 <img id="showcaseYourAvatar" src="images/spotify_covers/me.jpeg"
                   class="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover border-4 border-white shadow-md"
                   alt="You" />
+                <span id="showcaseYourOnlineDot"
+                  class="absolute top-0 right-0 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-white shadow-xs"
+                  title="Sedang Membuka Web"></span>
                 <span
                   class="absolute bottom-0 right-0 w-5 h-5 rounded-full bg-[#FA8072] border-2 border-white flex items-center justify-center text-[10px] text-white">
                   <i class="fa-solid fa-music"></i>
@@ -1485,6 +1488,10 @@
               <p id="showcaseYourName" class="text-xs font-extrabold text-[#3B2328] mt-1.5 truncate max-w-[100px]">
                 Dhafin</p>
               <span id="showcaseYourRole" class="text-[10px] text-[#9A737C]">Curator</span>
+              <span id="showcaseYourStatusBadge"
+                class="inline-flex items-center gap-1 mt-1 text-[9px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Online
+              </span>
             </div>
 
             <!-- Partner Avatar -->
@@ -1494,6 +1501,9 @@
                   src="images/spotify_covers/ndey.jpeg"
                   class="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover border-4 border-white shadow-md"
                   alt="Partner" />
+                <span id="showcasePartnerOnlineDot"
+                  class="absolute top-0 right-0 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-white shadow-xs"
+                  title="Sedang Membuka Web"></span>
                 <span
                   class="absolute bottom-0 right-0 w-5 h-5 rounded-full bg-[#E85D75] border-2 border-white flex items-center justify-center text-[10px] text-white">
                   <i class="fa-solid fa-heart"></i>
@@ -1502,6 +1512,10 @@
               <p id="showcasePartnerName" class="text-xs font-extrabold text-[#3B2328] mt-1.5 truncate max-w-[100px]">
                 Nadia</p>
               <span id="showcasePartnerRole" class="text-[10px] text-[#9A737C]">Beloved</span>
+              <span id="showcasePartnerStatusBadge"
+                class="inline-flex items-center gap-1 mt-1 text-[9px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Online
+              </span>
             </div>
           </div>
         </div>

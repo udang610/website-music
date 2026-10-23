@@ -765,9 +765,38 @@
       });
     });
 
+    // 2. Global presence sync: pantau apakah Dhafin / Nadia sedang membuka web
+    channel.on('presence', { event: 'sync' }, () => {
+      if (hooks.onGlobalPresenceSync) {
+        try {
+          const presences = channel.presenceState();
+          hooks.onGlobalPresenceSync(presences);
+        } catch (e) {
+          console.warn('[MusicDB] onGlobalPresenceSync error:', e);
+        }
+      }
+    });
+
     channel.subscribe(status => {
       console.log('✦ [MusicDB] DB Sync Realtime:', status);
+      if (status === 'SUBSCRIBED') {
+        trackPresence();
+      }
     });
+  }
+
+  function trackPresence(customUserId) {
+    if (!channel || !ready) return;
+    try {
+      const curUser = customUserId || localStorage.getItem('romantic_current_user') || 'dhafin';
+      channel.track({
+        deviceId: DEVICE_SESSION_ID,
+        userId: curUser.toLowerCase(),
+        onlineAt: Date.now()
+      });
+    } catch (e) {
+      console.warn('[MusicDB] trackPresence error:', e);
+    }
   }
 
   // ---------------- init ----------------
@@ -847,6 +876,7 @@
     connectJamRoom,
     leaveJamRoom,
     getActiveJamRoomId: () => activeJamRoomId,
+    trackPresence,
     getDeviceId: () => DEVICE_SESSION_ID
   };
 })();

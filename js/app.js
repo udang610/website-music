@@ -2135,6 +2135,11 @@ function initSupabaseSync() {
         handlePresenceSync(presences);
       }
     },
+    onGlobalPresenceSync: (presences) => {
+      if (typeof handleGlobalPresenceSync === 'function') {
+        handleGlobalPresenceSync(presences);
+      }
+    },
     onLocalMediaUploaded: () => {
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
@@ -3962,6 +3967,92 @@ function handlePresenceSync(presences) {
   }
 }
 
+let presenceStateMap = {
+  dhafin: false,
+  nadia: false
+};
+
+function handleGlobalPresenceSync(presences) {
+  const activeUserIds = new Set();
+  if (presences && typeof presences === 'object') {
+    Object.values(presences).forEach(deviceList => {
+      if (Array.isArray(deviceList)) {
+        deviceList.forEach(dev => {
+          if (dev && dev.userId) {
+            activeUserIds.add(String(dev.userId).toLowerCase().trim());
+          }
+        });
+      }
+    });
+  }
+
+  // Pengguna di perangkat saat ini selalu Online karena sedang aktif membuka web
+  const myUserId = (localStorage.getItem('romantic_current_user') || 'dhafin').toLowerCase().trim();
+  activeUserIds.add(myUserId);
+
+  presenceStateMap.dhafin = activeUserIds.has('dhafin');
+  presenceStateMap.nadia = activeUserIds.has('nadia');
+
+  updatePresenceUI();
+}
+
+function updatePresenceUI() {
+  const currentAcc = getCurrentAccount();
+  const yourId = (currentAcc.id || 'dhafin').toLowerCase();
+  const partnerId = (currentAcc.partnerId || 'nadia').toLowerCase();
+
+  const isYourOnline = !!presenceStateMap[yourId];
+  const isPartnerOnline = !!presenceStateMap[partnerId];
+
+  // 1. Update Profile Showcase Modal (Foto 2)
+  const yourDot = document.getElementById('showcaseYourOnlineDot');
+  const yourBadge = document.getElementById('showcaseYourStatusBadge');
+  if (yourDot) {
+    yourDot.className = isYourOnline
+      ? 'absolute top-0 right-0 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-white shadow-xs'
+      : 'absolute top-0 right-0 w-3.5 h-3.5 rounded-full bg-slate-300 border-2 border-white shadow-xs';
+    yourDot.title = isYourOnline ? 'Sedang Membuka Web' : 'Offline';
+  }
+  if (yourBadge) {
+    yourBadge.className = isYourOnline
+      ? 'inline-flex items-center gap-1 mt-1 text-[9px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200'
+      : 'inline-flex items-center gap-1 mt-1 text-[9px] font-semibold text-slate-500 bg-slate-50 px-2 py-0.5 rounded-full border border-slate-200';
+    yourBadge.innerHTML = isYourOnline
+      ? '<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Online'
+      : '<span class="w-1.5 h-1.5 rounded-full bg-slate-300"></span> Offline';
+  }
+
+  const partnerDot = document.getElementById('showcasePartnerOnlineDot');
+  const partnerBadge = document.getElementById('showcasePartnerStatusBadge');
+  if (partnerDot) {
+    partnerDot.className = isPartnerOnline
+      ? 'absolute top-0 right-0 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-white shadow-xs'
+      : 'absolute top-0 right-0 w-3.5 h-3.5 rounded-full bg-slate-300 border-2 border-white shadow-xs';
+    partnerDot.title = isPartnerOnline ? 'Sedang Membuka Web' : 'Offline';
+  }
+  if (partnerBadge) {
+    partnerBadge.className = isPartnerOnline
+      ? 'inline-flex items-center gap-1 mt-1 text-[9px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200'
+      : 'inline-flex items-center gap-1 mt-1 text-[9px] font-semibold text-slate-500 bg-slate-50 px-2 py-0.5 rounded-full border border-slate-200';
+    partnerBadge.innerHTML = isPartnerOnline
+      ? '<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Online'
+      : '<span class="w-1.5 h-1.5 rounded-full bg-slate-300"></span> Offline';
+  }
+
+  // 2. Update mini partner status in Top Navbar
+  const miniStatus = document.getElementById('miniPartnerStatusName');
+  if (miniStatus) {
+    miniStatus.innerHTML = `${currentAcc.partnerName} ${isPartnerOnline ? '<span class="text-emerald-500 text-[10px] font-bold">• Online</span>' : '<span class="text-[#9A737C] text-[10px] font-medium">• Offline</span>'}`;
+  }
+}
+
+// Global presence heartbeat: laporkan ke cloud setiap 25 detik
+setInterval(() => {
+  if (window.MusicDB && typeof window.MusicDB.trackPresence === 'function') {
+    window.MusicDB.trackPresence();
+  }
+}, 25000);
+
 // Unlock audio context on first touch for mobile devices
 (function initMobileAudioUnlock() {
   const unlock = () => {
@@ -4246,22 +4337,41 @@ async function searchItunesSong() {
   if (!query) return;
 
   const resultsBox = document.getElementById('itunesResultsList');
-  resultsBox.innerHTML = '<div class="p-4 text-center text-xs text-[#9A737C]"><i class="fa-solid fa-spinner animate-spin text-[#FA8072] mr-1.5"></i> Mencari lagu & cover official...</div>';
+  resultsBox.innerHTML = '<div class="p-4 text-center text-xs text-[#9A737C]"><i class="fa-solid fa-spinner animate-spin text-[#FA8072] mr-1.5"></i> Mencari dari seluruh katalog musik official (Indonesia & Global)...</div>';
   resultsBox.classList.remove('hidden');
 
   try {
     const q = encodeURIComponent(query);
-    const res = await fetch(`https://itunes.apple.com/search?term=${q}&entity=song&limit=8`);
-    const data = await res.json();
+    // Cari secara paralel di etalase Indonesia (sangat lengkap untuk Reality Club, Pamungkas, Dewa 19, Hindia, dll.)
+    // DAN etalase Global (untuk artis barat/mancanegara) secara simultan
+    const [resId, resGlobal] = await Promise.allSettled([
+      fetch(`https://itunes.apple.com/search?term=${q}&entity=song&country=ID&limit=30`).then(r => r.json()),
+      fetch(`https://itunes.apple.com/search?term=${q}&entity=song&country=US&limit=25`).then(r => r.json())
+    ]);
 
-    if (!data.results || data.results.length === 0) {
-      resultsBox.innerHTML = '<div class="p-4 text-center text-xs text-[#9A737C]">Lagu tidak ditemukan. Coba ketik judul / nama artis lain atau upload file MP3 Anda di bawah.</div>';
+    const resultsId = (resId.status === 'fulfilled' && resId.value && Array.isArray(resId.value.results)) ? resId.value.results : [];
+    const resultsUs = (resGlobal.status === 'fulfilled' && resGlobal.value && Array.isArray(resGlobal.value.results)) ? resGlobal.value.results : [];
+
+    const combined = [...resultsId, ...resultsUs];
+    const seen = new Set();
+    const finalResults = [];
+
+    for (const item of combined) {
+      if (!item || !item.trackName) continue;
+      const key = `${(item.trackName || '').toLowerCase().trim()}::${(item.artistName || '').toLowerCase().trim()}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      finalResults.push(item);
+    }
+
+    if (finalResults.length === 0) {
+      resultsBox.innerHTML = '<div class="p-4 text-center text-xs text-[#9A737C]">Lagu tidak ditemukan. Coba ketik judul atau nama artis lain, atau gunakan opsi manual di bawah.</div>';
       return;
     }
 
-    currentItunesSearchResults = data.results;
+    currentItunesSearchResults = finalResults;
 
-    resultsBox.innerHTML = data.results.map((item, idx) => {
+    resultsBox.innerHTML = finalResults.map((item, idx) => {
       const hdCover = item.artworkUrl100 ? item.artworkUrl100.replace('100x100bb', '600x600bb') : 'images/spotify_covers/jakarta.jpg';
       const dur = formatDurationMs(item.trackTimeMillis);
       const safeTitle = (item.trackName || 'Track').replace(/"/g, '&quot;');
@@ -4354,7 +4464,8 @@ async function quickAddSongDirectly(idx, btn) {
 
     // Temporary loading indicator on button
     if (buttonEl) {
-      buttonEl.innerHTML = '<i class="fa-solid fa-spinner animate-spin text-xs"></i> Memproses...';
+      buttonEl.innerHTML = '<i class="fa-solid fa-cloud-arrow-down animate-bounce text-xs"></i> Menyimpan ke DB...';
+      buttonEl.disabled = true;
     }
 
     const ultraHdCover = item.artworkUrl100 ? item.artworkUrl100.replace('100x100bb', '1000x1000bb') : 'images/spotify_covers/jakarta.jpg';
@@ -4412,7 +4523,7 @@ async function quickAddSongDirectly(idx, btn) {
       }
     }
 
-    // 5. CRITICAL FOR MOBILE: Always provide audioUrl fallback so mobile devices can play HTML5 audio immediately without being blocked by YouTube iframe restrictions!
+    // 5. Fallback preview stream
     if (!matchedAudioUrl && item.previewUrl) {
       matchedAudioUrl = item.previewUrl;
     }
@@ -4435,7 +4546,17 @@ async function quickAddSongDirectly(idx, btn) {
 
     targetPl.tracks.push(trackObj);
     saveState();
-    triggerSupabaseSync();
+
+    // Otomatis terdownload & tersimpan langsung ke database Supabase
+    if (window.MusicDB && typeof window.MusicDB.flushNow === 'function') {
+      try {
+        await window.MusicDB.flushNow();
+      } catch (dbErr) {
+        console.warn('[MusicDB] direct flush notice:', dbErr);
+      }
+    } else {
+      triggerSupabaseSync();
+    }
 
     // Immediate UI reflection in the background
     if (currentView === 'playlist' && state.activePlaylistId === targetPl.id) {
@@ -4448,12 +4569,12 @@ async function quickAddSongDirectly(idx, btn) {
 
     // Button feedback state
     if (buttonEl) {
-      buttonEl.innerHTML = '<i class="fa-solid fa-check text-xs"></i> Ditambahkan';
+      buttonEl.innerHTML = '<i class="fa-solid fa-check text-xs"></i> Tersimpan di Database';
       buttonEl.className = 'px-3 py-1.5 rounded-full bg-[#1DB954] text-white text-[11px] font-bold flex items-center gap-1 shadow-xs cursor-default';
       buttonEl.disabled = true;
     }
 
-    showToastNotification(`✓ "${songTitle}" berhasil ditambahkan ke "${targetPl.title}"! 🎵`, 'success');
+    showToastNotification(`✓ "${songTitle}" berhasil diunduh & tersimpan di database! 🎵`, 'success');
   } catch (err) {
     console.error('Error adding song directly:', err);
     showToastNotification('Terjadi kendala: ' + err.message, 'error');
@@ -4649,6 +4770,14 @@ function saveNewSong(e) {
 
   activePl.tracks.push(newTrack);
   saveState();
+
+  // Otomatis tersimpan langsung ke database Supabase
+  if (window.MusicDB && typeof window.MusicDB.flushNow === 'function') {
+    window.MusicDB.flushNow().catch(e => console.warn('[MusicDB] manual add flush notice:', e));
+  } else {
+    triggerSupabaseSync();
+  }
+
   hydrateUI();
   closeAddSongModal();
 
@@ -4745,6 +4874,11 @@ function populateProfileShowcaseView() {
   if (pinText) pinText.textContent = 'Lihat';
   const pinIcon = document.getElementById('showcasePinIcon');
   if (pinIcon) pinIcon.className = 'fa-regular fa-eye';
+
+  // Pastikan indikator status online Dhafin & Nadia terupdate
+  if (typeof updatePresenceUI === 'function') {
+    updatePresenceUI();
+  }
 }
 
 function toggleShowcasePin() {
