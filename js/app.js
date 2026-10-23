@@ -1597,6 +1597,7 @@ function applyAccountIdentity(account) {
   } catch (e) { }
 
   if (typeof hydrateUI === 'function') hydrateUI();
+  if (currentView === 'home' && typeof renderHomeView === 'function') renderHomeView();
   if (typeof updateMainJamView === 'function') updateMainJamView();
   if (typeof populateProfileShowcaseView === 'function') populateProfileShowcaseView();
 }
@@ -2075,13 +2076,14 @@ function initSupabaseSync() {
     applyCloudState: (cloudState) => {
       if (!cloudState) return;
       if (cloudState.pinCode !== undefined) state.pinCode = cloudState.pinCode;
-      if (cloudState.yourName !== undefined) state.yourName = cloudState.yourName;
-      if (cloudState.partnerName !== undefined) state.partnerName = cloudState.partnerName;
-      if (cloudState.yourAvatar !== undefined) state.yourAvatar = cloudState.yourAvatar;
-      if (cloudState.partnerAvatar !== undefined) state.partnerAvatar = cloudState.partnerAvatar;
       if (cloudState.loveNote !== undefined) state.loveNote = cloudState.loveNote;
       if (Array.isArray(cloudState.polaroidMemories)) state.polaroidMemories = cloudState.polaroidMemories;
       if (Array.isArray(cloudState.jamMessages)) state.jamMessages = cloudState.jamMessages;
+
+      // Jaga identitas user yang sedang aktif di browser ini (Dhafin / Nadia) agar tidak tertimpa
+      if (typeof getCurrentAccount === 'function' && typeof applyAccountIdentity === 'function') {
+        applyAccountIdentity(getCurrentAccount());
+      }
 
       if (Array.isArray(cloudState.playlists) && cloudState.playlists.length > 0) {
         const special = (state.playlists || []).filter(p => p.isLikedSpecial || p.id === 'pl-liked');
@@ -2309,6 +2311,12 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   } catch (e) { }
 
+  // Pulihkan identitas akun aktif (Dhafin / Nadia)
+  const currentAcc = (typeof getCurrentAccount === 'function') ? getCurrentAccount() : null;
+  if (currentAcc && typeof applyAccountIdentity === 'function') {
+    applyAccountIdentity(currentAcc);
+  }
+
   hydrateUI();
   navigateTo('home');
 
@@ -2492,9 +2500,12 @@ function renderHomeView() {
   else if (hr >= 11 && hr < 15) greet = 'Selamat Siang';
   else if (hr >= 15 && hr < 19) greet = 'Selamat Sore';
 
+  const currentAcc = (typeof getCurrentAccount === 'function') ? getCurrentAccount() : null;
+  const userName = currentAcc ? currentAcc.name : (state.yourName || 'Sayang');
+
   const greetingEl = document.getElementById('homeGreetingTitle');
   if (greetingEl) {
-    greetingEl.textContent = `${greet}, ${state.partnerName}`;
+    greetingEl.textContent = `${greet}, ${userName}`;
   }
 
   renderHomePlaylistsGrid();
