@@ -53,7 +53,7 @@ const officialCovers = {
   'terbuang dalam waktu': 'images/covers/terbuang_dalam_waktu.jpg',
   'best part': 'images/covers/best_part.jpg',
   'mistikus cinta': 'images/covers/mistikus_cinta.jpg',
-  'dua sejoli': 'images/covers/dua_sejoli.jpg',
+  'dua sejoli': 'images/covers/dewa19_dua_sejoli.jpg',
   'i wanna be yours': 'images/covers/i_wanna_be_yours.jpg',
   'sialan': 'images/covers/sialan.jpg',
   'back to friends': 'images/covers/back_to_friends.jpg',
@@ -1939,7 +1939,7 @@ function loadState() {
               dateAdded: 'Feb 25, 2025',
               duration: '5:26',
               liked: true,
-              cover: 'images/covers/dua_sejoli.jpg',
+              cover: 'images/covers/dewa19_dua_sejoli.jpg',
               audioUrl: 'audio/dewa19_dua_sejoli.m4a',
               youtubeId: 'IU_v67PFnqk'
             });
@@ -1958,6 +1958,10 @@ function loadState() {
               if (lowTitle.includes(key)) {
                 t.cover = covPath;
               }
+            }
+            if (lowTitle.includes('dua sejoli')) {
+              t.cover = 'images/covers/dewa19_dua_sejoli.jpg';
+              t.album = 'Bintang Lima';
             }
             if (lowTitle.includes('atlantis')) {
               t.youtubeId = 'gVAy3IZiL0s';
@@ -2346,6 +2350,9 @@ window.addEventListener('DOMContentLoaded', () => {
   checkUrlPlayParam();
   initSupabaseSync();
   initJamRoomSession();
+  if (typeof setPolaroidStyle === 'function') {
+    setPolaroidStyle(currentPolaroidStyle, false);
+  }
 });
 
 // Fetch HD album covers without touching audio streams
@@ -3160,9 +3167,9 @@ function updateActiveTrackUI() {
   renderMemoryNote(track);
 
   // Polaroid Modal
-  document.getElementById('polaroidImg').src = track.cover;
-  document.getElementById('polaroidTitle').textContent = `${track.title} — ${track.artist}`;
-  document.getElementById('polaroidMemory').textContent = `"${track.memory || 'Every beat reminds me of you ✦'}"`;
+  if (typeof updatePolaroidModal === 'function') {
+    updatePolaroidModal(track);
+  }
 
   // Like status
   const likeIcon = track.liked ? '<i class="fa-solid fa-heart text-[#FF4D6D]"></i>' : '<i class="fa-regular fa-heart text-white"></i>';
@@ -5245,10 +5252,103 @@ function closeLoveNoteModal() {
   document.getElementById('loveNoteModal').classList.remove('flex');
 }
 
+// ================= POLAROID CARD & STYLE SYSTEM =================
+let currentPolaroidStyle = 'classic';
+try {
+  const savedStyle = localStorage.getItem('romantic_polaroid_style');
+  if (savedStyle) currentPolaroidStyle = savedStyle;
+} catch (e) { }
+
+function setPolaroidStyle(styleName, save = true) {
+  const allowed = ['classic', 'vintage', 'blush', 'noir', 'scrapbook'];
+  if (!allowed.includes(styleName)) styleName = 'classic';
+  currentPolaroidStyle = styleName;
+  if (save) {
+    try { localStorage.setItem('romantic_polaroid_style', styleName); } catch (e) { }
+  }
+
+  const card = document.getElementById('polaroidCard');
+  if (card) {
+    allowed.forEach(s => card.classList.remove(`polaroid-style-${s}`));
+    card.classList.add(`polaroid-style-${styleName}`);
+  }
+
+  // Update style pill button highlights
+  document.querySelectorAll('.polaroid-style-pill').forEach(btn => {
+    const isCurrent = btn.getAttribute('data-pstyle') === styleName;
+    if (isCurrent) {
+      btn.className = 'polaroid-style-pill px-2.5 py-1 rounded-full text-[11px] font-bold transition flex items-center gap-1 bg-[#FA8072] text-white shadow-md scale-105';
+    } else {
+      btn.className = 'polaroid-style-pill px-2.5 py-1 rounded-full text-[11px] font-bold transition flex items-center gap-1 bg-white/80 dark:bg-[#1E1B24] text-[#5C3E46] dark:text-[#E0D0D5] hover:bg-white shadow-xs';
+    }
+  });
+
+  // Stamp indicator toggle for vintage & scrapbook
+  const stamp = document.getElementById('polaroidStamp');
+  if (stamp) {
+    if (styleName === 'vintage') {
+      stamp.textContent = '★ 35MM RETRO FILM • MEMORY';
+      stamp.classList.remove('hidden');
+    } else if (styleName === 'scrapbook') {
+      stamp.textContent = '✦ OUR STORY & MEMORY ✦';
+      stamp.classList.remove('hidden');
+    } else {
+      stamp.classList.add('hidden');
+    }
+  }
+}
+
+function updatePolaroidModal(track) {
+  if (!track) {
+    track = (typeof getPlayingTrack === 'function' ? getPlayingTrack() : null) ||
+      (state.playlists && state.playlists[0] && state.playlists[0].tracks && state.playlists[0].tracks[0]);
+  }
+  if (!track) return;
+
+  const polaroidImg = document.getElementById('polaroidImg');
+  const polaroidTitle = document.getElementById('polaroidTitle');
+  const polaroidMemory = document.getElementById('polaroidMemory');
+  const polaroidEmptyPrompt = document.getElementById('polaroidEmptyPrompt');
+  const polaroidFooterTag = document.getElementById('polaroidFooterTag');
+
+  if (polaroidImg) {
+    polaroidImg.src = track.cover || 'images/spotify_covers/jakarta.jpg';
+  }
+  if (polaroidTitle) {
+    polaroidTitle.textContent = `${track.title} — ${track.artist || ''}`;
+  }
+
+  const memory = (track.memory || '').trim();
+  if (memory) {
+    if (polaroidMemory) {
+      polaroidMemory.textContent = `"${memory}"`;
+      polaroidMemory.classList.remove('hidden');
+    }
+    if (polaroidEmptyPrompt) polaroidEmptyPrompt.classList.add('hidden');
+  } else {
+    if (polaroidMemory) {
+      polaroidMemory.textContent = '';
+      polaroidMemory.classList.add('hidden');
+    }
+    if (polaroidEmptyPrompt) polaroidEmptyPrompt.classList.remove('hidden');
+  }
+
+  if (polaroidFooterTag) {
+    polaroidFooterTag.textContent = track.dateAdded ? `✦ Ditambahkan ${track.dateAdded}` : '✦ Our Special Track';
+  }
+
+  setPolaroidStyle(currentPolaroidStyle, false);
+}
+
 function togglePolaroidModal() {
   const modal = document.getElementById('polaroidModal');
+  if (!modal) return;
+  const isOpening = modal.classList.contains('hidden');
   modal.classList.toggle('hidden');
   modal.classList.toggle('flex');
+  if (isOpening) {
+    updatePolaroidModal();
+  }
 }
 
 // ================= TOAST NOTIFICATION SYSTEM =================

@@ -595,3 +595,224 @@ aside::-webkit-scrollbar {
 .chat-emoji-btn--sm:hover {
   background: #FFF0F3;
 }
+
+/* ================= POLAROID CARD MODAL STYLES ================= */
+.polaroid-card {
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: transform, box-shadow;
+}
+
+/* 1. Classic Style (Clean Polaroid Frame with Peachy-Coral Tape) */
+.polaroid-style-classic {
+  background: #FFFFFF !important;
+  border: 1px solid #FFD2DC !important;
+  transform: rotate(-1deg);
+  box-shadow: 0 20px 35px -10px rgba(74, 44, 50, 0.22) !important;
+}
+.polaroid-style-classic .polaroid-tape-main {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%) rotate(2deg);
+  width: 110px;
+  height: 24px;
+  background: rgba(255, 179, 193, 0.75);
+  backdrop-filter: blur(2px);
+  border-radius: 2px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+}
+.polaroid-style-classic .polaroid-title {
+  color: #3B2328 !important;
+}
+.polaroid-style-classic .polaroid-memory {
+  color: #4A353B !important;
+}
+.polaroid-style-classic .polaroid-add-note-btn {
+  background: #FFF0F3;
+  color: #D94A6B;
+  border: 1px dashed #FFCCD5;
+}
+.polaroid-style-classic .polaroid-add-note-btn:hover {
+  background: #FFE4EA;
+  color: #B82F4F;
+}
+
+/* 2. Vintage 35mm Style (Parchment Tone, Sepia Filter, Kraft Tape) */
+.polaroid-style-vintage {
+  background: #F4EBE1 !important;
+  border: 1px solid #D8C7B4 !important;
+  transform: rotate(1deg);
+  box-shadow: 0 20px 35px -10px rgba(60, 40, 20, 0.28) !important;
+}
+.polaroid-style-vintage .polaroid-tape-main {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%) rotate(-1.5deg);
+  width: 105px;
+  height: 22px;
+  background: rgba(206, 155, 107, 0.85);
+  border-radius: 1px;
+  box-shadow: 0 2px 4px rgba(60, 35, 15, 0.15);
+}
+.polaroid-style-vintage .polaroid-photo-filter {
+  filter: sepia(0.28) contrast(1.05) brightness(0.97);
+  mix-blend-mode: multiply;
+  background: rgba(245, 230, 210, 0.15);
+}
+.polaroid-style-vintage .polaroid-title {
+  color: #382618 !important;
+  font-family: Georgia, serif;
+}
+.polaroid-style-vintage .polaroid-memory {
+  color: #4D3522 !important;
+}
+.polaroid-style-vintage .polaroid-stamp {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  padding: 2px 6px;
+  border: 1px dashed #A88768;
+  color: #8C6A4B;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  transform: rotate(-4deg);
+  border-radius: 3px;
+  background: rgba(244, 235, 225, 0.9);
+  pointer-events: none;
+}
+.polaroid-style-vintage .polaroid-add-note-btn {
+  background: #EADECE;
+  color: #5C402B;
+  border: 1px dashed #B89F84;
+}
+
+/* 3. Blush Romance Style (Pastel Pink, Heart Glow) */
+.polaroid-style-blush {
+  background: linear-gradient(150deg, #FFF5F7 0%, #FFE9EF 100%) !important;
+  border: 1.5px solid #FFCCD5 !important;
+  transform: rotate(-0.5deg);
+  box-shadow: 0 20px 40px -10px rgba(232, 93, 117, 0.3) !important;
+}
+.polaroid-style-blush .polaroid-tape-main {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%) rotate(1.5deg);
+  width: 115px;
+  height: 24px;
+  background: rgba(255, 163, 181, 0.85);
+  border-radius: 3px;
+  box-shadow: 0 2px 5px rgba(232, 93, 117, 0.2);
+}
+.polaroid-style-blush .polaroid-photo-filter {
+  background: radial-gradient(circle, rgba(255, 230, 235, 0) 50%, rgba(255, 200, 215, 0.2) 100%);
+}
+.polaroid-style-blush .polaroid-title {
+  color: #521C28 !important;
+}
+.polaroid-style-blush .polaroid-memory {
+  color: #7D2E42 !important;
+}
+.polaroid-style-blush .polaroid-add-note-btn {
+  background: #FFE4EB;
+  color: #C03856;
+  border: 1px dashed #FFAEBf;
+}
+
+/* 4. Midnight Noir Gold Style (Dark Obsidian Matte, Champagne Gold Handwriting) */
+.polaroid-style-noir {
+  background: linear-gradient(145deg, #18141F 0%, #221B2A 100%) !important;
+  border: 1.5px solid #3A3048 !important;
+  transform: rotate(0.8deg);
+  box-shadow: 0 25px 45px -10px rgba(0, 0, 0, 0.7), 0 0 20px rgba(212, 175, 55, 0.12) !important;
+}
+.polaroid-style-noir .polaroid-tape-main {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%) rotate(2.5deg);
+  width: 105px;
+  height: 22px;
+  background: linear-gradient(90deg, #A67C1E, #F5D77F, #A67C1E);
+  border-radius: 2px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+}
+.polaroid-style-noir .polaroid-title {
+  color: #FFFFFF !important;
+}
+.polaroid-style-noir .polaroid-memory {
+  color: #F8E2B0 !important;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+.polaroid-style-noir .polaroid-add-note-btn {
+  background: #272032;
+  color: #F6D678;
+  border: 1px dashed #D4AF37;
+}
+.polaroid-style-noir #polaroidFooterTag,
+.polaroid-style-noir button {
+  color: #C9BAD8;
+}
+
+/* 5. Scrapbook Collage Style (Dual Corner Washi Tapes, Textured Paper) */
+.polaroid-style-scrapbook {
+  background: #FAF6ED !important;
+  border: 2px dashed #D2C2AA !important;
+  transform: rotate(-1.5deg);
+  box-shadow: 0 20px 35px -10px rgba(75, 55, 35, 0.22) !important;
+}
+.polaroid-style-scrapbook .polaroid-tape-main {
+  display: none !important;
+}
+.polaroid-style-scrapbook .polaroid-tape-left {
+  display: block !important;
+  position: absolute;
+  top: -8px;
+  left: -12px;
+  width: 60px;
+  height: 20px;
+  background: repeating-linear-gradient(45deg, rgba(235, 175, 160, 0.85), rgba(235, 175, 160, 0.85) 6px, rgba(245, 205, 195, 0.85) 6px, rgba(245, 205, 195, 0.85) 12px);
+  transform: rotate(-35deg);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border-radius: 1px;
+}
+.polaroid-style-scrapbook .polaroid-tape-right {
+  display: block !important;
+  position: absolute;
+  top: -8px;
+  right: -12px;
+  width: 60px;
+  height: 20px;
+  background: repeating-linear-gradient(-45deg, rgba(165, 205, 195, 0.85), rgba(165, 205, 195, 0.85) 6px, rgba(195, 225, 220, 0.85) 6px, rgba(195, 225, 220, 0.85) 12px);
+  transform: rotate(35deg);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border-radius: 1px;
+}
+.polaroid-style-scrapbook .polaroid-title {
+  color: #2F241C !important;
+}
+.polaroid-style-scrapbook .polaroid-memory {
+  color: #423226 !important;
+}
+.polaroid-style-scrapbook .polaroid-stamp {
+  position: absolute;
+  bottom: 48px;
+  right: 12px;
+  padding: 2px 6px;
+  border: 1px solid #C4B196;
+  color: #7D6348;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  transform: rotate(3deg);
+  border-radius: 3px;
+  background: rgba(250, 246, 237, 0.95);
+  pointer-events: none;
+}
+.polaroid-style-scrapbook .polaroid-add-note-btn {
+  background: #EFE8DB;
+  color: #554131;
+  border: 1px dashed #BAA78C;
+}
