@@ -2350,8 +2350,8 @@ window.addEventListener('DOMContentLoaded', () => {
   checkUrlPlayParam();
   initSupabaseSync();
   initJamRoomSession();
-  if (typeof setPolaroidStyle === 'function') {
-    setPolaroidStyle(currentPolaroidStyle, false);
+  if (typeof updateGalleryFrameTypeButtons === 'function') {
+    updateGalleryFrameTypeButtons();
   }
 });
 
@@ -5252,52 +5252,7 @@ function closeLoveNoteModal() {
   document.getElementById('loveNoteModal').classList.remove('flex');
 }
 
-// ================= POLAROID CARD & STYLE SYSTEM =================
-let currentPolaroidStyle = 'classic';
-try {
-  const savedStyle = localStorage.getItem('romantic_polaroid_style');
-  if (savedStyle) currentPolaroidStyle = savedStyle;
-} catch (e) { }
-
-function setPolaroidStyle(styleName, save = true) {
-  const allowed = ['classic', 'vintage', 'blush', 'noir', 'scrapbook'];
-  if (!allowed.includes(styleName)) styleName = 'classic';
-  currentPolaroidStyle = styleName;
-  if (save) {
-    try { localStorage.setItem('romantic_polaroid_style', styleName); } catch (e) { }
-  }
-
-  const card = document.getElementById('polaroidCard');
-  if (card) {
-    allowed.forEach(s => card.classList.remove(`polaroid-style-${s}`));
-    card.classList.add(`polaroid-style-${styleName}`);
-  }
-
-  // Update style pill button highlights
-  document.querySelectorAll('.polaroid-style-pill').forEach(btn => {
-    const isCurrent = btn.getAttribute('data-pstyle') === styleName;
-    if (isCurrent) {
-      btn.className = 'polaroid-style-pill px-2.5 py-1 rounded-full text-[11px] font-bold transition flex items-center gap-1 bg-[#FA8072] text-white shadow-md scale-105';
-    } else {
-      btn.className = 'polaroid-style-pill px-2.5 py-1 rounded-full text-[11px] font-bold transition flex items-center gap-1 bg-white/80 dark:bg-[#1E1B24] text-[#5C3E46] dark:text-[#E0D0D5] hover:bg-white shadow-xs';
-    }
-  });
-
-  // Stamp indicator toggle for vintage & scrapbook
-  const stamp = document.getElementById('polaroidStamp');
-  if (stamp) {
-    if (styleName === 'vintage') {
-      stamp.textContent = '★ 35MM RETRO FILM • MEMORY';
-      stamp.classList.remove('hidden');
-    } else if (styleName === 'scrapbook') {
-      stamp.textContent = '✦ OUR STORY & MEMORY ✦';
-      stamp.classList.remove('hidden');
-    } else {
-      stamp.classList.add('hidden');
-    }
-  }
-}
-
+// ================= POLAROID TRACK PREVIEW (MODAL 4) =================
 function updatePolaroidModal(track) {
   if (!track) {
     track = (typeof getPlayingTrack === 'function' ? getPlayingTrack() : null) ||
@@ -5308,8 +5263,6 @@ function updatePolaroidModal(track) {
   const polaroidImg = document.getElementById('polaroidImg');
   const polaroidTitle = document.getElementById('polaroidTitle');
   const polaroidMemory = document.getElementById('polaroidMemory');
-  const polaroidEmptyPrompt = document.getElementById('polaroidEmptyPrompt');
-  const polaroidFooterTag = document.getElementById('polaroidFooterTag');
 
   if (polaroidImg) {
     polaroidImg.src = track.cover || 'images/spotify_covers/jakarta.jpg';
@@ -5318,26 +5271,17 @@ function updatePolaroidModal(track) {
     polaroidTitle.textContent = `${track.title} — ${track.artist || ''}`;
   }
 
+  // Teks sweet note HANYA akan muncul jika sebelumnya di field sweet note sudah diisi, polos tanpa button tambahan
   const memory = (track.memory || '').trim();
-  if (memory) {
-    if (polaroidMemory) {
+  if (polaroidMemory) {
+    if (memory) {
       polaroidMemory.textContent = `"${memory}"`;
       polaroidMemory.classList.remove('hidden');
-    }
-    if (polaroidEmptyPrompt) polaroidEmptyPrompt.classList.add('hidden');
-  } else {
-    if (polaroidMemory) {
+    } else {
       polaroidMemory.textContent = '';
       polaroidMemory.classList.add('hidden');
     }
-    if (polaroidEmptyPrompt) polaroidEmptyPrompt.classList.remove('hidden');
   }
-
-  if (polaroidFooterTag) {
-    polaroidFooterTag.textContent = track.dateAdded ? `✦ Ditambahkan ${track.dateAdded}` : '✦ Our Special Track';
-  }
-
-  setPolaroidStyle(currentPolaroidStyle, false);
 }
 
 function togglePolaroidModal() {
@@ -5445,10 +5389,39 @@ function downloadCurrentTrack() {
 // ================= DEDICATED POLAROID MEMORIES GALLERY ENGINE =================
 let pendingDeletePolaroidId = null;
 let currentDetailPolaroidId = null;
+let galleryFrameType = 'classic';
+try {
+  const savedFrame = localStorage.getItem('polaroid_gallery_frame_type');
+  if (savedFrame) galleryFrameType = savedFrame;
+} catch (e) { }
+
+function setGalleryFrameType(type) {
+  const allowed = ['classic', 'instax', 'filmstrip', 'scrapbook', 'slide'];
+  if (!allowed.includes(type)) type = 'classic';
+  galleryFrameType = type;
+  try {
+    localStorage.setItem('polaroid_gallery_frame_type', type);
+  } catch (e) { }
+  updateGalleryFrameTypeButtons();
+  renderPolaroidGallery();
+}
+
+function updateGalleryFrameTypeButtons() {
+  document.querySelectorAll('.gallery-frame-btn').forEach(btn => {
+    const isCurrent = btn.getAttribute('data-frametype') === galleryFrameType;
+    if (isCurrent) {
+      btn.className = 'gallery-frame-btn px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 bg-[#FA8072] text-white shadow-md scale-105';
+    } else {
+      btn.className = 'gallery-frame-btn px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 bg-white border border-[#FFD2DC] text-[#7A5862] hover:bg-[#FFF5F7] shadow-2xs';
+    }
+  });
+}
 
 function renderPolaroidGallery() {
   const container = document.getElementById('polaroidGalleryGrid');
   if (!container) return;
+
+  updateGalleryFrameTypeButtons();
 
   const memories = state.polaroidMemories || [];
   const btnClearAll = document.getElementById('btnClearAllPolaroids');
@@ -5476,35 +5449,126 @@ function renderPolaroidGallery() {
 
   container.innerHTML = memories.map((item, idx) => {
     const tiltClass = (typeof window !== 'undefined' && window.innerWidth < 1024) ? '' : tilts[idx % tilts.length];
-    return `
-      <div class="polaroid-card w-full ${tiltClass} group cursor-pointer transition-all duration-300" onclick="viewPolaroidDetail('${item.id}')">
-        <!-- Washi Tape -->
-        <div class="washi-tape"></div>
+    const hoverOverlay = `
+      <div class="absolute inset-0 bg-black/45 opacity-0 group-hover:opacity-100 transition flex items-center justify-center gap-2 p-2 z-20" onclick="event.stopPropagation()">
+        <button onclick="viewPolaroidDetail('${item.id}')" class="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white text-[#3B2328] hover:text-[#FA8072] flex items-center justify-center shadow-md transition" title="Lihat Foto Penuh">
+          <i class="fa-solid fa-expand text-[10px] sm:text-xs"></i>
+        </button>
+        <button onclick="openEditPolaroidModal('${item.id}')" class="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white text-[#3B2328] hover:text-[#FA8072] flex items-center justify-center shadow-md transition" title="Edit Polaroid">
+          <i class="fa-solid fa-pen-to-square text-[10px] sm:text-xs"></i>
+        </button>
+        <button onclick="confirmDeletePolaroid('${item.id}')" class="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white text-rose-500 hover:bg-rose-50 flex items-center justify-center shadow-md transition" title="Hapus Polaroid">
+          <i class="fa-solid fa-trash-can text-[10px] sm:text-xs"></i>
+        </button>
+      </div>
+    `;
 
-        <!-- Image Frame (Square 1:1, Never Cropped or Squished) -->
-        <div class="w-full aspect-square bg-[#FFF5F7] rounded-sm overflow-hidden mb-2 sm:mb-2.5 relative border border-[#FFE4E9] flex items-center justify-center">
-          <img src="${item.imageUrl}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500" alt="Polaroid photo" loading="lazy" />
-          
-          <!-- Hover / Focus Overlay with Zoom, Edit & Delete Buttons -->
-          <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center gap-2 p-2" onclick="event.stopPropagation()">
-            <button onclick="viewPolaroidDetail('${item.id}')" class="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white text-[#3B2328] hover:text-[#FA8072] flex items-center justify-center shadow-md transition" title="Lihat Foto Penuh">
-              <i class="fa-solid fa-expand text-[10px] sm:text-xs"></i>
-            </button>
-            <button onclick="openEditPolaroidModal('${item.id}')" class="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white text-[#3B2328] hover:text-[#FA8072] flex items-center justify-center shadow-md transition" title="Edit Polaroid">
-              <i class="fa-solid fa-pen-to-square text-[10px] sm:text-xs"></i>
-            </button>
-            <button onclick="confirmDeletePolaroid('${item.id}')" class="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white text-rose-500 hover:bg-rose-50 flex items-center justify-center shadow-md transition" title="Hapus Polaroid">
-              <i class="fa-solid fa-trash-can text-[10px] sm:text-xs"></i>
-            </button>
+    // 1. Instax Mini Film Frame
+    if (galleryFrameType === 'instax') {
+      return `
+        <div class="polaroid-card frame-type-instax w-full ${tiltClass} group cursor-pointer transition-all duration-300 relative bg-[#FCFAF8] border border-[#E5DCD4] p-2.5 sm:p-3 pb-8 sm:pb-9 rounded-md shadow-md hover:shadow-xl hover:-translate-y-1" onclick="viewPolaroidDetail('${item.id}')">
+          <div class="flex justify-between items-center px-1 mb-1.5 text-[9px] font-extrabold tracking-widest text-[#B5A599] uppercase">
+            <span>INSTAX MINI</span>
+            <span class="w-1.5 h-1.5 rounded-full bg-[#FA8072]/70"></span>
+          </div>
+          <div class="w-full aspect-[3/4] bg-[#F7F2EC] rounded-lg overflow-hidden mb-2 relative border border-[#EDE4DC] flex items-center justify-center shadow-xs">
+            <img src="${item.imageUrl}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500" alt="Instax photo" loading="lazy" />
+            ${hoverOverlay}
+          </div>
+          <p class="font-handwriting text-base sm:text-lg text-[#42332B] text-center leading-snug px-1 line-clamp-2 min-h-[2.2rem] flex items-center justify-center">
+            ${item.caption || 'Sweet Memory ✦'}
+          </p>
+          <div class="flex items-center justify-between text-[10px] font-semibold text-[#8C7A6E] mt-1 px-1">
+            <span class="truncate max-w-[50%]">${item.date || 'Sweet moment'}</span>
+            <span class="text-[#E85D75] truncate max-w-[48%] text-right">${item.location || 'Special place'}</span>
           </div>
         </div>
+      `;
+    }
 
-        <!-- Handwritten Caption (Multi-line comfortable reading, no harsh cutoff) -->
+    // 2. 35mm Film Strip Frame
+    if (galleryFrameType === 'filmstrip') {
+      return `
+        <div class="polaroid-card frame-type-filmstrip w-full ${tiltClass} group cursor-pointer transition-all duration-300 relative bg-[#141216] border border-[#2B2533] text-white p-2.5 pb-4 rounded-xs shadow-xl hover:shadow-2xl hover:-translate-y-1" onclick="viewPolaroidDetail('${item.id}')">
+          <div class="flex justify-between items-center px-1 py-1 mb-1">
+            <span class="sprocket-hole"></span><span class="sprocket-hole"></span><span class="sprocket-hole"></span><span class="sprocket-hole"></span><span class="sprocket-hole"></span><span class="sprocket-hole"></span>
+          </div>
+          <div class="w-full aspect-[4/3] bg-neutral-900 rounded-none overflow-hidden relative border border-[#3A3342] flex items-center justify-center">
+            <img src="${item.imageUrl}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500" alt="35mm Film photo" loading="lazy" />
+            ${hoverOverlay}
+          </div>
+          <div class="flex justify-between items-center px-1 py-1 mt-1 mb-1">
+            <span class="sprocket-hole"></span><span class="sprocket-hole"></span><span class="sprocket-hole"></span><span class="sprocket-hole"></span><span class="sprocket-hole"></span><span class="sprocket-hole"></span>
+          </div>
+          <div class="flex justify-between items-center text-[9px] font-mono text-[#F59E0B] px-1 font-bold">
+            <span>▶ 24A</span>
+            <span>PORTRA 400</span>
+            <span>SAFETY FILM</span>
+          </div>
+          <p class="text-xs sm:text-sm font-semibold text-neutral-100 text-center leading-snug px-1 line-clamp-2 min-h-[2rem] flex items-center justify-center mt-1">
+            ${item.caption || '35mm Film Memory ✦'}
+          </p>
+          <div class="flex items-center justify-between text-[10px] text-neutral-400 font-mono mt-1 px-1">
+            <span class="truncate max-w-[50%]">${item.date || 'Analog shot'}</span>
+            <span class="text-[#FBBF24] truncate max-w-[48%] text-right">${item.location || 'Location'}</span>
+          </div>
+        </div>
+      `;
+    }
+
+    // 3. Scrapbook Stamp Frame
+    if (galleryFrameType === 'scrapbook') {
+      return `
+        <div class="polaroid-card frame-type-scrapbook w-full ${tiltClass} group cursor-pointer transition-all duration-300 relative bg-[#FAF6EE] border-2 border-dashed border-[#D2C3AA] p-3 sm:p-3.5 pb-6 rounded-xl shadow-md hover:shadow-xl hover:-translate-y-1" onclick="viewPolaroidDetail('${item.id}')">
+          <div class="scrapbook-tape-left"></div>
+          <div class="scrapbook-tape-right"></div>
+          <div class="scrapbook-stamp-badge"><i class="fa-solid fa-stamp mr-0.5"></i> MEMORY</div>
+          <div class="w-full aspect-square bg-[#F5ECE0] rounded-sm overflow-hidden mb-2.5 relative border border-[#E3D4C1] flex items-center justify-center shadow-2xs">
+            <img src="${item.imageUrl}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500" alt="Scrapbook photo" loading="lazy" />
+            ${hoverOverlay}
+          </div>
+          <p class="font-handwriting text-base sm:text-lg text-[#3E2E20] text-center leading-snug px-1 line-clamp-2 min-h-[2.4rem] flex items-center justify-center">
+            ${item.caption || 'Cerita kita berdua ✦'}
+          </p>
+          <div class="flex items-center justify-between text-[10px] sm:text-[11px] font-semibold text-[#7A6450] mt-1.5 pt-1.5 border-t border-[#E8DEC8] px-1">
+            <span class="truncate max-w-[50%]">${item.date || 'Sweet moment'}</span>
+            <span class="text-[#E85D75] truncate max-w-[48%] text-right">${item.location || 'Special place'}</span>
+          </div>
+        </div>
+      `;
+    }
+
+    // 4. Aesthetic Slide Mount Frame
+    if (galleryFrameType === 'slide') {
+      return `
+        <div class="polaroid-card frame-type-slide w-full ${tiltClass} group cursor-pointer transition-all duration-300 relative bg-white border border-[#E5E7EB] p-3 sm:p-4 pb-5 rounded-xl shadow-lg hover:shadow-2xl hover:-translate-y-1" onclick="viewPolaroidDetail('${item.id}')">
+          <div class="slide-binder-clip"></div>
+          <div class="w-full aspect-square bg-[#F3F4F6] rounded-md overflow-hidden mb-2.5 relative ring-4 ring-neutral-100 shadow-inner flex items-center justify-center">
+            <img src="${item.imageUrl}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500" alt="Slide photo" loading="lazy" />
+            ${hoverOverlay}
+          </div>
+          <p class="text-xs sm:text-sm font-bold text-[#1F2937] text-center leading-snug px-1 line-clamp-2 min-h-[2.2rem] flex items-center justify-center">
+            ${item.caption || 'Slide Moment ✦'}
+          </p>
+          <div class="flex items-center justify-between text-[10px] font-medium text-[#6B7280] mt-1.5 pt-1.5 border-t border-neutral-100 px-1">
+            <span class="truncate max-w-[50%]">${item.date || 'Date'}</span>
+            <span class="text-[#FA8072] font-semibold truncate max-w-[48%] text-right">${item.location || 'Location'}</span>
+          </div>
+        </div>
+      `;
+    }
+
+    // Default: Classic Polaroid Frame
+    return `
+      <div class="polaroid-card frame-type-classic w-full ${tiltClass} group cursor-pointer transition-all duration-300 relative bg-white border border-[#FFD2DC] p-3 sm:p-3.5 pb-6 sm:pb-7 rounded-sm shadow-md hover:shadow-xl hover:-translate-y-1" onclick="viewPolaroidDetail('${item.id}')">
+        <div class="washi-tape"></div>
+        <div class="w-full aspect-square bg-[#FFF5F7] rounded-sm overflow-hidden mb-2 sm:mb-2.5 relative border border-[#FFE4E9] flex items-center justify-center">
+          <img src="${item.imageUrl}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500" alt="Polaroid photo" loading="lazy" />
+          ${hoverOverlay}
+        </div>
         <p class="font-handwriting text-base sm:text-lg lg:text-xl text-[#3B2328] text-center leading-snug px-1 line-clamp-2 min-h-[2.5rem] flex items-center justify-center">
           ${item.caption || 'Kenangan manis berdua ✦'}
         </p>
-
-        <!-- Date & Location Footer -->
         <div class="flex items-center justify-between text-[10px] sm:text-[11px] font-semibold text-[#9A737C] mt-1.5 pt-1.5 border-t border-[#FFF0F3] px-1">
           <span class="truncate max-w-[50%]">${item.date || 'Sweet moment'}</span>
           <span class="text-[#FA8072] truncate max-w-[48%] text-right">${item.location || 'Special place'}</span>

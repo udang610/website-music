@@ -513,9 +513,43 @@
           </div>
         </div>
 
+        <!-- Polaroid Frame Type Selector (Khusus di Menu Galeri Polaroid) -->
+        <div class="flex items-center justify-between gap-3 flex-wrap mb-5 p-2.5 sm:p-3 bg-white/85 backdrop-blur-md rounded-2xl border border-[#FFD2DC] shadow-xs">
+          <div class="flex items-center gap-1.5 flex-wrap">
+            <span class="text-xs font-bold text-[#8A636C] px-2 flex items-center gap-1.5">
+              <i class="fa-solid fa-shapes text-[#FA8072]"></i> Tipe Frame:
+            </span>
+            <button type="button" onclick="setGalleryFrameType('classic')" data-frametype="classic"
+              class="gallery-frame-btn px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 bg-[#FA8072] text-white shadow-md">
+              <i class="fa-solid fa-image text-xs"></i>
+              <span>Classic Polaroid</span>
+            </button>
+            <button type="button" onclick="setGalleryFrameType('instax')" data-frametype="instax"
+              class="gallery-frame-btn px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 bg-white border border-[#FFD2DC] text-[#7A5862] hover:bg-[#FFF5F7]">
+              <i class="fa-solid fa-film text-xs"></i>
+              <span>Instax Mini</span>
+            </button>
+            <button type="button" onclick="setGalleryFrameType('filmstrip')" data-frametype="filmstrip"
+              class="gallery-frame-btn px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 bg-white border border-[#FFD2DC] text-[#7A5862] hover:bg-[#FFF5F7]">
+              <i class="fa-solid fa-tape text-xs"></i>
+              <span>35mm Film Strip</span>
+            </button>
+            <button type="button" onclick="setGalleryFrameType('scrapbook')" data-frametype="scrapbook"
+              class="gallery-frame-btn px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 bg-white border border-[#FFD2DC] text-[#7A5862] hover:bg-[#FFF5F7]">
+              <i class="fa-solid fa-stamp text-xs"></i>
+              <span>Scrapbook Stamp</span>
+            </button>
+            <button type="button" onclick="setGalleryFrameType('slide')" data-frametype="slide"
+              class="gallery-frame-btn px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 bg-white border border-[#FFD2DC] text-[#7A5862] hover:bg-[#FFF5F7]">
+              <i class="fa-solid fa-crop-simple text-xs"></i>
+              <span>Aesthetic Slide</span>
+            </button>
+          </div>
+        </div>
+
         <!-- Polaroid Gallery Cards Grid: Responsive vertical grid scrolling downward -->
         <div id="polaroidGalleryGrid"
-          class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 p-2 pt-4 pb-28">
+          class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 p-2 pt-2 pb-28">
           <!-- Dynamically injected via renderPolaroidGallery() -->
         </div>
       </div>
@@ -1782,109 +1816,17 @@
   </div>
 
   <!-- ================= MODAL 4: POLAROID MEMORY CARD (TRACK PREVIEW) ================= -->
-  <div id="polaroidModal"
-    class="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs hidden items-center justify-center p-4 overflow-y-auto"
+  <div id="polaroidModal" class="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs hidden items-center justify-center p-4"
     onclick="togglePolaroidModal()">
-    <div onclick="event.stopPropagation()" class="flex flex-col items-center max-w-xs sm:max-w-sm w-full my-auto">
-
-      <!-- Style Selector Bar -->
-      <div class="mb-3.5 bg-white/95 dark:bg-[#1E1B24]/95 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/60 shadow-lg flex items-center justify-center gap-1 flex-wrap">
-        <span class="text-[10px] font-extrabold uppercase tracking-wider text-[#9A737C] mr-0.5 flex items-center gap-1">
-          <i class="fa-solid fa-palette text-[#FA8072]"></i> Style:
-        </span>
-        <button type="button" onclick="setPolaroidStyle('classic')" data-pstyle="classic"
-          class="polaroid-style-pill px-2.5 py-1 rounded-full text-[11px] font-bold transition flex items-center gap-1"
-          title="Classic Polaroid">
-          <span class="w-2.5 h-2.5 rounded-full bg-white border border-gray-300 shadow-xs"></span>
-          <span>Classic</span>
-        </button>
-        <button type="button" onclick="setPolaroidStyle('vintage')" data-pstyle="vintage"
-          class="polaroid-style-pill px-2.5 py-1 rounded-full text-[11px] font-bold transition flex items-center gap-1"
-          title="Vintage Film 35mm">
-          <span class="w-2.5 h-2.5 rounded-full bg-[#E8DACB] border border-[#B99F84] shadow-xs"></span>
-          <span>Vintage</span>
-        </button>
-        <button type="button" onclick="setPolaroidStyle('blush')" data-pstyle="blush"
-          class="polaroid-style-pill px-2.5 py-1 rounded-full text-[11px] font-bold transition flex items-center gap-1"
-          title="Pastel Blush Pink">
-          <span class="w-2.5 h-2.5 rounded-full bg-[#FFCCD5] border border-[#FF8FAB] shadow-xs"></span>
-          <span>Blush</span>
-        </button>
-        <button type="button" onclick="setPolaroidStyle('noir')" data-pstyle="noir"
-          class="polaroid-style-pill px-2.5 py-1 rounded-full text-[11px] font-bold transition flex items-center gap-1"
-          title="Midnight Noir Gold">
-          <span class="w-2.5 h-2.5 rounded-full bg-[#1A1622] border border-[#D4AF37] shadow-xs"></span>
-          <span>Noir</span>
-        </button>
-        <button type="button" onclick="setPolaroidStyle('scrapbook')" data-pstyle="scrapbook"
-          class="polaroid-style-pill px-2.5 py-1 rounded-full text-[11px] font-bold transition flex items-center gap-1"
-          title="Scrapbook Collage">
-          <span class="w-2.5 h-2.5 rounded-full bg-[#F5EEDB] border border-[#C5B391] shadow-xs"></span>
-          <span>Scrapbook</span>
-        </button>
+    <div onclick="event.stopPropagation()"
+      class="bg-white p-4 pb-7 rounded-2xl shadow-2xl max-w-xs w-full transform -rotate-1 border border-[#FFD2DC] relative">
+      <!-- Washi Tape -->
+      <div
+        class="w-28 h-6 bg-[#FFB3C1]/70 backdrop-blur-xs absolute -top-3 left-1/2 -translate-x-1/2 rotate-2 rounded-xs shadow-xs">
       </div>
-
-      <!-- The Polaroid Card Container -->
-      <div id="polaroidCard"
-        class="polaroid-card polaroid-style-classic p-4 pb-6 rounded-2xl shadow-2xl w-full relative transition-all duration-300">
-        
-        <!-- Washi Tape Elements -->
-        <div id="polaroidTapeMain" class="polaroid-tape-main"></div>
-        <div id="polaroidTapeLeft" class="polaroid-tape-left hidden"></div>
-        <div id="polaroidTapeRight" class="polaroid-tape-right hidden"></div>
-
-        <!-- Optional Vintage/Retro Stamp Tag -->
-        <div id="polaroidStamp" class="polaroid-stamp hidden"></div>
-
-        <!-- Photo Frame -->
-        <div class="polaroid-img-wrapper overflow-hidden rounded-lg mb-3.5 relative shadow-inner">
-          <img id="polaroidImg" src="" class="w-full h-64 object-cover transition duration-300" alt="Memory Cover" />
-          <div id="polaroidPhotoFilter" class="polaroid-photo-filter absolute inset-0 pointer-events-none"></div>
-        </div>
-
-        <!-- Song Title & Artist -->
-        <div class="text-center px-1">
-          <h4 id="polaroidTitle" class="polaroid-title text-base font-extrabold truncate"></h4>
-        </div>
-
-        <!-- Dynamic Sweet Note Display (Adapts to song's note, not hardcoded pink!) -->
-        <div id="polaroidMemoryContainer" class="mt-2 text-center min-h-[2.5rem] flex items-center justify-center px-1">
-          <p id="polaroidMemory"
-            class="polaroid-memory font-handwriting text-2xl leading-snug cursor-pointer transition hover:opacity-85"
-            onclick="openEditCurrentMemory()" title="Ketuk untuk ubah Sweet Note">
-          </p>
-          <div id="polaroidEmptyPrompt" class="hidden">
-            <button type="button" onclick="openEditCurrentMemory()"
-              class="polaroid-add-note-btn inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold transition"
-              title="Tambahkan Sweet Note untuk lagu ini">
-              <i class="fa-solid fa-pen-nib"></i>
-              <span>+ Tulis Sweet Note</span>
-            </button>
-          </div>
-        </div>
-
-        <!-- Polaroid Card Footer: Tag & Quick Edit -->
-        <div class="mt-3 pt-2.5 border-t border-black/5 dark:border-white/10 flex items-center justify-between text-[11px] opacity-70">
-          <span id="polaroidFooterTag" class="truncate max-w-[180px]">✦ Our Special Track</span>
-          <button type="button" onclick="openEditCurrentMemory()"
-            class="hover:opacity-100 font-bold transition flex items-center gap-1" title="Edit Sweet Note">
-            <i class="fa-solid fa-pen-to-square text-[10px]"></i> Edit Note
-          </button>
-        </div>
-      </div>
-
-      <!-- Action buttons below the card -->
-      <div class="mt-4 flex items-center justify-center gap-2">
-        <button type="button" onclick="togglePolaroidModal()"
-          class="px-5 py-2 rounded-full bg-white/90 hover:bg-white text-[#3B2328] text-xs font-bold shadow-md transition flex items-center gap-1.5">
-          <i class="fa-solid fa-xmark"></i> Tutup
-        </button>
-        <button type="button" onclick="openEditCurrentMemory()"
-          class="px-5 py-2 rounded-full bg-gradient-to-r from-[#FA8072] to-[#E85D75] text-white text-xs font-bold shadow-md hover:opacity-95 transition flex items-center gap-1.5">
-          <i class="fa-solid fa-heart"></i> Tulis Note
-        </button>
-      </div>
-
+      <img id="polaroidImg" src="" class="w-full h-64 object-cover rounded-lg mb-4" alt="Memory" />
+      <h4 id="polaroidTitle" class="text-base font-extrabold text-[#3B2328] text-center"></h4>
+      <p id="polaroidMemory" class="font-handwriting text-2xl text-[#3B2328] text-center mt-2 leading-snug hidden"></p>
     </div>
   </div>
 
