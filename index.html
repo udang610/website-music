@@ -878,45 +878,48 @@
 
         <!-- Sweet Memory Note Card -->
         <div class="mx-3 mb-3 p-4 rounded-2xl bg-[#FFF5F7] border border-[#FFD2DC]">
-          <div class="flex items-center justify-between mb-1.5">
+          <div class="flex items-center justify-between mb-2">
             <span class="text-[11px] font-extrabold uppercase tracking-wider text-[#E85D75] flex items-center gap-1.5">
               <i class="fa-solid fa-sparkles"></i> Sweet Memory Note
             </span>
             <button onclick="openEditCurrentMemory()"
-              class="text-[11px] text-[#9A737C] hover:text-[#FA8072] font-semibold">
-              <i class="fa-solid fa-pen"></i> Edit
+              class="text-[11px] text-[#9A737C] hover:text-[#FA8072] font-semibold transition flex items-center gap-1">
+              <i class="fa-solid fa-pen text-[10px]"></i> Edit
             </button>
           </div>
           <p id="rightTrackMemory" onclick="openEditCurrentMemory()"
-            class="font-handwriting text-xl text-[#3B2328] leading-snug cursor-pointer"></p>
+            class="font-handwriting text-xl text-[#3B2328] leading-snug cursor-pointer hover:opacity-85 transition"></p>
           <button id="rightTrackMemoryEmpty" onclick="openEditCurrentMemory()"
-            class="hidden w-full text-left py-2 px-3 rounded-xl border border-dashed border-[#FFC2CF] bg-white/60 hover:bg-white text-xs text-[#9A737C] transition">
+            class="hidden w-full text-left py-2.5 px-3 rounded-xl border border-dashed border-[#FFB8C8] bg-transparent hover:bg-[#FFE8ED]/70 text-xs text-[#9A737C] transition">
             <i class="fa-solid fa-feather-pointed text-[#FA8072] mr-1"></i>
             Belum ada catatan untuk lagu ini. Tulis kenangan manismu ✍️
           </button>
         </div>
 
         <!-- Mini Listening Together Status Card inside Canvas Tab -->
-        <div
-          class="mx-3 mb-3 p-3.5 rounded-2xl bg-gradient-to-r from-[#FFF0F3] to-[#FFE4E9]/70 border border-[#FFD2DC] flex items-center justify-between">
-          <div class="flex items-center gap-3">
-            <div class="flex -space-x-2">
+        <div id="miniListeningTogetherCard"
+          class="mx-3 mb-3 p-3 sm:p-3.5 rounded-2xl bg-gradient-to-r from-[#FFF0F3] to-[#FFE8ED] border border-[#FFD2DC] flex items-center justify-between gap-2.5 shadow-2xs">
+          <div class="flex items-center gap-2.5 min-w-0 flex-1">
+            <!-- Avatars -->
+            <div class="flex -space-x-2 shrink-0">
               <img id="miniJamAvatar1" src="images/spotify_covers/me.jpeg"
-                class="w-8 h-8 rounded-full object-cover ring-2 ring-white" />
-              <img id="miniJamAvatar2"
-                src="images/spotify_covers/ndey.jpeg"
-                class="w-8 h-8 rounded-full object-cover ring-2 ring-[#FA8072] live-ring" />
+                class="w-8 h-8 rounded-full object-cover ring-2 ring-white shadow-2xs" alt="You" />
+              <img id="miniJamAvatar2" src="images/spotify_covers/ndey.jpeg"
+                class="w-8 h-8 rounded-full object-cover ring-2 ring-white shadow-2xs transition-all duration-300" alt="Partner" />
             </div>
-            <div>
-              <p class="text-xs font-bold text-[#3B2328] flex items-center gap-1.5">
-                <span id="miniPartnerStatusName">Nadia</span> sedang mendengarkan
-              </p>
-              <p class="text-[11px] text-[#9A737C]">Sinkronisasi real-time aktif • 100% Match</p>
+            <!-- Status Text Details -->
+            <div class="min-w-0 flex-1">
+              <div class="flex items-center gap-1.5">
+                <span id="miniJamTitle" class="text-xs font-extrabold text-[#3B2328] truncate">Listening Together</span>
+                <span id="miniJamLiveBadge" class="hidden text-[8px] font-black px-1.5 py-0.2 rounded-full bg-emerald-100 text-emerald-700 border border-emerald-300 shrink-0">LIVE</span>
+              </div>
+              <p id="miniJamDesc" class="text-[11px] text-[#9A737C] truncate mt-0.5">Belum ada sesi aktif • Ajak pasanganmu 💕</p>
             </div>
           </div>
-          <button onclick="navigateTo('jam')"
-            class="px-2.5 py-1.5 rounded-xl bg-white text-[#E85D75] text-xs font-bold shadow-xs hover:bg-[#FA8072] hover:text-white transition">
-            Buka Jam
+          <!-- Action Button -->
+          <button id="miniJamBtn" onclick="navigateTo('jam')"
+            class="shrink-0 px-3 py-1.5 rounded-xl bg-white border border-[#FFD2DC] text-[#E85D75] text-xs font-bold shadow-2xs hover:bg-[#FA8072] hover:text-white hover:border-[#FA8072] transition whitespace-nowrap">
+            Mulai Jam
           </button>
         </div>
       </div>

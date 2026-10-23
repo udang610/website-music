@@ -2353,6 +2353,9 @@ window.addEventListener('DOMContentLoaded', () => {
   if (typeof updateGalleryFrameTypeButtons === 'function') {
     updateGalleryFrameTypeButtons();
   }
+  if (typeof updateMiniJamStatusCard === 'function') {
+    updateMiniJamStatusCard();
+  }
 });
 
 // Fetch HD album covers without touching audio streams
@@ -2397,7 +2400,9 @@ function hydrateUI() {
   document.getElementById('miniJamAvatar1').src = state.yourAvatar;
   document.getElementById('miniJamAvatar2').src = state.partnerAvatar;
 
-  document.getElementById('miniPartnerStatusName').textContent = state.partnerName;
+  const miniPartnerNameEl = document.getElementById('miniPartnerStatusName');
+  if (miniPartnerNameEl) miniPartnerNameEl.textContent = state.partnerName;
+  if (typeof updateMiniJamStatusCard === 'function') updateMiniJamStatusCard();
   document.getElementById('loveNoteDisplay').textContent = state.loveNote;
 
   const trackCount = (activePl && activePl.tracks) ? activePl.tracks.length : 0;
@@ -3817,6 +3822,48 @@ function renderJamRoomUI() {
   }
 
   renderMainJamChat();
+  if (typeof updateMiniJamStatusCard === 'function') {
+    updateMiniJamStatusCard();
+  }
+}
+
+// Sinkronisasi status card Mini Listening Together di panel kanan
+function updateMiniJamStatusCard() {
+  const cardTitle = document.getElementById('miniJamTitle');
+  const cardDesc = document.getElementById('miniJamDesc');
+  const cardBadge = document.getElementById('miniJamLiveBadge');
+  const cardBtn = document.getElementById('miniJamBtn');
+  const avatar1 = document.getElementById('miniJamAvatar1');
+  const avatar2 = document.getElementById('miniJamAvatar2');
+  if (!cardTitle || !cardDesc || !cardBtn) return;
+
+  const currentAcc = (typeof getCurrentAccount === 'function') ? getCurrentAccount() : null;
+  const partnerName = currentAcc ? currentAcc.partnerName : (state.partnerName || 'Nadia');
+  const partnerId = currentAcc && currentAcc.id === 'nadia' ? 'dhafin' : 'nadia';
+  const isPartnerOnline = Boolean(presenceStateMap && presenceStateMap[partnerId]);
+
+  if (avatar1 && state.yourAvatar) avatar1.src = state.yourAvatar;
+  if (avatar2 && state.partnerAvatar) avatar2.src = state.partnerAvatar;
+
+  if (currentJamRoomId) {
+    // State B: Sedang ada room yang terbuat / Jamming Together aktif
+    cardTitle.textContent = `Room: ${currentJamRoomId}`;
+    if (cardBadge) cardBadge.classList.remove('hidden');
+    cardDesc.textContent = `${partnerName} (${isPartnerOnline ? 'Online 🟢' : 'Offline ⚪'}) • Sinkron Aktif`;
+    cardBtn.textContent = 'Buka Jam';
+    cardBtn.className = 'shrink-0 px-3 py-1.5 rounded-xl bg-gradient-to-r from-[#FA8072] to-[#E85D75] text-white text-xs font-bold shadow-xs hover:opacity-95 transition whitespace-nowrap';
+    if (avatar2) avatar2.className = 'w-8 h-8 rounded-full object-cover ring-2 ring-[#FA8072] live-ring shadow-xs';
+  } else {
+    // State A: Belum ada room yang terbuat / belum jamming together
+    cardTitle.textContent = 'Listening Together';
+    if (cardBadge) cardBadge.classList.add('hidden');
+    cardDesc.textContent = isPartnerOnline 
+      ? `${partnerName} sedang online 🟢 • Dengar bareng!` 
+      : 'Belum ada sesi aktif • Ajak pasanganmu 💕';
+    cardBtn.textContent = 'Mulai Jam';
+    cardBtn.className = 'shrink-0 px-3 py-1.5 rounded-xl bg-white border border-[#FFD2DC] text-[#E85D75] text-xs font-bold shadow-2xs hover:bg-[#FA8072] hover:text-white hover:border-[#FA8072] transition whitespace-nowrap';
+    if (avatar2) avatar2.className = 'w-8 h-8 rounded-full object-cover ring-2 ring-white shadow-2xs';
+  }
 }
 
 function joinJamRoom(roomId) {
@@ -4155,6 +4202,9 @@ function updatePresenceUI() {
   const miniStatus = document.getElementById('miniPartnerStatusName');
   if (miniStatus) {
     miniStatus.innerHTML = `${currentAcc.partnerName} ${isPartnerOnline ? '<span class="text-emerald-500 text-[10px] font-bold">• Online</span>' : '<span class="text-[#9A737C] text-[10px] font-medium">• Offline</span>'}`;
+  }
+  if (typeof updateMiniJamStatusCard === 'function') {
+    updateMiniJamStatusCard();
   }
 }
 
