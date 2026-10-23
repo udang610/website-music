@@ -533,4 +533,65 @@ aside::-webkit-scrollbar {
   box-shadow: 0 0 5px #FA8072;
 }
 
+/* ================= CHAT EMOJI POP-UP ================= */
+.chat-emoji-popup {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  left: 0;
+  width: 290px;
+  max-width: calc(100vw - 32px);
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid #FFD2DC;
+  border-radius: 1.25rem;
+  padding: 0.9rem;
+  box-shadow: 0 16px 36px rgba(232, 93, 117, 0.18), 0 4px 12px rgba(59, 35, 40, 0.06);
+  z-index: 60;
+  animation: emojiPopupSlide 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
 
+@keyframes emojiPopupSlide {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.chat-emoji-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 2.25rem;
+  border-radius: 0.75rem;
+  background: #FFF5F7;
+  border: 1px solid #FFE4E9;
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: transform 0.15s ease, background-color 0.15s ease;
+}
+
+.chat-emoji-btn:hover {
+  background: #FFE4E9;
+  transform: scale(1.15);
+}
+
+.chat-emoji-btn:active {
+  transform: scale(0.95);
+}
+
+.chat-emoji-btn--sm {
+  height: 1.9rem;
+  font-size: 1.05rem;
+  border-radius: 0.5rem;
+  background: transparent;
+  border: none;
+}
+
+.chat-emoji-btn--sm:hover {
+  background: #FFF0F3;
+}

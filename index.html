@@ -306,7 +306,7 @@
               <p class="text-[11px] text-[#9A737C] font-semibold mt-0.5">— our little melody notes</p>
             </div>
           </div>
-          <button onclick="switchRightPanelTab('jam')"
+          <button onclick="navigateTo('jam')"
             class="hidden sm:inline-flex px-3.5 py-1.5 rounded-xl bg-white text-[#E85D75] hover:bg-[#FA8072] hover:text-white border border-[#FFD2DC] text-xs font-bold transition items-center gap-1.5 shrink-0">
             <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
             <span>Jam Session</span>
@@ -644,66 +644,11 @@
           </div>
         </div>
 
-        <!-- Side-by-Side Responsive Grid: Reactions & Couple Chat -->
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
+        <!-- Couple Chat (emote dipindah ke pop-up di field chat) -->
+        <div class="grid grid-cols-1 gap-5 items-stretch">
 
-          <!-- Column 1: Real-Time Floating Reactions (5 Cols) -->
-          <div
-            class="lg:col-span-5 p-5 rounded-3xl bg-white border border-[#FFD2DC] shadow-sm flex flex-col justify-between">
-            <div>
-              <div class="flex items-center justify-between mb-3">
-                <div>
-                  <h3 class="text-sm font-extrabold text-[#3B2328] flex items-center gap-1.5">
-                    <i class="fa-solid fa-heart-pulse text-[#FA8072]"></i>
-                    <span>Reaksi Romantis Real-Time</span>
-                  </h3>
-                  <p class="text-[11px] text-[#9A737C]">Kirim reaksi melayang di layar</p>
-                </div>
-              </div>
-
-              <div class="grid grid-cols-3 gap-2.5 my-2">
-                <button onclick="sendFloatingReaction('❤️', true)"
-                  class="p-3 rounded-2xl bg-[#FFF5F7] hover:bg-[#FFE4E9] border border-[#FFD2DC] flex flex-col items-center justify-center hover:scale-105 transition shadow-2xs group cursor-pointer">
-                  <span class="text-2xl group-hover:scale-125 transition">❤️</span>
-                  <span class="text-[11px] font-bold text-[#7A4E58] mt-1">Love</span>
-                </button>
-                <button onclick="sendFloatingReaction('🥰', true)"
-                  class="p-3 rounded-2xl bg-[#FFF5F7] hover:bg-[#FFE4E9] border border-[#FFD2DC] flex flex-col items-center justify-center hover:scale-105 transition shadow-2xs group cursor-pointer">
-                  <span class="text-2xl group-hover:scale-125 transition">🥰</span>
-                  <span class="text-[11px] font-bold text-[#7A4E58] mt-1">Sayang</span>
-                </button>
-                <button onclick="sendFloatingReaction('🥺', true)"
-                  class="p-3 rounded-2xl bg-[#FFF5F7] hover:bg-[#FFE4E9] border border-[#FFD2DC] flex flex-col items-center justify-center hover:scale-105 transition shadow-2xs group cursor-pointer">
-                  <span class="text-2xl group-hover:scale-125 transition">🥺</span>
-                  <span class="text-[11px] font-bold text-[#7A4E58] mt-1">Terharu</span>
-                </button>
-                <button onclick="sendFloatingReaction('🔥', true)"
-                  class="p-3 rounded-2xl bg-[#FFF5F7] hover:bg-[#FFE4E9] border border-[#FFD2DC] flex flex-col items-center justify-center hover:scale-105 transition shadow-2xs group cursor-pointer">
-                  <span class="text-2xl group-hover:scale-125 transition">🔥</span>
-                  <span class="text-[11px] font-bold text-[#7A4E58] mt-1">Keren</span>
-                </button>
-                <button onclick="sendFloatingReaction('🌸', true)"
-                  class="p-3 rounded-2xl bg-[#FFF5F7] hover:bg-[#FFE4E9] border border-[#FFD2DC] flex flex-col items-center justify-center hover:scale-105 transition shadow-2xs group cursor-pointer">
-                  <span class="text-2xl group-hover:scale-125 transition">🌸</span>
-                  <span class="text-[11px] font-bold text-[#7A4E58] mt-1">Cantik</span>
-                </button>
-                <button onclick="sendFloatingReaction('✨', true)"
-                  class="p-3 rounded-2xl bg-[#FFF5F7] hover:bg-[#FFE4E9] border border-[#FFD2DC] flex flex-col items-center justify-center hover:scale-105 transition shadow-2xs group cursor-pointer">
-                  <span class="text-2xl group-hover:scale-125 transition">✨</span>
-                  <span class="text-[11px] font-bold text-[#7A4E58] mt-1">Bintang</span>
-                </button>
-              </div>
-            </div>
-
-            <button onclick="simulatePartnerSweetAction()"
-              class="w-full mt-3 py-2 px-3 rounded-xl bg-[#FFF0F3] hover:bg-[#FFE4E9] text-[#E85D75] text-xs font-bold border border-[#FFD2DC] transition flex items-center justify-center gap-1.5 cursor-pointer">
-              <i class="fa-solid fa-wand-magic-sparkles text-[#FA8072]"></i>
-              <span>Simulasikan Balasan Pasangan</span>
-            </button>
-          </div>
-
-          <!-- Column 2: Couple Jam Sweet Chat Box (7 Cols) -->
-          <div class="lg:col-span-7 p-5 rounded-3xl bg-white border border-[#FFD2DC] shadow-sm flex flex-col h-[320px]">
+          <!-- Couple Jam Sweet Chat Box -->
+          <div class="p-5 rounded-3xl bg-white border border-[#FFD2DC] shadow-sm flex flex-col h-[420px]">
             <div class="flex items-center justify-between pb-2.5 border-b border-[#FFE4E9] mb-2.5">
               <h3 class="text-sm font-extrabold text-[#3B2328] flex items-center gap-2">
                 <i class="fa-solid fa-comments text-[#FA8072]"></i>
@@ -717,9 +662,40 @@
             </div>
 
             <form onsubmit="sendMainJamChatMessage(event)"
-              class="pt-2.5 border-t border-[#FFE4E9] flex items-center gap-2">
+              class="relative pt-2.5 border-t border-[#FFE4E9] flex items-center gap-2">
+
+              <!-- Emoji / Reaction Pop-up -->
+              <div id="chatEmojiPopup" class="chat-emoji-popup hidden" role="dialog" aria-label="Pilih emote">
+                <div class="flex items-center justify-between mb-2">
+                  <span class="text-[10px] font-extrabold uppercase tracking-wider text-[#E85D75]">Reaksi Melayang</span>
+                  <span class="text-[10px] text-[#9A737C]">tampil di layar</span>
+                </div>
+                <div class="grid grid-cols-6 gap-1 mb-3">
+                  <button type="button" onclick="sendChatPopupReaction('❤️')" class="chat-emoji-btn" title="Love">❤️</button>
+                  <button type="button" onclick="sendChatPopupReaction('🥰')" class="chat-emoji-btn" title="Sayang">🥰</button>
+                  <button type="button" onclick="sendChatPopupReaction('🥺')" class="chat-emoji-btn" title="Terharu">🥺</button>
+                  <button type="button" onclick="sendChatPopupReaction('🔥')" class="chat-emoji-btn" title="Keren">🔥</button>
+                  <button type="button" onclick="sendChatPopupReaction('🌸')" class="chat-emoji-btn" title="Cantik">🌸</button>
+                  <button type="button" onclick="sendChatPopupReaction('✨')" class="chat-emoji-btn" title="Bintang">✨</button>
+                </div>
+                <div class="flex items-center justify-between mb-2">
+                  <span class="text-[10px] font-extrabold uppercase tracking-wider text-[#E85D75]">Sisipkan ke Pesan</span>
+                </div>
+                <div id="chatEmojiInsertGrid" class="grid grid-cols-8 gap-0.5 mb-2"></div>
+                <button type="button" onclick="simulatePartnerSweetAction(); closeChatEmojiPopup();"
+                  class="w-full mt-1 py-1.5 px-3 rounded-xl bg-[#FFF0F3] hover:bg-[#FFE4E9] text-[#E85D75] text-[11px] font-bold border border-[#FFD2DC] transition flex items-center justify-center gap-1.5">
+                  <i class="fa-solid fa-wand-magic-sparkles text-[#FA8072]"></i>
+                  <span>Simulasikan Balasan Pasangan</span>
+                </button>
+              </div>
+
+              <button type="button" id="chatEmojiToggleBtn" onclick="toggleChatEmojiPopup(event)"
+                class="w-9 h-9 rounded-full bg-[#FFF5F7] border border-[#FFD2DC] text-[#FA8072] hover:bg-[#FFE4E9] flex items-center justify-center transition shrink-0"
+                title="Emote & Reaksi" aria-haspopup="dialog" aria-controls="chatEmojiPopup">
+                <i class="fa-regular fa-face-smile text-base"></i>
+              </button>
               <input id="mainJamChatInput" type="text" placeholder="Ketik pesan untuk pasanganmu..."
-                class="flex-1 px-4 py-2 rounded-full bg-[#FFF5F7] border border-[#FFD2DC] text-xs text-[#3B2328] focus:outline-none focus:border-[#FA8072]" />
+                class="flex-1 min-w-0 px-4 py-2 rounded-full bg-[#FFF5F7] border border-[#FFD2DC] text-xs text-[#3B2328] focus:outline-none focus:border-[#FA8072]" />
               <button type="submit"
                 class="px-4 py-2 rounded-full bg-gradient-to-r from-[#FA8072] to-[#E85D75] hover:opacity-95 text-white text-xs font-bold shadow-md transition flex items-center gap-1.5 shrink-0">
                 <i class="fa-solid fa-paper-plane text-xs"></i>
@@ -732,28 +708,11 @@
       </div>
     </main>
 
-    <!-- 3. RIGHT PANEL: NOW PLAYING VISUAL CARD & LISTENING TOGETHER (SPOTIFY JAM) -->
+    <!-- 3. RIGHT PANEL: NOW PLAYING VISUAL CARD (Listening Together ada di menu khusus) -->
     <aside
       class="hidden lg:flex w-full lg:w-[350px] xl:w-[375px] bg-white border border-[#FFD2DC] rounded-2xl overflow-hidden shadow-sm flex-col shrink-0 relative">
 
-      <!-- Floating Reactions Container -->
-      <div id="reactionStage" class="pointer-events-none absolute inset-0 overflow-hidden z-50"></div>
-
-      <!-- Top Tab Switcher -->
-      <div class="p-2.5 bg-[#FFF9FA] border-b border-[#FFE4E9] flex items-center gap-1.5">
-        <button onclick="switchRightPanelTab('canvas')" id="tabBtnCanvas"
-          class="flex-1 py-2 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 bg-[#FA8072] text-white shadow-sm transition">
-          <i class="fa-solid fa-compact-disc"></i>
-          <span>Now Playing</span>
-        </button>
-        <button onclick="navigateTo('jam'); switchRightPanelTab('jam');" id="tabBtnJam"
-          class="flex-1 py-2 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 text-[#9A737C] hover:bg-[#FFE4E9]/50 transition">
-          <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-          <span>Listening Together</span>
-        </button>
-      </div>
-
-      <!-- TAB 1: SPOTIFY RIGHT CANVAS VIEW -->
+      <!-- NOW PLAYING CANVAS VIEW -->
       <div id="panelCanvasView" class="flex-1 flex flex-col overflow-y-auto">
         <!-- Full Bleed Visual Card -->
         <div class="relative h-72 m-3 rounded-2xl overflow-hidden shadow-lg group">
@@ -867,9 +826,13 @@
               <i class="fa-solid fa-pen"></i> Edit
             </button>
           </div>
-          <p id="rightTrackMemory" class="font-handwriting text-xl text-[#3B2328] leading-snug">
-            "Lagu waktu kita jalan berdua habis hujan sambil cerita masa depan 💕"
-          </p>
+          <p id="rightTrackMemory" onclick="openEditCurrentMemory()"
+            class="font-handwriting text-xl text-[#3B2328] leading-snug cursor-pointer"></p>
+          <button id="rightTrackMemoryEmpty" onclick="openEditCurrentMemory()"
+            class="hidden w-full text-left py-2 px-3 rounded-xl border border-dashed border-[#FFC2CF] bg-white/60 hover:bg-white text-xs text-[#9A737C] transition">
+            <i class="fa-solid fa-feather-pointed text-[#FA8072] mr-1"></i>
+            Belum ada catatan untuk lagu ini. Tulis kenangan manismu ✍️
+          </button>
         </div>
 
         <!-- Mini Listening Together Status Card inside Canvas Tab -->
@@ -890,118 +853,11 @@
               <p class="text-[11px] text-[#9A737C]">Sinkronisasi real-time aktif • 100% Match</p>
             </div>
           </div>
-          <button onclick="navigateTo('jam'); switchRightPanelTab('jam');"
+          <button onclick="navigateTo('jam')"
             class="px-2.5 py-1.5 rounded-xl bg-white text-[#E85D75] text-xs font-bold shadow-xs hover:bg-[#FA8072] hover:text-white transition">
             Buka Jam
           </button>
         </div>
-      </div>
-
-      <!-- TAB 2: LISTENING TOGETHER (COUPLE JAM) -->
-      <div id="panelJamView" class="hidden flex-1 flex flex-col overflow-hidden">
-        <!-- Jam Session Header Box -->
-        <div class="p-3.5 m-3 rounded-2xl bg-gradient-to-br from-[#FA8072] to-[#E85D75] text-white shadow-md">
-          <div class="flex items-center justify-between mb-2">
-            <span
-              class="px-2 py-0.5 rounded-full bg-white/25 text-[10px] font-extrabold uppercase tracking-wider flex items-center gap-1.5">
-              <span class="w-1.5 h-1.5 rounded-full bg-emerald-300 animate-ping"></span>
-              Couple Jam Session
-            </span>
-            <button onclick="copyInviteLink()"
-              class="text-xs bg-white/20 hover:bg-white/30 px-2.5 py-1 rounded-lg font-bold flex items-center gap-1 transition">
-              <i class="fa-solid fa-link"></i> <span id="jamRoomCode">LUV-2407</span>
-            </button>
-          </div>
-
-          <!-- Dual Synchronized Avatars -->
-          <div class="flex items-center justify-center gap-4 my-2">
-            <div class="text-center">
-              <div class="relative inline-block">
-                <img id="jamAvatarYou" src="images/spotify_covers/me.jpeg"
-                  class="w-12 h-12 rounded-full object-cover border-2 border-white shadow-md" />
-                <span
-                  class="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-emerald-400 border-2 border-white flex items-center justify-center text-[8px] text-white">
-                  <i class="fa-solid fa-headphones"></i>
-                </span>
-              </div>
-              <p id="jamNameYou" class="text-[11px] font-bold mt-1">Kamu</p>
-            </div>
-
-            <!-- Animated Soundwave Bridge -->
-            <div class="flex flex-col items-center">
-              <div class="flex items-end gap-1 h-4">
-                <span class="eq-bar !bg-white"></span>
-                <span class="eq-bar !bg-white"></span>
-                <span class="eq-bar !bg-white"></span>
-              </div>
-              <span class="text-[10px] text-white/90 font-semibold mt-1">Synced ✦</span>
-            </div>
-
-            <div class="text-center">
-              <div class="relative inline-block">
-                <img id="jamAvatarPartner"
-                  src="images/spotify_covers/ndey.jpeg"
-                  class="w-12 h-12 rounded-full object-cover border-2 border-white shadow-md" />
-                <span
-                  class="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-emerald-400 border-2 border-white flex items-center justify-center text-[8px] text-white">
-                  <i class="fa-solid fa-heart"></i>
-                </span>
-              </div>
-              <p id="jamNamePartner" class="text-[11px] font-bold mt-1">Nadia</p>
-            </div>
-          </div>
-
-          <!-- Sync Toggle & Partner Status -->
-          <div class="mt-2 pt-2 border-t border-white/20 flex items-center justify-between text-[11px]">
-            <span id="jamLiveActivityText" class="truncate">🎧 Mendengarkan di detik yang sama</span>
-            <label class="inline-flex items-center cursor-pointer">
-              <input type="checkbox" id="syncPlayToggle" checked onchange="toggleSyncMode()" class="sr-only peer">
-              <div
-                class="w-8 h-4 bg-white/30 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-3 after:w-3 after:transition-all relative">
-              </div>
-            </label>
-          </div>
-        </div>
-
-        <!-- Quick Floating Emoji Reactions Bar -->
-        <div class="px-3 mb-2">
-          <div class="flex items-center justify-between bg-[#FFF5F7] border border-[#FFD2DC] rounded-xl px-3 py-1.5">
-            <span class="text-[11px] font-bold text-[#9A737C]">Kirim Reaksi:</span>
-            <div class="flex items-center gap-1.5">
-              <button onclick="sendFloatingReaction('❤️', true)"
-                class="hover:scale-125 transition text-base">❤️</button>
-              <button onclick="sendFloatingReaction('🥰', true)"
-                class="hover:scale-125 transition text-base">🥰</button>
-              <button onclick="sendFloatingReaction('😭', true)"
-                class="hover:scale-125 transition text-base">😭</button>
-              <button onclick="sendFloatingReaction('🔥', true)"
-                class="hover:scale-125 transition text-base">🔥</button>
-              <button onclick="sendFloatingReaction('🌸', true)"
-                class="hover:scale-125 transition text-base">🌸</button>
-              <button onclick="simulatePartnerSweetAction()"
-                class="ml-1 px-2 py-0.5 rounded-lg bg-[#FFE4E9] text-[#E85D75] text-[10px] font-bold hover:bg-[#FA8072] hover:text-white transition"
-                title="Simulasikan balasan pasangan">
-                Balas ✨
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Live Couple Chat Messages -->
-        <div id="jamChatContainer" class="flex-1 overflow-y-auto px-3 py-1 space-y-2.5 text-xs">
-          <!-- Injected via JS -->
-        </div>
-
-        <!-- Chat Input Form -->
-        <form onsubmit="sendJamChatMessage(event)"
-          class="p-3 border-t border-[#FFE4E9] bg-white flex items-center gap-2">
-          <input id="jamChatInput" type="text" placeholder="Ketik pesan sambil dengerin lagu..."
-            class="flex-1 px-3.5 py-2 rounded-full bg-[#FFF5F7] border border-[#FFD2DC] text-xs text-[#3B2328] focus:outline-none focus:border-[#FA8072]" />
-          <button type="submit"
-            class="w-8 h-8 rounded-full bg-[#FA8072] hover:bg-[#E85D75] text-white flex items-center justify-center shadow-sm transition">
-            <i class="fa-solid fa-paper-plane text-xs"></i>
-          </button>
-        </form>
       </div>
     </aside>
   </div>
@@ -1110,9 +966,8 @@
             Lullaby
           </span>
         </div>
-        <p id="mobileTrackMemory" class="text-[11px] text-[#9A737C]/80 italic truncate mt-0.5">
-          "Tatapan pertama yang bikin aku langsung jatuh hati sama kamu 👀✨"
-        </p>
+        <p id="mobileTrackMemory" onclick="openEditCurrentMemory()"
+          class="text-[11px] text-[#9A737C]/80 italic truncate mt-0.5 cursor-pointer"></p>
       </div>
 
       <!-- Like Heart Button -->
@@ -1243,7 +1098,7 @@
   <footer class="h-20 px-3 sm:px-4 bg-white border-t border-[#FFD2DC] flex items-center justify-between gap-2 sm:gap-4 shrink-0 z-40">
 
     <!-- Left: Active Track Cover + Title + Artist + Add Heart + Download -->
-    <div onclick="if(window.innerWidth < 1024) openMobileDetailPlayer(); else switchRightPanelTab('canvas');"
+    <div onclick="if(window.innerWidth < 1024) openMobileDetailPlayer();"
       class="flex items-center gap-2.5 sm:gap-3 flex-1 sm:w-1/4 sm:min-w-[180px] sm:max-w-[280px] min-w-0 cursor-pointer group">
       <div class="relative shrink-0">
         <img id="bottomTrackCover" src="images/spotify_covers/jakarta.jpg"
@@ -1326,7 +1181,7 @@
       <button onclick="togglePolaroidModal()" class="hover:text-[#FA8072] transition" title="Kartu Polaroid">
         <i class="fa-solid fa-image text-sm"></i>
       </button>
-      <button onclick="switchRightPanelTab('jam')" class="hover:text-[#FA8072] relative transition"
+      <button onclick="navigateTo('jam')" class="hover:text-[#FA8072] relative transition"
         title="Listening Together (Couple Jam)">
         <i class="fa-solid fa-tower-broadcast text-sm text-[#FA8072]"></i>
       </button>
@@ -1341,6 +1196,40 @@
 
   <!-- Hidden HTML5 Audio Element -->
   <audio id="audioPlayer" preload="metadata"></audio>
+
+  <!-- Global Floating Reactions Stage (tampil di desktop & mobile) -->
+  <div id="reactionStage" class="pointer-events-none fixed inset-0 overflow-hidden z-[70]"></div>
+
+  <!-- ================= MODAL: SWEET MEMORY NOTE (ISI SENDIRI) ================= -->
+  <div id="memoryNoteModal" class="fixed inset-0 z-[60] bg-black/40 backdrop-blur-xs hidden items-center justify-center p-4"
+    onclick="if(event.target === this) closeMemoryNoteModal()">
+    <div class="bg-white border border-[#FFD2DC] rounded-3xl max-w-md w-full p-6 shadow-2xl">
+      <div class="flex items-start justify-between mb-3">
+        <div class="min-w-0">
+          <span class="text-[11px] font-extrabold uppercase tracking-wider text-[#E85D75] flex items-center gap-1.5">
+            <i class="fa-solid fa-feather-pointed"></i> Sweet Memory Note
+          </span>
+          <h3 id="memoryNoteTrackTitle" class="text-base font-extrabold text-[#3B2328] truncate mt-0.5">Judul Lagu</h3>
+        </div>
+        <button onclick="closeMemoryNoteModal()" class="w-8 h-8 rounded-full hover:bg-[#FFF0F3] text-[#9A737C] flex items-center justify-center" title="Tutup">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      <textarea id="memoryNoteInput" rows="4" maxlength="240"
+        placeholder="Ceritakan kenangan kalian dengan lagu ini..."
+        class="w-full px-4 py-3 rounded-2xl bg-[#FFF5F7] border border-[#FFD2DC] font-handwriting text-xl text-[#3B2328] leading-snug focus:outline-none focus:border-[#FA8072] resize-none"></textarea>
+      <div class="flex items-center justify-between mt-1 mb-4">
+        <span class="text-[10px] text-[#9A737C]">Kosongkan untuk menghapus catatan</span>
+        <span id="memoryNoteCounter" class="text-[10px] text-[#9A737C]">0/240</span>
+      </div>
+      <div class="flex gap-2">
+        <button onclick="closeMemoryNoteModal()"
+          class="w-1/2 py-2.5 rounded-xl border border-[#FFD2DC] text-[#9A737C] text-xs font-bold hover:bg-[#FFF5F7] transition">Batal</button>
+        <button onclick="saveMemoryNote()"
+          class="w-1/2 py-2.5 rounded-xl bg-gradient-to-r from-[#FA8072] to-[#E85D75] text-white text-xs font-bold shadow-md hover:opacity-95 transition">Simpan Catatan</button>
+      </div>
+    </div>
+  </div>
 
   <!-- Hidden YouTube Official Audio Engine (Kept in viewport so mobile browsers do not suspend iframe) -->
   <div id="ytAudioPlayerContainer"

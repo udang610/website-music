@@ -97,7 +97,7 @@ const defaultState = {
           "title": "Those Eyes",
           "artist": "New West",
           "album": "Those Eyes - Single",
-          "memory": "Tatapan pertama yang bikin aku langsung jatuh hati sama kamu 👀✨",
+          "memory": "",
           "dateAdded": "Feb 25, 2025",
           "duration": "3:41",
           "liked": true,
@@ -110,7 +110,7 @@ const defaultState = {
           "title": "Atlantis",
           "artist": "Seafret",
           "album": "Tell Me It's Real",
-          "memory": "Lagu yang selalu kita putar pas perjalanan malam di mobil 🌃",
+          "memory": "",
           "dateAdded": "Feb 25, 2025",
           "duration": "4:02",
           "liked": true,
@@ -123,7 +123,7 @@ const defaultState = {
           "title": "Terbuang Dalam Waktu",
           "artist": "Barasuara",
           "album": "Pikiran dan Perjalanan",
-          "memory": "Lagu yang nemenin kita waktu saling cerita mimpi dan masa depan 💭",
+          "memory": "",
           "dateAdded": "Feb 25, 2025",
           "duration": "4:32",
           "liked": true,
@@ -136,7 +136,7 @@ const defaultState = {
           "title": "Best Part",
           "artist": "Daniel Caesar ft. H.E.R.",
           "album": "Freudian",
-          "memory": "If life is a movie, oh you're the best part 🤍",
+          "memory": "",
           "dateAdded": "Feb 25, 2025",
           "duration": "3:29",
           "liked": true,
@@ -149,7 +149,7 @@ const defaultState = {
           "title": "Mistikus Cinta",
           "artist": "Dewa 19",
           "album": "Cintailah Cinta",
-          "memory": "Ketika rasa itu magis dan tak bisa dijelaskan kata-kata 🌌",
+          "memory": "",
           "dateAdded": "Feb 25, 2025",
           "duration": "5:38",
           "liked": true,
@@ -162,7 +162,7 @@ const defaultState = {
           "title": "Dua Sejoli",
           "artist": "Dewa 19",
           "album": "Bintang Lima",
-          "memory": "Usaplah dahiku, genggamlah tanganku... Lagu cinta abadi kita berdua 💕",
+          "memory": "",
           "dateAdded": "Feb 25, 2025",
           "duration": "5:26",
           "liked": true,
@@ -183,7 +183,7 @@ const defaultState = {
           "title": "Those Eyes",
           "artist": "New West",
           "album": "Those Eyes - Single",
-          "memory": "Tatapan pertama yang bikin aku langsung jatuh hati sama kamu 👀✨",
+          "memory": "",
           "dateAdded": "Feb 25, 2025",
           "duration": "3:41",
           "liked": true,
@@ -196,7 +196,7 @@ const defaultState = {
           "title": "Atlantis",
           "artist": "Seafret",
           "album": "Tell Me It's Real",
-          "memory": "Lagu yang selalu kita putar pas perjalanan malam di mobil 🌃",
+          "memory": "",
           "dateAdded": "Feb 25, 2025",
           "duration": "4:02",
           "liked": true,
@@ -209,7 +209,7 @@ const defaultState = {
           "title": "Terbuang Dalam Waktu",
           "artist": "Barasuara",
           "album": "Terbuang Dalam Waktu - Single",
-          "memory": "Lagu favorit kita waktu kehujanan bareng sambil ketawa-tawa ☔🤍",
+          "memory": "",
           "dateAdded": "Feb 25, 2025",
           "duration": "4:59",
           "liked": true,
@@ -222,7 +222,7 @@ const defaultState = {
           "title": "Best Part",
           "artist": "Daniel Caesar",
           "album": "Freudian",
-          "memory": "You are literally the best part of my every single day ☕🌸",
+          "memory": "",
           "dateAdded": "Mar 14, 2025",
           "duration": "3:30",
           "liked": false,
@@ -235,7 +235,7 @@ const defaultState = {
           "title": "Mistikus Cinta",
           "artist": "Dewa 19",
           "album": "Cintailah Cinta",
-          "memory": "lagu yang buat kecanduan 💕",
+          "memory": "",
           "dateAdded": "Oct 19, 2026",
           "duration": "5:38",
           "liked": true,
@@ -248,7 +248,7 @@ const defaultState = {
           "title": "Dua Sejoli",
           "artist": "Dewa 19",
           "album": "Bintang Lima",
-          "memory": "Usaplah dahiku, genggamlah tanganku... Lagu cinta abadi kita berdua 💕",
+          "memory": "",
           "dateAdded": "Feb 25, 2025",
           "duration": "5:26",
           "liked": true,
@@ -261,7 +261,7 @@ const defaultState = {
           "title": "K.",
           "artist": "Cigarettes After Sex",
           "album": "✦ jakarta.",
-          "memory": "Suasana tenang dan damai tiap kali denger lagu ini bareng kamu ☕",
+          "memory": "",
           "dateAdded": "Oct 20, 2026",
           "duration": "5:19",
           "liked": false,
@@ -274,7 +274,7 @@ const defaultState = {
           "title": "What Was I Made For? [From The Motion Picture \"Barbie\"]",
           "artist": "Billie Eilish",
           "album": "✦ jakarta.",
-          "memory": "Setiap liriknya berasa kayak cerita kita berdua 🤍",
+          "memory": "",
           "dateAdded": "Oct 20, 2026",
           "duration": "3:42",
           "liked": true,
@@ -287,7 +287,7 @@ const defaultState = {
           "title": "It Will Rain",
           "artist": "Bruno Mars",
           "album": "✦ jakarta.",
-          "memory": "Ingat ga waktu lagu ini pertama kali kita putar di mobil? 🚗",
+          "memory": "",
           "dateAdded": "Oct 20, 2026",
           "duration": "4:17",
           "liked": false,
@@ -300,7 +300,7 @@ const defaultState = {
           "title": "When I Was Your Man",
           "artist": "Bruno Mars",
           "album": "✦ jakarta.",
-          "memory": "Senyummu langsung kebayang tiap intro lagu ini mulai 🌸",
+          "memory": "",
           "dateAdded": "Oct 20, 2026",
           "duration": "3:33",
           "liked": false,
@@ -313,7 +313,7 @@ const defaultState = {
           "title": "On Bended Knee",
           "artist": "Boyz II Men",
           "album": "✦ jakarta.",
-          "memory": "Melodi manis yang selalu ngingetin aku sama kamu 💕",
+          "memory": "",
           "dateAdded": "Oct 20, 2026",
           "duration": "5:29",
           "liked": true,
@@ -326,7 +326,7 @@ const defaultState = {
           "title": "I Love You, I'm Sorry",
           "artist": "Gracie Abrams",
           "album": "✦ jakarta.",
-          "memory": "Lagu favorit waktu kita ngobrol berjam-jam tanpa bosen ✨",
+          "memory": "",
           "dateAdded": "Oct 20, 2026",
           "duration": "2:37",
           "liked": false,
@@ -339,7 +339,7 @@ const defaultState = {
           "title": "End of Beginning",
           "artist": "Djo",
           "album": "✦ jakarta.",
-          "memory": "Suasana tenang dan damai tiap kali denger lagu ini bareng kamu ☕",
+          "memory": "",
           "dateAdded": "Oct 20, 2026",
           "duration": "2:39",
           "liked": false,
@@ -352,7 +352,7 @@ const defaultState = {
           "title": "Walking Back Home",
           "artist": "Vira Talisa",
           "album": "✦ jakarta.",
-          "memory": "Setiap liriknya berasa kayak cerita kita berdua 🤍",
+          "memory": "",
           "dateAdded": "Oct 20, 2026",
           "duration": "2:12",
           "liked": true,
@@ -365,7 +365,7 @@ const defaultState = {
           "title": "seasons",
           "artist": "wave to earth",
           "album": "✦ jakarta.",
-          "memory": "Ingat ga waktu lagu ini pertama kali kita putar di mobil? 🚗",
+          "memory": "",
           "dateAdded": "Oct 20, 2026",
           "duration": "4:15",
           "liked": false,
@@ -378,7 +378,7 @@ const defaultState = {
           "title": "Summertime Sadness",
           "artist": "Lana Del Rey",
           "album": "✦ jakarta.",
-          "memory": "Senyummu langsung kebayang tiap intro lagu ini mulai 🌸",
+          "memory": "",
           "dateAdded": "Oct 20, 2026",
           "duration": "4:25",
           "liked": false,
@@ -399,7 +399,7 @@ const defaultState = {
           "title": "That's What I Like",
           "artist": "Bruno Mars",
           "album": "y'll fallin' in love? ｡𖦹°‧.𖥔 ݁ ˖",
-          "memory": "Melodi manis yang selalu ngingetin aku sama kamu 💕",
+          "memory": "",
           "dateAdded": "Oct 20, 2026",
           "duration": "3:26",
           "liked": true,
@@ -412,7 +412,7 @@ const defaultState = {
           "title": "Marry You",
           "artist": "Bruno Mars",
           "album": "y'll fallin' in love? ｡𖦹°‧.𖥔 ݁ ˖",
-          "memory": "Lagu favorit waktu kita ngobrol berjam-jam tanpa bosen ✨",
+          "memory": "",
           "dateAdded": "Oct 20, 2026",
           "duration": "3:50",
           "liked": false,
@@ -425,7 +425,7 @@ const defaultState = {
           "title": "I Wanna Be Yours",
           "artist": "Arctic Monkeys",
           "album": "y'll fallin' in love? ｡𖦹°‧.𖥔 ݁ ˖",
-          "memory": "Suasana tenang dan damai tiap kali denger lagu ini bareng kamu ☕",
+          "memory": "",
           "dateAdded": "Oct 20, 2026",
           "duration": "3:03",
           "liked": false,
@@ -438,7 +438,7 @@ const defaultState = {
           "title": "\"Slut!\" (Taylor's Version) (From The Vault)",
           "artist": "Taylor Swift",
           "album": "y'll fallin' in love? ｡𖦹°‧.𖥔 ݁ ˖",
-          "memory": "Setiap liriknya berasa kayak cerita kita berdua 🤍",
+          "memory": "",
           "dateAdded": "Oct 20, 2026",
           "duration": "3:00",
           "liked": true,
@@ -451,7 +451,7 @@ const defaultState = {
           "title": "lowkey",
           "artist": "NIKI",
           "album": "y'll fallin' in love? ｡𖦹°‧.𖥔 ݁ ˖",
-          "memory": "Ingat ga waktu lagu ini pertama kali kita putar di mobil? 🚗",
+          "memory": "",
           "dateAdded": "Oct 20, 2026",
           "duration": "2:51",
           "liked": false,
@@ -464,7 +464,7 @@ const defaultState = {
           "title": "Falling In Love",
           "artist": "Cigarettes After Sex",
           "album": "y'll fallin' in love? ｡𖦹°‧.𖥔 ݁ ˖",
-          "memory": "Senyummu langsung kebayang tiap intro lagu ini mulai 🌸",
+          "memory": "",
           "dateAdded": "Oct 20, 2026",
           "duration": "4:05",
           "liked": false,
@@ -477,7 +477,7 @@ const defaultState = {
           "title": "The Way I Loved You (Taylor’s Version)",
           "artist": "Taylor Swift",
           "album": "y'll fallin' in love? ｡𖦹°‧.𖥔 ݁ ˖",
-          "memory": "Melodi manis yang selalu ngingetin aku sama kamu 💕",
+          "memory": "",
           "dateAdded": "Oct 20, 2026",
           "duration": "4:03",
           "liked": true,
@@ -490,7 +490,7 @@ const defaultState = {
           "title": "No. 1 Party Anthem",
           "artist": "Arctic Monkeys",
           "album": "y'll fallin' in love? ｡𖦹°‧.𖥔 ݁ ˖",
-          "memory": "Lagu favorit waktu kita ngobrol berjam-jam tanpa bosen ✨",
+          "memory": "",
           "dateAdded": "Oct 20, 2026",
           "duration": "4:03",
           "liked": false,
@@ -503,7 +503,7 @@ const defaultState = {
           "title": "Fearless (Taylor’s Version)",
           "artist": "Taylor Swift",
           "album": "y'll fallin' in love? ｡𖦹°‧.𖥔 ݁ ˖",
-          "memory": "Suasana tenang dan damai tiap kali denger lagu ini bareng kamu ☕",
+          "memory": "",
           "dateAdded": "Oct 20, 2026",
           "duration": "4:01",
           "liked": false,
@@ -516,7 +516,7 @@ const defaultState = {
           "title": "i wanna be your girlfriend",
           "artist": "girl in red",
           "album": "y'll fallin' in love? ｡𖦹°‧.𖥔 ݁ ˖",
-          "memory": "Setiap liriknya berasa kayak cerita kita berdua 🤍",
+          "memory": "",
           "dateAdded": "Oct 20, 2026",
           "duration": "3:24",
           "liked": true,
@@ -529,7 +529,7 @@ const defaultState = {
           "title": "Alexandra",
           "artist": "Reality Club",
           "album": "y'll fallin' in love? ｡𖦹°‧.𖥔 ݁ ˖",
-          "memory": "Ingat ga waktu lagu ini pertama kali kita putar di mobil? 🚗",
+          "memory": "",
           "dateAdded": "Oct 20, 2026",
           "duration": "3:58",
           "liked": false,
@@ -542,7 +542,7 @@ const defaultState = {
           "title": "Sure Thing",
           "artist": "Miguel",
           "album": "y'll fallin' in love? ｡𖦹°‧.𖥔 ݁ ˖",
-          "memory": "Senyummu langsung kebayang tiap intro lagu ini mulai 🌸",
+          "memory": "",
           "dateAdded": "Oct 20, 2026",
           "duration": "3:15",
           "liked": false,
@@ -563,7 +563,7 @@ const defaultState = {
           "title": "2002",
           "artist": "Anne-Marie",
           "album": "candlelight🧘🏻‍♀️",
-          "memory": "Melodi manis yang selalu ngingetin aku sama kamu 💕",
+          "memory": "",
           "dateAdded": "Oct 20, 2026",
           "duration": "3:06",
           "liked": true,
@@ -576,7 +576,7 @@ const defaultState = {
           "title": "Last Friday Night (T.G.I.F.)",
           "artist": "Katy Perry",
           "album": "candlelight🧘🏻‍♀️",
-          "memory": "Lagu favorit waktu kita ngobrol berjam-jam tanpa bosen ✨",
+          "memory": "",
           "dateAdded": "Oct 20, 2026",
           "duration": "3:50",
           "liked": false,
@@ -589,7 +589,7 @@ const defaultState = {
           "title": "34+35",
           "artist": "Ariana Grande",
           "album": "candlelight🧘🏻‍♀️",
-          "memory": "Suasana tenang dan damai tiap kali denger lagu ini bareng kamu ☕",
+          "memory": "",
           "dateAdded": "Oct 20, 2026",
           "duration": "2:53",
           "liked": false,
@@ -602,7 +602,7 @@ const defaultState = {
           "title": "supernatural",
           "artist": "Ariana Grande",
           "album": "candlelight🧘🏻‍♀️",
-          "memory": "Setiap liriknya berasa kayak cerita kita berdua 🤍",
+          "memory": "",
           "dateAdded": "Oct 20, 2026",
           "duration": "2:43",
           "liked": true,
@@ -615,7 +615,7 @@ const defaultState = {
           "title": "All Of The Girls You Loved Before",
           "artist": "Taylor Swift",
           "album": "candlelight🧘🏻‍♀️",
-          "memory": "Ingat ga waktu lagu ini pertama kali kita putar di mobil? 🚗",
+          "memory": "",
           "dateAdded": "Oct 20, 2026",
           "duration": "3:41",
           "liked": false,
@@ -628,7 +628,7 @@ const defaultState = {
           "title": "California Gurls - feat. Snoop Dogg",
           "artist": "Katy Perry, Snoop Dogg",
           "album": "candlelight🧘🏻‍♀️",
-          "memory": "Senyummu langsung kebayang tiap intro lagu ini mulai 🌸",
+          "memory": "",
           "dateAdded": "Oct 20, 2026",
           "duration": "3:56",
           "liked": false,
@@ -641,7 +641,7 @@ const defaultState = {
           "title": "Please Please Please",
           "artist": "Sabrina Carpenter",
           "album": "candlelight🧘🏻‍♀️",
-          "memory": "Melodi manis yang selalu ngingetin aku sama kamu 💕",
+          "memory": "",
           "dateAdded": "Oct 20, 2026",
           "duration": "3:06",
           "liked": true,
@@ -654,7 +654,7 @@ const defaultState = {
           "title": "obsessed",
           "artist": "zandros, Limi",
           "album": "candlelight🧘🏻‍♀️",
-          "memory": "Lagu favorit waktu kita ngobrol berjam-jam tanpa bosen ✨",
+          "memory": "",
           "dateAdded": "Oct 20, 2026",
           "duration": "3:00",
           "liked": false,
@@ -667,7 +667,7 @@ const defaultState = {
           "title": "Last Friday Night (T.G.I.F.)",
           "artist": "Katy Perry",
           "album": "candlelight🧘🏻‍♀️",
-          "memory": "Suasana tenang dan damai tiap kali denger lagu ini bareng kamu ☕",
+          "memory": "",
           "dateAdded": "Oct 20, 2026",
           "duration": "3:50",
           "liked": false,
@@ -680,7 +680,7 @@ const defaultState = {
           "title": "Dangerous Woman",
           "artist": "Ariana Grande",
           "album": "candlelight🧘🏻‍♀️",
-          "memory": "Setiap liriknya berasa kayak cerita kita berdua 🤍",
+          "memory": "",
           "dateAdded": "Oct 20, 2026",
           "duration": "3:55",
           "liked": true,
@@ -693,7 +693,7 @@ const defaultState = {
           "title": "If I Ain't Got You",
           "artist": "Alicia Keys",
           "album": "candlelight🧘🏻‍♀️",
-          "memory": "Ingat ga waktu lagu ini pertama kali kita putar di mobil? 🚗",
+          "memory": "",
           "dateAdded": "Oct 20, 2026",
           "duration": "3:48",
           "liked": false,
@@ -706,7 +706,7 @@ const defaultState = {
           "title": "Water",
           "artist": "Tyla",
           "album": "candlelight🧘🏻‍♀️",
-          "memory": "Senyummu langsung kebayang tiap intro lagu ini mulai 🌸",
+          "memory": "",
           "dateAdded": "Oct 20, 2026",
           "duration": "3:20",
           "liked": false,
@@ -727,7 +727,7 @@ const defaultState = {
           "title": "Nina",
           "artist": ".Feast",
           "album": "cry, breathe, & reboot.",
-          "memory": "Melodi manis yang selalu ngingetin aku sama kamu 💕",
+          "memory": "",
           "dateAdded": "Oct 20, 2026",
           "duration": "4:37",
           "liked": true,
@@ -740,7 +740,7 @@ const defaultState = {
           "title": "Evaluasi",
           "artist": "Hindia",
           "album": "cry, breathe, & reboot.",
-          "memory": "Lagu favorit waktu kita ngobrol berjam-jam tanpa bosen ✨",
+          "memory": "",
           "dateAdded": "Oct 20, 2026",
           "duration": "3:14",
           "liked": false,
@@ -753,7 +753,7 @@ const defaultState = {
           "title": "Bertaut",
           "artist": "Nadin Amizah",
           "album": "cry, breathe, & reboot.",
-          "memory": "Suasana tenang dan damai tiap kali denger lagu ini bareng kamu ☕",
+          "memory": "",
           "dateAdded": "Oct 20, 2026",
           "duration": "5:15",
           "liked": false,
@@ -766,7 +766,7 @@ const defaultState = {
           "title": "Sorai",
           "artist": "Nadin Amizah",
           "album": "cry, breathe, & reboot.",
-          "memory": "Setiap liriknya berasa kayak cerita kita berdua 🤍",
+          "memory": "",
           "dateAdded": "Oct 20, 2026",
           "duration": "4:38",
           "liked": true,
@@ -779,7 +779,7 @@ const defaultState = {
           "title": "Secukupnya",
           "artist": "Hindia",
           "album": "cry, breathe, & reboot.",
-          "memory": "Ingat ga waktu lagu ini pertama kali kita putar di mobil? 🚗",
+          "memory": "",
           "dateAdded": "Oct 20, 2026",
           "duration": "3:25",
           "liked": false,
@@ -792,7 +792,7 @@ const defaultState = {
           "title": "Untungnya, Hidup Harus Tetap Berjalan",
           "artist": "Bernadya",
           "album": "cry, breathe, & reboot.",
-          "memory": "Senyummu langsung kebayang tiap intro lagu ini mulai 🌸",
+          "memory": "",
           "dateAdded": "Oct 20, 2026",
           "duration": "3:02",
           "liked": false,
@@ -805,7 +805,7 @@ const defaultState = {
           "title": "Peradaban",
           "artist": ".Feast",
           "album": "cry, breathe, & reboot.",
-          "memory": "Melodi manis yang selalu ngingetin aku sama kamu 💕",
+          "memory": "",
           "dateAdded": "Oct 20, 2026",
           "duration": "5:39",
           "liked": true,
@@ -818,7 +818,7 @@ const defaultState = {
           "title": "You're On Your Own, Kid",
           "artist": "Taylor Swift",
           "album": "cry, breathe, & reboot.",
-          "memory": "Lagu favorit waktu kita ngobrol berjam-jam tanpa bosen ✨",
+          "memory": "",
           "dateAdded": "Oct 20, 2026",
           "duration": "3:14",
           "liked": false,
@@ -831,7 +831,7 @@ const defaultState = {
           "title": "Matilda",
           "artist": "Harry Styles",
           "album": "cry, breathe, & reboot.",
-          "memory": "Suasana tenang dan damai tiap kali denger lagu ini bareng kamu ☕",
+          "memory": "",
           "dateAdded": "Oct 20, 2026",
           "duration": "4:05",
           "liked": false,
@@ -844,7 +844,7 @@ const defaultState = {
           "title": "Kata Mereka Ini Berlebihan",
           "artist": "Bernadya",
           "album": "cry, breathe, & reboot.",
-          "memory": "Setiap liriknya berasa kayak cerita kita berdua 🤍",
+          "memory": "",
           "dateAdded": "Oct 20, 2026",
           "duration": "3:11",
           "liked": true,
@@ -857,7 +857,7 @@ const defaultState = {
           "title": "Sialan",
           "artist": "Adrian Khalif, Juicy Luicy",
           "album": "cry, breathe, & reboot.",
-          "memory": "Ingat ga waktu lagu ini pertama kali kita putar di mobil? 🚗",
+          "memory": "",
           "dateAdded": "Oct 20, 2026",
           "duration": "4:01",
           "liked": false,
@@ -870,7 +870,7 @@ const defaultState = {
           "title": "Untuk Perempuan Yang Sedang Di Pelukan",
           "artist": "Payung Teduh",
           "album": "cry, breathe, & reboot.",
-          "memory": "Senyummu langsung kebayang tiap intro lagu ini mulai 🌸",
+          "memory": "",
           "dateAdded": "Oct 20, 2026",
           "duration": "5:42",
           "liked": false,
@@ -891,7 +891,7 @@ const defaultState = {
           "title": "Reminder",
           "artist": "The Weeknd",
           "album": "shes a racer.",
-          "memory": "Melodi manis yang selalu ngingetin aku sama kamu 💕",
+          "memory": "",
           "dateAdded": "Oct 20, 2026",
           "duration": "3:38",
           "liked": true,
@@ -904,7 +904,7 @@ const defaultState = {
           "title": "Sure Thing",
           "artist": "Miguel",
           "album": "shes a racer.",
-          "memory": "Lagu favorit waktu kita ngobrol berjam-jam tanpa bosen ✨",
+          "memory": "",
           "dateAdded": "Oct 20, 2026",
           "duration": "3:15",
           "liked": false,
@@ -917,7 +917,7 @@ const defaultState = {
           "title": "Swim",
           "artist": "Chase Atlantic",
           "album": "shes a racer.",
-          "memory": "Suasana tenang dan damai tiap kali denger lagu ini bareng kamu ☕",
+          "memory": "",
           "dateAdded": "Oct 20, 2026",
           "duration": "3:48",
           "liked": false,
@@ -930,7 +930,7 @@ const defaultState = {
           "title": "Kiss It Better",
           "artist": "Rihanna",
           "album": "shes a racer.",
-          "memory": "Setiap liriknya berasa kayak cerita kita berdua 🤍",
+          "memory": "",
           "dateAdded": "Oct 20, 2026",
           "duration": "4:13",
           "liked": true,
@@ -943,7 +943,7 @@ const defaultState = {
           "title": "Collide (Sped Up Remix)",
           "artist": "Justine Skye, Tyga",
           "album": "shes a racer.",
-          "memory": "Ingat ga waktu lagu ini pertama kali kita putar di mobil? 🚗",
+          "memory": "",
           "dateAdded": "Oct 20, 2026",
           "duration": "3:41",
           "liked": false,
@@ -956,7 +956,7 @@ const defaultState = {
           "title": "Die With A Smile",
           "artist": "Lady Gaga, Bruno Mars",
           "album": "shes a racer.",
-          "memory": "Senyummu langsung kebayang tiap intro lagu ini mulai 🌸",
+          "memory": "",
           "dateAdded": "Oct 20, 2026",
           "duration": "4:11",
           "liked": false,
@@ -969,7 +969,7 @@ const defaultState = {
           "title": "Aku Milikmu",
           "artist": "Dewa 19",
           "album": "shes a racer.",
-          "memory": "Melodi manis yang selalu ngingetin aku sama kamu 💕",
+          "memory": "",
           "dateAdded": "Oct 20, 2026",
           "duration": "5:32",
           "liked": true,
@@ -982,7 +982,7 @@ const defaultState = {
           "title": "Cry",
           "artist": "Cigarettes After Sex",
           "album": "shes a racer.",
-          "memory": "Lagu favorit waktu kita ngobrol berjam-jam tanpa bosen ✨",
+          "memory": "",
           "dateAdded": "Oct 20, 2026",
           "duration": "4:16",
           "liked": false,
@@ -995,7 +995,7 @@ const defaultState = {
           "title": "Falling In Love",
           "artist": "Cigarettes After Sex",
           "album": "shes a racer.",
-          "memory": "Suasana tenang dan damai tiap kali denger lagu ini bareng kamu ☕",
+          "memory": "",
           "dateAdded": "Oct 20, 2026",
           "duration": "4:05",
           "liked": false,
@@ -1008,7 +1008,7 @@ const defaultState = {
           "title": "Sunsetz",
           "artist": "Cigarettes After Sex",
           "album": "shes a racer.",
-          "memory": "Setiap liriknya berasa kayak cerita kita berdua 🤍",
+          "memory": "",
           "dateAdded": "Oct 20, 2026",
           "duration": "3:34",
           "liked": true,
@@ -1021,7 +1021,7 @@ const defaultState = {
           "title": "welcome and goodbye",
           "artist": "Dream, Ivory",
           "album": "shes a racer.",
-          "memory": "Ingat ga waktu lagu ini pertama kali kita putar di mobil? 🚗",
+          "memory": "",
           "dateAdded": "Oct 20, 2026",
           "duration": "2:20",
           "liked": false,
@@ -1034,7 +1034,7 @@ const defaultState = {
           "title": "Tokyo Drift (Fast & Furious) - From \"The Fast And The Furious: Tokyo Drift\" Soundtrack",
           "artist": "Teriyaki Boyz",
           "album": "shes a racer.",
-          "memory": "Senyummu langsung kebayang tiap intro lagu ini mulai 🌸",
+          "memory": "",
           "dateAdded": "Oct 20, 2026",
           "duration": "4:15",
           "liked": false,
@@ -1055,7 +1055,7 @@ const defaultState = {
           "title": "B.E.D.",
           "artist": "Jacquees",
           "album": "🍸 cocktails",
-          "memory": "Melodi manis yang selalu ngingetin aku sama kamu 💕",
+          "memory": "",
           "dateAdded": "Oct 20, 2026",
           "duration": "3:56",
           "liked": true,
@@ -1068,7 +1068,7 @@ const defaultState = {
           "title": "Long Way 2 Go",
           "artist": "Cassie",
           "album": "🍸 cocktails",
-          "memory": "Lagu favorit waktu kita ngobrol berjam-jam tanpa bosen ✨",
+          "memory": "",
           "dateAdded": "Oct 20, 2026",
           "duration": "3:40",
           "liked": false,
@@ -1081,7 +1081,7 @@ const defaultState = {
           "title": "2 On (feat. ScHoolboy Q)",
           "artist": "Tinashe, ScHoolboy Q",
           "album": "🍸 cocktails",
-          "memory": "Suasana tenang dan damai tiap kali denger lagu ini bareng kamu ☕",
+          "memory": "",
           "dateAdded": "Oct 20, 2026",
           "duration": "3:47",
           "liked": false,
@@ -1094,7 +1094,7 @@ const defaultState = {
           "title": "Or Nah (feat. The Weeknd, Wiz Khalifa & DJ Mustard) - Remix",
           "artist": "Ty Dolla $ign, The Weeknd, Wiz Khalifa, Mustard",
           "album": "🍸 cocktails",
-          "memory": "Setiap liriknya berasa kayak cerita kita berdua 🤍",
+          "memory": "",
           "dateAdded": "Oct 20, 2026",
           "duration": "4:02",
           "liked": true,
@@ -1107,7 +1107,7 @@ const defaultState = {
           "title": "Flashing Lights",
           "artist": "Kanye West, Dwele",
           "album": "🍸 cocktails",
-          "memory": "Ingat ga waktu lagu ini pertama kali kita putar di mobil? 🚗",
+          "memory": "",
           "dateAdded": "Oct 20, 2026",
           "duration": "3:57",
           "liked": false,
@@ -1120,7 +1120,7 @@ const defaultState = {
           "title": "Fair Trade (with Travis Scott)",
           "artist": "Drake, Travis Scott",
           "album": "🍸 cocktails",
-          "memory": "Senyummu langsung kebayang tiap intro lagu ini mulai 🌸",
+          "memory": "",
           "dateAdded": "Oct 20, 2026",
           "duration": "4:51",
           "liked": false,
@@ -1133,7 +1133,7 @@ const defaultState = {
           "title": "No Role Modelz",
           "artist": "J. Cole",
           "album": "🍸 cocktails",
-          "memory": "Melodi manis yang selalu ngingetin aku sama kamu 💕",
+          "memory": "",
           "dateAdded": "Oct 20, 2026",
           "duration": "4:52",
           "liked": true,
@@ -1146,7 +1146,7 @@ const defaultState = {
           "title": "Bitches Love Me",
           "artist": "Lil Wayne, Future, Drake",
           "album": "🍸 cocktails",
-          "memory": "Lagu favorit waktu kita ngobrol berjam-jam tanpa bosen ✨",
+          "memory": "",
           "dateAdded": "Oct 20, 2026",
           "duration": "4:11",
           "liked": false,
@@ -1159,7 +1159,7 @@ const defaultState = {
           "title": "P power (feat. Drake)",
           "artist": "Gunna, Drake",
           "album": "🍸 cocktails",
-          "memory": "Suasana tenang dan damai tiap kali denger lagu ini bareng kamu ☕",
+          "memory": "",
           "dateAdded": "Oct 20, 2026",
           "duration": "3:13",
           "liked": false,
@@ -1172,7 +1172,7 @@ const defaultState = {
           "title": "God's Plan",
           "artist": "Drake",
           "album": "🍸 cocktails",
-          "memory": "Setiap liriknya berasa kayak cerita kita berdua 🤍",
+          "memory": "",
           "dateAdded": "Oct 20, 2026",
           "duration": "3:18",
           "liked": true,
@@ -1185,7 +1185,7 @@ const defaultState = {
           "title": "Teenage Fever",
           "artist": "Drake",
           "album": "🍸 cocktails",
-          "memory": "Ingat ga waktu lagu ini pertama kali kita putar di mobil? 🚗",
+          "memory": "",
           "dateAdded": "Oct 20, 2026",
           "duration": "3:39",
           "liked": false,
@@ -1198,7 +1198,7 @@ const defaultState = {
           "title": "Time Flies",
           "artist": "Drake",
           "album": "🍸 cocktails",
-          "memory": "Senyummu langsung kebayang tiap intro lagu ini mulai 🌸",
+          "memory": "",
           "dateAdded": "Oct 20, 2026",
           "duration": "3:12",
           "liked": false,
@@ -1219,7 +1219,7 @@ const defaultState = {
           "title": "Culik Aku Dong",
           "artist": "Kharis Sopan, DJ Likin Breat",
           "album": "in 🇮🇩 we said jj remix",
-          "memory": "Melodi manis yang selalu ngingetin aku sama kamu 💕",
+          "memory": "",
           "dateAdded": "Oct 20, 2026",
           "duration": "4:18",
           "liked": true,
@@ -1232,7 +1232,7 @@ const defaultState = {
           "title": "DITINGGAL BANG DIKA",
           "artist": "Dika",
           "album": "in 🇮🇩 we said jj remix",
-          "memory": "Lagu favorit waktu kita ngobrol berjam-jam tanpa bosen ✨",
+          "memory": "",
           "dateAdded": "Oct 20, 2026",
           "duration": "5:30",
           "liked": false,
@@ -1245,7 +1245,7 @@ const defaultState = {
           "title": "DJ Hilang Harapan x Rutinitas Randong",
           "artist": "DJ BUDOTS",
           "album": "in 🇮🇩 we said jj remix",
-          "memory": "Suasana tenang dan damai tiap kali denger lagu ini bareng kamu ☕",
+          "memory": "",
           "dateAdded": "Oct 20, 2026",
           "duration": "4:00",
           "liked": false,
@@ -1258,7 +1258,7 @@ const defaultState = {
           "title": "Karena Kamu Cantik",
           "artist": "Komang Rimex",
           "album": "in 🇮🇩 we said jj remix",
-          "memory": "Setiap liriknya berasa kayak cerita kita berdua 🤍",
+          "memory": "",
           "dateAdded": "Oct 20, 2026",
           "duration": "3:36",
           "liked": true,
@@ -1271,7 +1271,7 @@ const defaultState = {
           "title": "SUNGGUH KETAMVANAN INI",
           "artist": "Maman Fvndy, DJ Donall, RPH Remix",
           "album": "in 🇮🇩 we said jj remix",
-          "memory": "Ingat ga waktu lagu ini pertama kali kita putar di mobil? 🚗",
+          "memory": "",
           "dateAdded": "Oct 20, 2026",
           "duration": "4:40",
           "liked": false,
@@ -1284,7 +1284,7 @@ const defaultState = {
           "title": "DJ MALAM MINGGU AKU TAK PUNYA PACAR",
           "artist": "DJ MANAY",
           "album": "in 🇮🇩 we said jj remix",
-          "memory": "Senyummu langsung kebayang tiap intro lagu ini mulai 🌸",
+          "memory": "",
           "dateAdded": "Oct 20, 2026",
           "duration": "5:55",
           "liked": false,
@@ -1297,7 +1297,7 @@ const defaultState = {
           "title": "Sakitnya Luar Dalam",
           "artist": "DJ Haning",
           "album": "in 🇮🇩 we said jj remix",
-          "memory": "Melodi manis yang selalu ngingetin aku sama kamu 💕",
+          "memory": "",
           "dateAdded": "Oct 20, 2026",
           "duration": "4:22",
           "liked": true,
@@ -1310,7 +1310,7 @@ const defaultState = {
           "title": "Seratus Persen Cintaku",
           "artist": "Maman Fvndy",
           "album": "in 🇮🇩 we said jj remix",
-          "memory": "Lagu favorit waktu kita ngobrol berjam-jam tanpa bosen ✨",
+          "memory": "",
           "dateAdded": "Oct 20, 2026",
           "duration": "4:49",
           "liked": false,
@@ -1323,7 +1323,7 @@ const defaultState = {
           "title": "DJ JANGAN SALAH PASANGAN X BONFIRE",
           "artist": "DJ ManikCi",
           "album": "in 🇮🇩 we said jj remix",
-          "memory": "Suasana tenang dan damai tiap kali denger lagu ini bareng kamu ☕",
+          "memory": "",
           "dateAdded": "Oct 20, 2026",
           "duration": "3:55",
           "liked": false,
@@ -1336,7 +1336,7 @@ const defaultState = {
           "title": "DJ HILANG HARAPAN EXTENDED",
           "artist": "DJ BUDOTS",
           "album": "in 🇮🇩 we said jj remix",
-          "memory": "Setiap liriknya berasa kayak cerita kita berdua 🤍",
+          "memory": "",
           "dateAdded": "Oct 20, 2026",
           "duration": "4:43",
           "liked": true,
@@ -1349,7 +1349,7 @@ const defaultState = {
           "title": "Laguku Dubstep",
           "artist": "DJ Cantika",
           "album": "in 🇮🇩 we said jj remix",
-          "memory": "Ingat ga waktu lagu ini pertama kali kita putar di mobil? 🚗",
+          "memory": "",
           "dateAdded": "Oct 20, 2026",
           "duration": "3:58",
           "liked": false,
@@ -1362,7 +1362,7 @@ const defaultState = {
           "title": "DJ GOYANG DAYUNG Instrumental",
           "artist": "Maman Fvndy",
           "album": "in 🇮🇩 we said jj remix",
-          "memory": "Senyummu langsung kebayang tiap intro lagu ini mulai 🌸",
+          "memory": "",
           "dateAdded": "Oct 20, 2026",
           "duration": "3:51",
           "liked": false,
@@ -1383,7 +1383,7 @@ const defaultState = {
           "title": "Fix You",
           "artist": "Coldplay",
           "album": "⋆˙⟡ midnight cry",
-          "memory": "Melodi manis yang selalu ngingetin aku sama kamu 💕",
+          "memory": "",
           "dateAdded": "Oct 20, 2026",
           "duration": "4:55",
           "liked": true,
@@ -1396,7 +1396,7 @@ const defaultState = {
           "title": "Somewhere Only We Know",
           "artist": "Keane",
           "album": "⋆˙⟡ midnight cry",
-          "memory": "Lagu favorit waktu kita ngobrol berjam-jam tanpa bosen ✨",
+          "memory": "",
           "dateAdded": "Oct 20, 2026",
           "duration": "3:57",
           "liked": false,
@@ -1409,7 +1409,7 @@ const defaultState = {
           "title": "When I Was Your Man",
           "artist": "Bruno Mars",
           "album": "⋆˙⟡ midnight cry",
-          "memory": "Suasana tenang dan damai tiap kali denger lagu ini bareng kamu ☕",
+          "memory": "",
           "dateAdded": "Oct 20, 2026",
           "duration": "3:33",
           "liked": false,
@@ -1422,7 +1422,7 @@ const defaultState = {
           "title": "'Cause You Have To",
           "artist": "LANY",
           "album": "⋆˙⟡ midnight cry",
-          "memory": "Setiap liriknya berasa kayak cerita kita berdua 🤍",
+          "memory": "",
           "dateAdded": "Oct 20, 2026",
           "duration": "4:10",
           "liked": true,
@@ -1435,7 +1435,7 @@ const defaultState = {
           "title": "The Man Who Can't Be Moved",
           "artist": "The Script",
           "album": "⋆˙⟡ midnight cry",
-          "memory": "Ingat ga waktu lagu ini pertama kali kita putar di mobil? 🚗",
+          "memory": "",
           "dateAdded": "Oct 20, 2026",
           "duration": "4:01",
           "liked": false,
@@ -1448,7 +1448,7 @@ const defaultState = {
           "title": "If Ever You're in My Arms Again",
           "artist": "Peabo Bryson",
           "album": "⋆˙⟡ midnight cry",
-          "memory": "Senyummu langsung kebayang tiap intro lagu ini mulai 🌸",
+          "memory": "",
           "dateAdded": "Oct 20, 2026",
           "duration": "4:11",
           "liked": false,
@@ -1461,7 +1461,7 @@ const defaultState = {
           "title": "It Will Rain",
           "artist": "Bruno Mars",
           "album": "⋆˙⟡ midnight cry",
-          "memory": "Melodi manis yang selalu ngingetin aku sama kamu 💕",
+          "memory": "",
           "dateAdded": "Oct 20, 2026",
           "duration": "4:17",
           "liked": true,
@@ -1474,7 +1474,7 @@ const defaultState = {
           "title": "Thru These Tears",
           "artist": "LANY",
           "album": "⋆˙⟡ midnight cry",
-          "memory": "Lagu favorit waktu kita ngobrol berjam-jam tanpa bosen ✨",
+          "memory": "",
           "dateAdded": "Oct 20, 2026",
           "duration": "3:24",
           "liked": false,
@@ -1487,7 +1487,7 @@ const defaultState = {
           "title": "back to friends",
           "artist": "sombr",
           "album": "⋆˙⟡ midnight cry",
-          "memory": "Suasana tenang dan damai tiap kali denger lagu ini bareng kamu ☕",
+          "memory": "",
           "dateAdded": "Oct 20, 2026",
           "duration": "3:19",
           "liked": false,
@@ -1500,7 +1500,7 @@ const defaultState = {
           "title": "Glimpse of Us",
           "artist": "Joji",
           "album": "⋆˙⟡ midnight cry",
-          "memory": "Setiap liriknya berasa kayak cerita kita berdua 🤍",
+          "memory": "",
           "dateAdded": "Oct 20, 2026",
           "duration": "3:53",
           "liked": true,
@@ -1513,7 +1513,7 @@ const defaultState = {
           "title": "Slipping Through My Fingers",
           "artist": "ABBA",
           "album": "⋆˙⟡ midnight cry",
-          "memory": "Ingat ga waktu lagu ini pertama kali kita putar di mobil? 🚗",
+          "memory": "",
           "dateAdded": "Oct 20, 2026",
           "duration": "3:53",
           "liked": false,
@@ -1526,7 +1526,7 @@ const defaultState = {
           "title": "Atlantis",
           "artist": "Seafret",
           "album": "⋆˙⟡ midnight cry",
-          "memory": "Senyummu langsung kebayang tiap intro lagu ini mulai 🌸",
+          "memory": "",
           "dateAdded": "Oct 20, 2026",
           "duration": "3:49",
           "liked": false,
@@ -1658,6 +1658,46 @@ function stopYtScrubber() {
 }
 
 // ================= STATE HELPERS & STORAGE =================
+// Catatan preset lama yang dulu otomatis terisi. Dihapus agar Sweet Memory Note diisi sendiri.
+const LEGACY_PRESET_MEMORIES = new Set([
+  'Tatapan pertama yang bikin aku langsung jatuh hati sama kamu 👀✨',
+  'Lagu yang selalu kita putar pas perjalanan malam di mobil 🌃',
+  'Lagu yang nemenin kita waktu saling cerita mimpi dan masa depan 💭',
+  "If life is a movie, oh you're the best part 🤍",
+  'Ketika rasa itu magis dan tak bisa dijelaskan kata-kata 🌌',
+  'Usaplah dahiku, genggamlah tanganku... Lagu cinta abadi kita berdua 💕',
+  'Lagu favorit kita waktu kehujanan bareng sambil ketawa-tawa ☔🤍',
+  'You are literally the best part of my every single day ☕🌸',
+  'Suasana tenang dan damai tiap kali denger lagu ini bareng kamu ☕',
+  'Setiap liriknya berasa kayak cerita kita berdua 🤍',
+  'Ingat ga waktu lagu ini pertama kali kita putar di mobil? 🚗',
+  'Senyummu langsung kebayang tiap intro lagu ini mulai 🌸',
+  'Melodi manis yang selalu ngingetin aku sama kamu 💕',
+  'Lagu favorit waktu kita ngobrol berjam-jam tanpa bosen ✨',
+  'Lagu waktu kita jalan berdua habis hujan sambil cerita masa depan 💕',
+  'Lagu spesial pilihan kita 💕'
+]);
+
+function isLegacyPresetMemory(text) {
+  const t = (text || '').trim();
+  if (!t) return false;
+  return LEGACY_PRESET_MEMORIES.has(t) || /^Lagu spesial dari album ".*" ✦$/.test(t);
+}
+
+// Mengosongkan catatan preset lama. Return true jika ada perubahan.
+function purgePresetMemories(playlists) {
+  let changed = false;
+  (playlists || []).forEach(pl => {
+    (pl.tracks || []).forEach(t => {
+      if (isLegacyPresetMemory(t.memory)) {
+        t.memory = '';
+        changed = true;
+      }
+    });
+  });
+  return changed;
+}
+
 function loadState() {
   try {
     let saved = localStorage.getItem(STORAGE_KEY);
@@ -1807,7 +1847,7 @@ function loadState() {
               title: 'Dua Sejoli',
               artist: 'Dewa 19',
               album: 'Bintang Lima',
-              memory: 'Usaplah dahiku, genggamlah tanganku... Lagu cinta abadi kita berdua 💕',
+              memory: '',
               dateAdded: 'Feb 25, 2025',
               duration: '5:26',
               liked: true,
@@ -1866,6 +1906,11 @@ function loadState() {
           });
         }
       });
+    }
+
+    if (purgePresetMemories(parsed.playlists)) {
+      console.log('✦ Preset Sweet Memory Notes dikosongkan agar bisa diisi sendiri');
+      window.__pendingPresetPurgeSync = true;
     }
 
     const mergedState = { ...defaultState, ...parsed };
@@ -1951,6 +1996,12 @@ function initSupabaseSync() {
       if (Array.isArray(cloudState.playlists) && cloudState.playlists.length > 0) {
         const special = (state.playlists || []).filter(p => p.isLikedSpecial || p.id === 'pl-liked');
         state.playlists = [...cloudState.playlists, ...special];
+      }
+
+      // Bersihkan catatan preset lama yang masih tersimpan di cloud, lalu sinkronkan balik
+      if (purgePresetMemories(state.playlists) || window.__pendingPresetPurgeSync) {
+        window.__pendingPresetPurgeSync = false;
+        setTimeout(() => triggerSupabaseSync(), 0);
       }
 
       // Sync local cache
@@ -2180,13 +2231,9 @@ function hydrateUI() {
   document.getElementById('navAvatarYou').src = state.yourAvatar;
   document.getElementById('navAvatarPartner').src = state.partnerAvatar;
 
-  document.getElementById('jamAvatarYou').src = state.yourAvatar;
-  document.getElementById('jamAvatarPartner').src = state.partnerAvatar;
   document.getElementById('miniJamAvatar1').src = state.yourAvatar;
   document.getElementById('miniJamAvatar2').src = state.partnerAvatar;
 
-  document.getElementById('jamNameYou').textContent = state.yourName;
-  document.getElementById('jamNamePartner').textContent = state.partnerName;
   document.getElementById('miniPartnerStatusName').textContent = state.partnerName;
   document.getElementById('loveNoteDisplay').textContent = state.loveNote;
 
@@ -2935,7 +2982,7 @@ function updateActiveTrackUI() {
   document.getElementById('vinylCenterArt').src = track.cover;
   document.getElementById('rightTrackTitle').textContent = track.title;
   document.getElementById('rightTrackArtist').textContent = track.artist;
-  document.getElementById('rightTrackMemory').textContent = `"${track.memory || 'Lagu spesial buat kita berdua ✦'}"`;
+  renderMemoryNote(track);
 
   // Polaroid Modal
   document.getElementById('polaroidImg').src = track.cover;
@@ -2953,8 +3000,7 @@ function updateActiveTrackUI() {
   if (mobTitle) mobTitle.textContent = track.title;
   const mobArtist = document.getElementById('mobileTrackArtist');
   if (mobArtist) mobArtist.textContent = track.artist;
-  const mobMemory = document.getElementById('mobileTrackMemory');
-  if (mobMemory) mobMemory.textContent = `"${track.memory || 'Lagu spesial buat kita berdua ✦'}"`;
+  // Mobile memory note di-render oleh renderMemoryNote()
 
   const mobLikeBtn = document.getElementById('mobileLikeBtn');
   if (mobLikeBtn) {
@@ -3291,33 +3337,75 @@ function openEditCurrentMemory() {
   const tracks = getActiveTracks();
   const current = tracks[currentIndex];
   if (!current) return;
-  const newMemory = prompt(`Edit Sweet Memory untuk lagu "${current.title}":`, current.memory || '');
-  if (newMemory !== null) {
-    current.memory = newMemory.trim();
-    saveState();
-    updateActiveTrackUI();
-    if (currentView === 'playlist') renderTracklist();
+  const modal = document.getElementById('memoryNoteModal');
+  const input = document.getElementById('memoryNoteInput');
+  const title = document.getElementById('memoryNoteTrackTitle');
+  if (!modal || !input) return;
+  if (title) title.textContent = `${current.title} — ${current.artist || ''}`;
+  input.value = current.memory || '';
+  updateMemoryNoteCounter();
+  input.oninput = updateMemoryNoteCounter;
+  input.onkeydown = (e) => {
+    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) saveMemoryNote();
+    if (e.key === 'Escape') closeMemoryNoteModal();
+  };
+  modal.classList.remove('hidden');
+  modal.classList.add('flex');
+  setTimeout(() => input.focus(), 50);
+}
+
+function updateMemoryNoteCounter() {
+  const input = document.getElementById('memoryNoteInput');
+  const counter = document.getElementById('memoryNoteCounter');
+  if (input && counter) counter.textContent = `${input.value.length}/${input.maxLength || 240}`;
+}
+
+function closeMemoryNoteModal() {
+  const modal = document.getElementById('memoryNoteModal');
+  if (!modal) return;
+  modal.classList.add('hidden');
+  modal.classList.remove('flex');
+}
+
+function saveMemoryNote() {
+  const tracks = getActiveTracks();
+  const current = tracks[currentIndex];
+  const input = document.getElementById('memoryNoteInput');
+  if (!current || !input) return closeMemoryNoteModal();
+  const newMemory = input.value.trim();
+  current.memory = newMemory;
+  // Samakan catatan untuk lagu yang sama di playlist lain (mis. Liked Songs)
+  (state.playlists || []).forEach(pl => (pl.tracks || []).forEach(t => {
+    if (t !== current && t.id && t.id === current.id) t.memory = newMemory;
+  }));
+  saveState();
+  updateActiveTrackUI();
+  if (currentView === 'playlist') renderTracklist();
+  closeMemoryNoteModal();
+  showToastNotification(newMemory ? 'Sweet Memory Note tersimpan 💕' : 'Catatan dihapus', 'success');
+}
+
+// Render Sweet Memory Note (panel kanan + mobile) dengan empty state bila belum diisi
+function renderMemoryNote(track) {
+  const memory = (track && track.memory ? track.memory : '').trim();
+  const textEl = document.getElementById('rightTrackMemory');
+  const emptyEl = document.getElementById('rightTrackMemoryEmpty');
+  if (textEl) {
+    textEl.textContent = memory ? `"${memory}"` : '';
+    textEl.classList.toggle('hidden', !memory);
+  }
+  if (emptyEl) emptyEl.classList.toggle('hidden', !!memory);
+
+  const mobMemory = document.getElementById('mobileTrackMemory');
+  if (mobMemory) {
+    mobMemory.textContent = memory ? `"${memory}"` : '✍️ Ketuk untuk menulis kenangan lagu ini';
   }
 }
 
 // ================= RIGHT PANEL CONTROLS =================
+// Panel kanan kini hanya "Now Playing". Listening Together dibuka lewat menu khusus.
 function switchRightPanelTab(tab) {
-  const canvasView = document.getElementById('panelCanvasView');
-  const jamView = document.getElementById('panelJamView');
-  const tabBtnCanvas = document.getElementById('tabBtnCanvas');
-  const tabBtnJam = document.getElementById('tabBtnJam');
-
-  if (tab === 'canvas') {
-    canvasView.classList.remove('hidden');
-    jamView.classList.add('hidden');
-    tabBtnCanvas.className = 'flex-1 py-2 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 bg-[#FA8072] text-white shadow-sm transition';
-    tabBtnJam.className = 'flex-1 py-2 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 text-[#9A737C] hover:bg-[#FFE4E9]/50 transition';
-  } else {
-    canvasView.classList.add('hidden');
-    jamView.classList.remove('hidden');
-    tabBtnCanvas.className = 'flex-1 py-2 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 text-[#9A737C] hover:bg-[#FFE4E9]/50 transition';
-    tabBtnJam.className = 'flex-1 py-2 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 bg-[#FA8072] text-white shadow-sm transition';
-  }
+  if (tab === 'jam') navigateTo('jam');
 }
 
 function toggleVinylMode() {
@@ -3417,8 +3505,9 @@ document.addEventListener('click', (e) => {
 // ================= LISTENING TOGETHER =================
 function toggleSyncMode() {
   const chk = document.getElementById('syncPlayToggle');
-  syncModeActive = chk.checked;
+  if (chk) syncModeActive = chk.checked;
   const statusTxt = document.getElementById('jamLiveActivityText');
+  if (!statusTxt) return;
   statusTxt.textContent = syncModeActive
     ? '🎧 Mendengarkan di detik yang sama'
     : '⏸ Sinkronisasi pemutaran dinonaktifkan';
@@ -3438,6 +3527,7 @@ function sendFloatingReaction(emoji, echoPartner = true) {
 
 function spawnReactionAnimation(emoji) {
   const stage = document.getElementById('reactionStage');
+  if (!stage) return;
   const el = document.createElement('div');
   el.className = 'floating-emoji';
   el.textContent = emoji;
@@ -3466,51 +3556,67 @@ function broadcastJamSystemNote(msg) {
   renderJamChat();
 }
 
+// Chat hanya ada di menu Listening Together; fungsi lama diteruskan ke renderer utama
 function renderJamChat() {
-  const container = document.getElementById('jamChatContainer');
-  if (!container) return;
-  container.innerHTML = state.jamMessages.map(m => {
-    if (m.sender === 'system') {
-      return `
-        <div class="text-center py-1">
-          <span class="text-[10px] bg-[#FFF0F3] text-[#E85D75] px-2.5 py-0.5 rounded-full border border-[#FFD2DC]">
-            ${m.text}
-          </span>
-        </div>
-      `;
-    }
-    const isYou = m.sender === 'you';
-    return `
-      <div class="flex flex-col ${isYou ? 'items-end' : 'items-start'}">
-        <div class="max-w-[85%] px-3 py-2 rounded-2xl ${isYou ? 'bg-gradient-to-r from-[#FA8072] to-[#E85D75] text-white rounded-br-xs' : 'bg-[#FFF5F7] text-[#3B2328] border border-[#FFD2DC] rounded-bl-xs'} shadow-xs">
-          <p class="leading-snug">${m.text}</p>
-        </div>
-        <span class="text-[9px] text-[#9A737C] mt-0.5 px-1">${m.time}</span>
-      </div>
-    `;
-  }).join('');
-  container.scrollTop = container.scrollHeight;
+  if (typeof renderMainJamChat === 'function') renderMainJamChat();
 }
 
-function sendJamChatMessage(e) {
-  e.preventDefault();
-  const input = document.getElementById('jamChatInput');
-  const text = input.value.trim();
-  if (!text) return;
+// ================= CHAT EMOJI POP-UP =================
+const CHAT_INSERT_EMOJIS = ['😊', '😂', '🥰', '😍', '😘', '🥺', '😭', '😳', '😴', '🤗', '😌', '😜', '❤️', '💕', '💖', '🤍', '🌸', '✨', '🌙', '☕', '🎧', '🎶', '🔥', '👍'];
 
-  state.jamMessages.push({
-    sender: 'you',
-    text,
-    time: getCurrentTimeStr()
-  });
-  input.value = '';
-  saveState();
-  renderJamChat();
-
-  setTimeout(() => {
-    simulatePartnerChatReply(text);
-  }, 1400);
+function buildChatEmojiInsertGrid() {
+  const grid = document.getElementById('chatEmojiInsertGrid');
+  if (!grid || grid.dataset.built) return;
+  grid.innerHTML = CHAT_INSERT_EMOJIS.map(e =>
+    `<button type="button" class="chat-emoji-btn chat-emoji-btn--sm" onclick="insertEmojiToChat('${e}')">${e}</button>`
+  ).join('');
+  grid.dataset.built = '1';
 }
+
+function toggleChatEmojiPopup(event) {
+  if (event) event.stopPropagation();
+  const popup = document.getElementById('chatEmojiPopup');
+  if (!popup) return;
+  buildChatEmojiInsertGrid();
+  const willOpen = popup.classList.contains('hidden');
+  popup.classList.toggle('hidden', !willOpen);
+  const btn = document.getElementById('chatEmojiToggleBtn');
+  if (btn) btn.setAttribute('aria-expanded', String(willOpen));
+}
+
+function closeChatEmojiPopup() {
+  const popup = document.getElementById('chatEmojiPopup');
+  if (popup) popup.classList.add('hidden');
+  const btn = document.getElementById('chatEmojiToggleBtn');
+  if (btn) btn.setAttribute('aria-expanded', 'false');
+}
+
+function insertEmojiToChat(emoji) {
+  const input = document.getElementById('mainJamChatInput');
+  if (!input) return;
+  const start = input.selectionStart ?? input.value.length;
+  const end = input.selectionEnd ?? input.value.length;
+  input.value = input.value.slice(0, start) + emoji + input.value.slice(end);
+  const caret = start + emoji.length;
+  input.focus();
+  input.setSelectionRange(caret, caret);
+}
+
+function sendChatPopupReaction(emoji) {
+  sendFloatingReaction(emoji, true);
+  closeChatEmojiPopup();
+}
+
+// Tutup pop-up emoji saat klik di luar atau tekan Escape
+document.addEventListener('click', (e) => {
+  const popup = document.getElementById('chatEmojiPopup');
+  if (!popup || popup.classList.contains('hidden')) return;
+  const btn = document.getElementById('chatEmojiToggleBtn');
+  if (!popup.contains(e.target) && !(btn && btn.contains(e.target))) closeChatEmojiPopup();
+});
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') closeChatEmojiPopup();
+});
 
 function simulatePartnerChatReply(userMessage) {
   const tracks = getActiveTracks();
@@ -3838,7 +3944,7 @@ async function quickAddSongDirectly(idx, btn) {
       audioUrl: matchedAudioUrl,
       youtubeId: matchedYoutubeId,
       duration: (typeof formatDurationMs === 'function' ? formatDurationMs(item.trackTimeMillis) : 'Full') || 'Full',
-      memory: `Lagu spesial dari album "${item.collectionName || songTitle}" ✦`,
+      memory: '',
       dateAdded: today,
       liked: false
     };
@@ -4035,7 +4141,7 @@ function saveNewSong(e) {
     title,
     artist,
     album: 'Single',
-    memory: memory || 'Lagu spesial pilihan kita 💕',
+    memory: memory || '',
     dateAdded: today,
     duration: finalYoutubeId ? 'Full Official' : 'Full',
     liked: true,
@@ -4891,6 +4997,13 @@ function renderMainJamChat() {
 
   const messages = state.jamMessages || [];
   container.innerHTML = messages.map(msg => {
+    if (msg.sender === 'system') {
+      return `
+        <div class="text-center py-1">
+          <span class="text-[10px] bg-[#FFF0F3] text-[#E85D75] px-2.5 py-0.5 rounded-full border border-[#FFD2DC]">${msg.text}</span>
+        </div>
+      `;
+    }
     const isYou = msg.sender === 'you';
     return `
       <div class="flex flex-col ${isYou ? 'items-end' : 'items-start'}">
