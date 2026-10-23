@@ -639,15 +639,74 @@
     if (touched && hooks.onRemoteChange) hooks.onRemoteChange(table);
   }
 
+  const DEVICE_SESSION_ID = 'dev-' + Math.random().toString(36).slice(2, 9) + '-' + Date.now();
+
+  function broadcastPlayback(payload) {
+    if (!channel) return false;
+    try {
+      channel.send({
+        type: 'broadcast',
+        event: 'playback_sync',
+        payload: {
+          ...payload,
+          senderDeviceId: DEVICE_SESSION_ID,
+          sentAt: Date.now()
+        }
+      });
+      return true;
+    } catch (e) {
+      console.warn('[MusicDB] broadcastPlayback error:', e);
+      return false;
+    }
+  }
+
   function subscribe() {
     if (channel) return;
-    channel = client.channel('music-db-v2');
+    channel = client.channel('music-db-v2', {
+      config: {
+        broadcast: { self: false }
+      }
+    });
+
+    // 1. Database table sync
     Object.values(T).forEach(table => {
       channel.on('postgres_changes', { event: '*', schema: 'public', table }, (payload) => {
         try { handleRemote(table, payload); } catch (e) { console.warn('[MusicDB] realtime handler error:', e); }
       });
     });
-    channel.subscribe(status => console.log('✦ [MusicDB] Realtime:', status));
+
+    // 2. Realtime broadcast for Spotify Jam playback sync (instant WebSockets)
+    channel.on('broadcast', { event: 'playback_sync' }, ({ payload }) => {
+      if (payload && payload.senderDeviceId !== DEVICE_SESSION_ID && hooks.onPlaybackSync) {
+        try {
+          hooks.onPlaybackSync(payload);
+        } catch (e) {
+          console.warn('[MusicDB] onPlaybackSync error:', e);
+        }
+      }
+    });
+
+    // 3. Realtime presence to detect online devices
+    channel.on('presence', { event: 'sync' }, () => {
+      if (hooks.onPresenceSync) {
+        try {
+          const presences = channel.presenceState();
+          hooks.onPresenceSync(presences);
+        } catch (e) {}
+      }
+    });
+
+    channel.subscribe(status => {
+      console.log('✦ [MusicDB] Realtime:', status);
+      if (status === 'SUBSCRIBED') {
+        const userState = hooks.getState ? hooks.getState() : {};
+        channel.track({
+          deviceId: DEVICE_SESSION_ID,
+          userName: userState.yourName || 'Partner',
+          onlineAt: Date.now()
+        });
+      }
+    });
   }
 
   // ---------------- init ----------------
@@ -721,6 +780,8 @@
     init,
     scheduleFlush,
     flushNow,
-    isReady: () => ready
+    isReady: () => ready,
+    broadcastPlayback,
+    getDeviceId: () => DEVICE_SESSION_ID
   };
 })();
