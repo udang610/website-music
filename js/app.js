@@ -1596,10 +1596,25 @@ function applyAccountIdentity(account) {
     localStorage.setItem('romantic_current_user', account.id);
   } catch (e) { }
 
+  // 1. Laporkan identitas login baru ini ke Supabase Presence secara realtime
+  if (window.MusicDB && typeof window.MusicDB.trackPresence === 'function') {
+    window.MusicDB.trackPresence(account.id);
+  }
+
+  // 2. Langsung update map status online lokal secara instan (user saat ini langsung Online)
+  if (typeof presenceStateMap === 'object' && presenceStateMap) {
+    presenceStateMap[account.id] = true;
+    if (account.partnerId) {
+      // Pastikan partner tidak salah dianggap online dari tab yang sama
+      presenceStateMap[account.partnerId] = false;
+    }
+  }
+
   if (typeof hydrateUI === 'function') hydrateUI();
   if (currentView === 'home' && typeof renderHomeView === 'function') renderHomeView();
   if (typeof updateMainJamView === 'function') updateMainJamView();
   if (typeof populateProfileShowcaseView === 'function') populateProfileShowcaseView();
+  if (typeof updatePresenceUI === 'function') updatePresenceUI();
 }
 
 function selectLoginProfile(userId) {
@@ -4053,22 +4068,29 @@ let presenceStateMap = {
 };
 
 function handleGlobalPresenceSync(presences) {
+  const currentAcc = (typeof getCurrentAccount === 'function') ? getCurrentAccount() : null;
+  const myUserId = (currentAcc ? currentAcc.id : (localStorage.getItem('romantic_current_user') || 'dhafin')).toLowerCase().trim();
+  const myDeviceId = (window.MusicDB && typeof window.MusicDB.getDeviceId === 'function') ? window.MusicDB.getDeviceId() : null;
+
   const activeUserIds = new Set();
+  activeUserIds.add(myUserId);
+
   if (presences && typeof presences === 'object') {
     Object.values(presences).forEach(deviceList => {
       if (Array.isArray(deviceList)) {
         deviceList.forEach(dev => {
           if (dev && dev.userId) {
-            activeUserIds.add(String(dev.userId).toLowerCase().trim());
+            const devUser = String(dev.userId).toLowerCase().trim();
+            // Abaikan data lama dari perangkat ini jika userId-nya berbeda dengan user yang aktif sekarang
+            if (myDeviceId && dev.deviceId === myDeviceId && devUser !== myUserId) {
+              return;
+            }
+            activeUserIds.add(devUser);
           }
         });
       }
     });
   }
-
-  // Pengguna di perangkat saat ini selalu Online karena sedang aktif membuka web
-  const myUserId = (localStorage.getItem('romantic_current_user') || 'dhafin').toLowerCase().trim();
-  activeUserIds.add(myUserId);
 
   presenceStateMap.dhafin = activeUserIds.has('dhafin');
   presenceStateMap.nadia = activeUserIds.has('nadia');
@@ -4077,12 +4099,15 @@ function handleGlobalPresenceSync(presences) {
 }
 
 function updatePresenceUI() {
-  const currentAcc = getCurrentAccount();
+  const currentAcc = (typeof getCurrentAccount === 'function') ? getCurrentAccount() : null;
+  if (!currentAcc) return;
   const yourId = (currentAcc.id || 'dhafin').toLowerCase();
   const partnerId = (currentAcc.partnerId || 'nadia').toLowerCase();
 
-  const isYourOnline = !!presenceStateMap[yourId];
-  const isPartnerOnline = !!presenceStateMap[partnerId];
+  // User yang sedang membuka browser ini SELALU 100% Online
+  const isYourOnline = true;
+  // Partner online jika terdeteksi di presenceStateMap (dari perangkat lain)
+  const isPartnerOnline = (partnerId !== yourId) ? Boolean(presenceStateMap[partnerId]) : false;
 
   // 1. Update Profile Showcase Modal (Foto 2)
   const yourDot = document.getElementById('showcaseYourOnlineDot');
