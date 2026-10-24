@@ -54,7 +54,9 @@ window.onYouTubeIframeAPIReady = function () {
         if (t && t.audioUrl) {
           currentEngine = 'html5';
           audio.src = t.audioUrl;
-          playAudio();
+          if (isPlaying) {
+            playAudio();
+          }
         }
       }
     }
@@ -175,10 +177,14 @@ function loadTrack(index, autoPlay = true, playlistId = null) {
       .then(data => {
         if (data && data.youtubeId) {
           track.youtubeId = data.youtubeId;
-          if (currentPlayingTrack === track && !isPlaying) {
+          if (currentPlayingTrack === track) {
             currentEngine = 'youtube';
-            if (isYtReady && ytPlayer && ytPlayer.loadVideoById) {
-              ytPlayer.loadVideoById(track.youtubeId);
+            if (isYtReady && ytPlayer) {
+              if (isPlaying && ytPlayer.loadVideoById) {
+                ytPlayer.loadVideoById(track.youtubeId);
+              } else if (ytPlayer.cueVideoById) {
+                ytPlayer.cueVideoById(track.youtubeId);
+              }
             }
           }
         }
@@ -390,7 +396,11 @@ function playAudio() {
       const track = getPlayingTrack();
       if (track && track.youtubeId && isYtReady && ytPlayer && ytPlayer.loadVideoById) {
         currentEngine = 'youtube';
-        ytPlayer.loadVideoById(track.youtubeId);
+    if (isPlaying && ytPlayer.loadVideoById) {
+      ytPlayer.loadVideoById(track.youtubeId);
+    } else if (ytPlayer.cueVideoById) {
+      ytPlayer.cueVideoById(track.youtubeId);
+    }
       } else {
         isPlaying = false;
         updatePlayButtons();

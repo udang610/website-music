@@ -457,7 +457,7 @@ setInterval(() => {
 // Unlock audio context on first touch for mobile devices
 (function initMobileAudioUnlock() {
   const unlock = () => {
-    if (audio) audio.load();
+    if (audio && audio.src && isPlaying) { audio.load(); }
     window.removeEventListener('touchstart', unlock);
     window.removeEventListener('click', unlock);
   };

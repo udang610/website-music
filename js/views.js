@@ -380,6 +380,18 @@ function unlockApp() {
 
     applyAccountIdentity(matchedAccount);
 
+    // Pastikan tidak ada autoplay saat login / unlock
+    isPlaying = false;
+    if (audio) {
+      try { audio.pause(); } catch (e) {}
+    }
+    if (typeof ytPlayer !== 'undefined' && ytPlayer && typeof ytPlayer.pauseVideo === 'function') {
+      try { ytPlayer.pauseVideo(); } catch (e) {}
+    }
+    if (typeof updatePlayButtons === 'function') {
+      updatePlayButtons();
+    }
+
     showToastNotification(`Selamat datang kembali, ${matchedAccount.name}! 💕`, 'success');
 
     const lock = document.getElementById('lockScreen');
