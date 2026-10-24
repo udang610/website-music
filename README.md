@@ -12,7 +12,18 @@ website-music/
 ├── css/
 │   └── style.css      # Styling khusus, animasi floating reaksi, slider, equalizer, & vinyl
 ├── js/
-│   └── app.js         # Logika pemutar audio, pencarian iTunes HD, Listening Together, & LocalStorage
+│   ├── db.js          # Supabase Realtime & normalized cloud sync (v2)
+│   ├── data.js        # Default state, catalog YouTube ID, cover HD, audio preset
+│   ├── auth.js        # Dual accounts (Dhafin 1006 / Nadia 1809), switch profile
+│   ├── state.js       # State runtime, LocalStorage cache & cloud sync hooks
+│   ├── player.js      # Dual audio playback engine (HTML5 + YouTube Iframe), vinyl & equalizer
+│   ├── views.js       # Navigasi view (Home, Playlist, Polaroid, Jam), tracklist, lock screen
+│   ├── playlist.js    # Manajemen Playlist (CRUD, tambah, edit, hapus)
+│   ├── track-actions.js # Like, hapus, download MP3, add to playlist, share song
+│   ├── jam.js         # Listening Together (Jam session realtime, couple chat, floating reaction)
+│   ├── polaroid.js    # Polaroid Memories Gallery (masonry grid, frame styling, CRUD)
+│   ├── modals.js      # Pencarian lagu iTunes/YouTube, MP3 upload, love-note modal, drawer mobile
+│   └── app.js         # Bootstrap orchestrator & lifecycle entry point
 └── README.md          # Panduan penggunaan & kustomisasi
 ```
 

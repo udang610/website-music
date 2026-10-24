@@ -10,3 +10,6 @@ __pycache__/
 # IDE / Editor
 .vscode/
 .idea/
+
+# Local backups
+*.backup.js
