@@ -49,8 +49,7 @@ let pendingDeletePolaroidId = null;
 let currentDetailPolaroidId = null;
 let galleryFrameType = 'classic';
 try {
-  const savedFrame = localStorage.getItem('polaroid_gallery_frame_type');
-  if (savedFrame) galleryFrameType = savedFrame;
+  localStorage.removeItem('polaroid_gallery_frame_type');
 } catch (e) { }
 
 function setGalleryFrameType(type) {
@@ -517,4 +516,4 @@ function closePolaroidDetailModal() {
   }
 }
 
-
+
