@@ -91,6 +91,9 @@ function startYtScrubber() {
           saveState();
           if (currentView === 'playlist') renderTracklist();
         }
+
+        // MediaSession API position state sync
+        updateMediaSessionPositionState();
       }
     }
   }, 300);
@@ -343,6 +346,9 @@ function updateActiveTrackUI() {
   if (mainJamPlayIcon) {
     mainJamPlayIcon.className = isPlaying ? 'fa-solid fa-pause text-lg' : 'fa-solid fa-play text-lg ml-0.5';
   }
+
+  // MediaSession API: Sync Lock Screen & Bluetooth Headset Metadata
+  updateMediaSessionMetadata(track);
 }
 
 function selectTrackFromList(index) {
@@ -492,6 +498,9 @@ function updatePlayButtons() {
     if (mobileVinylDisc) mobileVinylDisc.classList.remove('playing');
     if (mobileVinylTonearm) mobileVinylTonearm.classList.remove('playing');
   }
+
+  // MediaSession API: Sync Playback State (Lock Screen Play/Pause)
+  updateMediaSessionPlaybackState();
 }
 
 function nextTrack() {
@@ -554,6 +563,9 @@ audio.addEventListener('timeupdate', () => {
     if (mobCur) mobCur.textContent = formatTime(audio.currentTime);
     const mobDur = document.getElementById('mobileDurationTimeText');
     if (mobDur) mobDur.textContent = formatTime(audio.duration);
+
+    // MediaSession API position state sync
+    updateMediaSessionPositionState();
   }
 });
 
@@ -621,6 +633,9 @@ function seekAudio(val) {
     audio.currentTime = targetSec;
   }
 
+  // MediaSession API position state sync
+  updateMediaSessionPositionState();
+
   // Spotify Jam: broadcast debounced seek to partner
   if (!isRemotePlaybackSync && typeof syncModeActive !== 'undefined' && syncModeActive) {
     if (typeof scheduleBroadcastSeek === 'function') {
@@ -660,5 +675,189 @@ function extractYouTubeId(url) {
   const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
   const match = url.match(regExp);
   return (match && match[2].length === 11) ? match[2] : null;
+}
+
+// =====================================================================
+// MEDIASESSION API INTEGRATION (LOCK SCREEN & BLUETOOTH HEADPHONE CONTROLS)
+// =====================================================================
+
+function getCurrentPlaybackSeconds() {
+  if (currentEngine === 'youtube' && isYtReady && ytPlayer && ytPlayer.getCurrentTime) {
+    try {
+      const cur = ytPlayer.getCurrentTime();
+      return (cur && isFinite(cur)) ? cur : 0;
+    } catch (e) {
+      return 0;
+    }
+  }
+  return (audio && isFinite(audio.currentTime)) ? (audio.currentTime || 0) : 0;
+}
+
+function getCurrentPlaybackDuration() {
+  if (currentEngine === 'youtube' && isYtReady && ytPlayer && ytPlayer.getDuration) {
+    try {
+      const dur = ytPlayer.getDuration();
+      return (dur && isFinite(dur)) ? dur : 0;
+    } catch (e) {
+      return 0;
+    }
+  }
+  return (audio && isFinite(audio.duration)) ? (audio.duration || 0) : 0;
+}
+
+function seekToSeconds(sec) {
+  if (typeof sec !== 'number' || isNaN(sec) || !isFinite(sec)) return;
+  sec = Math.max(0, sec);
+  const dur = getCurrentPlaybackDuration();
+  if (dur > 0 && sec > dur) sec = dur;
+
+  if (currentEngine === 'youtube' && isYtReady && ytPlayer && ytPlayer.seekTo) {
+    try { ytPlayer.seekTo(sec, true); } catch (e) {}
+  } else if (audio && audio.duration) {
+    try { audio.currentTime = sec; } catch (e) {}
+  }
+
+  // Update slider UI
+  if (dur > 0) {
+    const pct = (sec / dur) * 100;
+    const progressSlider = document.getElementById('progressSlider');
+    if (progressSlider) progressSlider.value = pct;
+    const mobSlider = document.getElementById('mobileProgressSlider');
+    if (mobSlider) mobSlider.value = pct;
+  }
+  const curEl = document.getElementById('currentTimeText');
+  if (curEl) curEl.textContent = formatTime(sec);
+  const mobCur = document.getElementById('mobileCurrentTimeText');
+  if (mobCur) mobCur.textContent = formatTime(sec);
+
+  // Sync position with MediaSession
+  updateMediaSessionPositionState();
+
+  // Spotify Jam: broadcast seek to partner
+  if (!isRemotePlaybackSync && typeof syncModeActive !== 'undefined' && syncModeActive) {
+    if (typeof scheduleBroadcastSeek === 'function') {
+      scheduleBroadcastSeek(sec);
+    }
+  }
+}
+
+function updateMediaSessionMetadata(track) {
+  if (!('mediaSession' in navigator) || !track) return;
+
+  const currentPl = (typeof getPlayingPlaylist === 'function') ? getPlayingPlaylist() : null;
+  const albumName = (currentPl && currentPl.title) ? currentPl.title : 'Lullaby';
+
+  // Convert cover URL to absolute URL for lockscreen compatibility
+  let artworkUrl = track.cover || 'images/icons/icon-512.png';
+  try {
+    artworkUrl = new URL(artworkUrl, window.location.href).href;
+  } catch (e) {}
+
+  try {
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title: track.title || 'Lullaby',
+      artist: track.artist || 'Our Melodies',
+      album: albumName,
+      artwork: [
+        { src: artworkUrl, sizes: '96x96', type: 'image/jpeg' },
+        { src: artworkUrl, sizes: '128x128', type: 'image/jpeg' },
+        { src: artworkUrl, sizes: '192x192', type: 'image/jpeg' },
+        { src: artworkUrl, sizes: '256x256', type: 'image/jpeg' },
+        { src: artworkUrl, sizes: '384x384', type: 'image/jpeg' },
+        { src: artworkUrl, sizes: '512x512', type: 'image/jpeg' }
+      ]
+    });
+  } catch (err) {
+    console.warn('[MediaSession] Metadata update error:', err);
+  }
+
+  updateMediaSessionPlaybackState();
+  updateMediaSessionPositionState();
+}
+
+function updateMediaSessionPlaybackState() {
+  if (!('mediaSession' in navigator)) return;
+  try {
+    navigator.mediaSession.playbackState = isPlaying ? 'playing' : 'paused';
+  } catch (e) {}
+}
+
+function updateMediaSessionPositionState() {
+  if (!('mediaSession' in navigator) || !('setPositionState' in navigator.mediaSession)) return;
+  try {
+    const duration = getCurrentPlaybackDuration();
+    const position = getCurrentPlaybackSeconds();
+    if (duration > 0 && position >= 0 && position <= duration) {
+      navigator.mediaSession.setPositionState({
+        duration: duration,
+        playbackRate: 1.0,
+        position: position
+      });
+    }
+  } catch (e) {
+    // Silently ignore position errors during rapid transitions
+  }
+}
+
+let isMediaSessionInitialized = false;
+function initMediaSession() {
+  if (!('mediaSession' in navigator) || isMediaSessionInitialized) return;
+  isMediaSessionInitialized = true;
+
+  const safeAction = (action, handler) => {
+    try {
+      navigator.mediaSession.setActionHandler(action, handler);
+    } catch (e) {
+      // Action might not be supported on this browser version
+    }
+  };
+
+  safeAction('play', () => {
+    if (!isPlaying) togglePlay();
+  });
+
+  safeAction('pause', () => {
+    if (isPlaying) togglePlay();
+  });
+
+  safeAction('previoustrack', () => {
+    prevTrack();
+  });
+
+  safeAction('nexttrack', () => {
+    nextTrack();
+  });
+
+  safeAction('seekto', (details) => {
+    if (details && typeof details.seekTime === 'number') {
+      seekToSeconds(details.seekTime);
+    }
+  });
+
+  safeAction('seekbackward', (details) => {
+    const skipTime = (details && details.seekOffset) ? details.seekOffset : 10;
+    const curTime = getCurrentPlaybackSeconds();
+    seekToSeconds(Math.max(0, curTime - skipTime));
+  });
+
+  safeAction('seekforward', (details) => {
+    const skipTime = (details && details.seekOffset) ? details.seekOffset : 10;
+    const curTime = getCurrentPlaybackSeconds();
+    const dur = getCurrentPlaybackDuration();
+    seekToSeconds(dur > 0 ? Math.min(dur, curTime + skipTime) : (curTime + skipTime));
+  });
+
+  safeAction('stop', () => {
+    if (isPlaying) togglePlay();
+  });
+}
+
+// Auto-initialize MediaSession
+if (typeof document !== 'undefined') {
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initMediaSession, { once: true });
+  } else {
+    initMediaSession();
+  }
 }
 
