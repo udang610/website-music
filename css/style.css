@@ -697,3 +697,23 @@ aside::-webkit-scrollbar {
   z-index: 10;
 }
 
+/* App Intro Loading Screen Animation */
+@keyframes loadingBar {
+  0% { transform: translateX(-100%); }
+  50% { transform: translateX(20%); }
+  100% { transform: translateX(100%); }
+}
+
+.animate-loading-bar {
+  animation: loadingBar 1.4s ease-in-out infinite;
+}
+
+@keyframes spinSmooth {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.animate-spin-smooth {
+  animation: spinSmooth 3s linear infinite;
+}
+

@@ -82,6 +82,42 @@
 
 <body class="h-[100dvh] max-h-[100dvh] overflow-hidden flex flex-col select-none bg-[#FFF5F7]">
 
+  <!-- ================= APP INTRO LOADING SCREEN ================= -->
+  <div id="appLoadingScreen"
+    class="fixed inset-0 z-[160] bg-[#FFF5F7] flex flex-col items-center justify-center transition-all duration-700 ease-out select-none">
+    <div class="flex flex-col items-center text-center">
+      <!-- Spinning Vinyl Record Icon with Soft Glow -->
+      <div class="relative w-20 h-20 mb-5 flex items-center justify-center">
+        <div class="absolute inset-0 rounded-full bg-gradient-to-tr from-[#FA8072]/30 to-[#E85D75]/30 blur-xl animate-pulse"></div>
+        <div class="relative w-20 h-20 rounded-full shadow-2xl shadow-[#FA8072]/25 animate-spin-smooth">
+          <svg class="w-20 h-20" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="50" cy="50" r="48" fill="#1E1214"/>
+            <circle cx="50" cy="50" r="42" stroke="#382428" stroke-width="2.5"/>
+            <circle cx="50" cy="50" r="34" stroke="#2B1A1E" stroke-width="2"/>
+            <circle cx="50" cy="50" r="26" stroke="#382428" stroke-width="2"/>
+            <circle cx="50" cy="50" r="18" fill="url(#vinylIntroGrad)"/>
+            <circle cx="50" cy="50" r="5" fill="#FFF5F7"/>
+            <defs>
+              <linearGradient id="vinylIntroGrad" x1="32" y1="32" x2="68" y2="68" gradientUnits="userSpaceOnUse">
+                <stop stop-color="#FA8072"/>
+                <stop offset="1" stop-color="#E85D75"/>
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
+      </div>
+
+      <!-- App Title & Subtitle -->
+      <h1 class="text-2xl font-black tracking-tight text-[#3B2328] mb-1.5">Lullaby</h1>
+      <p class="text-xs font-semibold text-[#9A737C] tracking-wide mb-6">Menyiapkan melodi kita...</p>
+
+      <!-- Smooth Progress Indicator Bar -->
+      <div class="w-36 h-1 rounded-full bg-[#FFE4E9] overflow-hidden relative">
+        <div class="absolute top-0 bottom-0 left-0 bg-gradient-to-r from-[#FA8072] to-[#E85D75] rounded-full w-full animate-loading-bar"></div>
+      </div>
+    </div>
+  </div>
+
   <!-- ================= PIN LOCK SCREEN MODAL (SIMPLE & PRIVATE) ================= -->
   <div id="lockScreen"
     class="fixed inset-0 z-[100] bg-[#FFF5F7]/95 backdrop-blur-xl flex items-center justify-center p-4 transition-all duration-500">

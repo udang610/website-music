@@ -48,5 +48,25 @@ window.addEventListener('DOMContentLoaded', () => {
       console.warn('[PWA] Service Worker note:', err);
     });
   }
+
+  // Dismiss intro loading screen with smooth fade-out
+  dismissLoadingScreen();
 });
+
+function dismissLoadingScreen() {
+  const loader = document.getElementById('appLoadingScreen');
+  if (!loader || loader.dataset.dismissed) return;
+  loader.dataset.dismissed = 'true';
+  setTimeout(() => {
+    loader.classList.add('opacity-0', 'pointer-events-none');
+    setTimeout(() => {
+      loader.classList.add('hidden');
+      loader.style.display = 'none';
+    }, 700);
+  }, 500);
+}
+
+// Fallback safety in case DOMContentLoaded has already passed
+window.addEventListener('load', dismissLoadingScreen, { once: true });
+
 

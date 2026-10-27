@@ -392,8 +392,6 @@ function unlockApp() {
       updatePlayButtons();
     }
 
-    showToastNotification(`Selamat datang kembali, ${matchedAccount.name}! 💕`, 'success');
-
     const lock = document.getElementById('lockScreen');
     if (lock) {
       lock.classList.add('opacity-0', 'pointer-events-none');
@@ -453,7 +451,6 @@ function logOutApp() {
   }
   const err = document.getElementById('pinError');
   if (err) err.classList.add('hidden');
-  showToastNotification('Berhasil keluar. Masukkan PIN untuk masuk kembali 🔒', 'info');
 }
 
 // Auto-submit on 4 digits or Enter key

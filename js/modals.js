@@ -916,9 +916,13 @@ function showToastNotification(message, type = 'info', opt = {}) {
   const thumbEl = document.getElementById('toastThumb');
   if (!toast || !msgEl) return;
 
-  clearTimeout(toastTimeout);
+  // Bersihkan emote/emoji agar tampilan notifikasi clean & minimalis
+  const cleanMsg = String(message || '')
+    .replace(/[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{FE00}-\u{FE0F}💕❤️🔒🎵✨✦🥺💌]/gu, '')
+    .replace(/\s+/g, ' ')
+    .trim();
 
-  msgEl.textContent = message;
+  msgEl.textContent = cleanMsg || message;
 
   if (titleEl) {
     if (type === 'success') titleEl.textContent = opt.title || 'Berhasil';
