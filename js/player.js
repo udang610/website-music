@@ -745,13 +745,28 @@ function updateMediaSessionMetadata(track) {
   if (!('mediaSession' in navigator) || !track) return;
 
   const currentPl = (typeof getPlayingPlaylist === 'function') ? getPlayingPlaylist() : null;
-  const albumName = (currentPl && currentPl.title) ? currentPl.title : 'Lullaby';
+  let albumName = 'Lullaby • Our Melodies 💕';
+  if (currentPl && currentPl.title) {
+    albumName = `Lullaby • ${currentPl.title}`;
+  }
 
-  // Convert cover URL to absolute URL for lockscreen compatibility
-  let artworkUrl = track.cover || 'images/icons/icon-512.png';
+  // Convert cover URL to absolute URL and upgrade iTunes covers to 1000x1000 HD
+  let rawCover = track.cover || 'images/icons/icon-512.png';
+  if (typeof rawCover === 'string' && rawCover.includes('apple.com')) {
+    rawCover = rawCover.replace(/\/\d+x\d+bb\./, '/1000x1000bb.');
+  }
+
+  let artworkUrl = rawCover;
   try {
     artworkUrl = new URL(artworkUrl, window.location.href).href;
   } catch (e) {}
+
+  // Determine correct MIME type for OS bitmap renderer
+  let mimeType = 'image/jpeg';
+  const cleanExt = (artworkUrl.split('?')[0] || '').toLowerCase();
+  if (cleanExt.endsWith('.png')) mimeType = 'image/png';
+  else if (cleanExt.endsWith('.webp')) mimeType = 'image/webp';
+  else if (cleanExt.endsWith('.svg')) mimeType = 'image/svg+xml';
 
   try {
     navigator.mediaSession.metadata = new MediaMetadata({
@@ -759,12 +774,13 @@ function updateMediaSessionMetadata(track) {
       artist: track.artist || 'Our Melodies',
       album: albumName,
       artwork: [
-        { src: artworkUrl, sizes: '96x96', type: 'image/jpeg' },
-        { src: artworkUrl, sizes: '128x128', type: 'image/jpeg' },
-        { src: artworkUrl, sizes: '192x192', type: 'image/jpeg' },
-        { src: artworkUrl, sizes: '256x256', type: 'image/jpeg' },
-        { src: artworkUrl, sizes: '384x384', type: 'image/jpeg' },
-        { src: artworkUrl, sizes: '512x512', type: 'image/jpeg' }
+        { src: artworkUrl, sizes: '96x96', type: mimeType },
+        { src: artworkUrl, sizes: '128x128', type: mimeType },
+        { src: artworkUrl, sizes: '192x192', type: mimeType },
+        { src: artworkUrl, sizes: '256x256', type: mimeType },
+        { src: artworkUrl, sizes: '384x384', type: mimeType },
+        { src: artworkUrl, sizes: '512x512', type: mimeType },
+        { src: artworkUrl, sizes: '1024x1024', type: mimeType }
       ]
     });
   } catch (err) {

@@ -908,28 +908,54 @@ function closeLoveNoteModal() {
 
 // ================= TOAST NOTIFICATION SYSTEM =================
 let toastTimeout = null;
-function showToastNotification(message, type = 'info') {
+function showToastNotification(message, type = 'info', opt = {}) {
   const toast = document.getElementById('toastNotification');
   const msgEl = document.getElementById('toastMsg');
+  const titleEl = document.getElementById('toastTitle');
   const iconEl = document.getElementById('toastIcon');
-  if (!toast || !msgEl || !iconEl) return;
+  const thumbEl = document.getElementById('toastThumb');
+  if (!toast || !msgEl) return;
 
   clearTimeout(toastTimeout);
 
   msgEl.textContent = message;
-  if (type === 'success') {
-    iconEl.className = 'fa-solid fa-circle-check text-emerald-400';
-  } else if (type === 'error') {
-    iconEl.className = 'fa-solid fa-circle-exclamation text-rose-400';
-  } else {
-    iconEl.className = 'fa-solid fa-download text-[#FA8072]';
+
+  if (titleEl) {
+    if (type === 'success') titleEl.textContent = opt.title || 'Berhasil';
+    else if (type === 'error') titleEl.textContent = opt.title || 'Perhatian';
+    else if (type === 'music') titleEl.textContent = opt.title || 'Now Playing';
+    else titleEl.textContent = opt.title || 'Lullaby';
   }
 
-  toast.classList.remove('opacity-0', 'translate-y-[-12px]', 'pointer-events-none');
+  // Thumb vs Icon
+  const curTrack = (typeof getPlayingTrack === 'function') ? getPlayingTrack() : null;
+  const thumbSrc = opt.thumb || (type === 'music' && curTrack ? curTrack.cover : null);
+
+  if (thumbEl && thumbSrc) {
+    thumbEl.src = thumbSrc;
+    thumbEl.classList.remove('hidden');
+    if (iconEl) iconEl.classList.add('hidden');
+  } else {
+    if (thumbEl) thumbEl.classList.add('hidden');
+    if (iconEl) {
+      iconEl.classList.remove('hidden');
+      if (type === 'success') {
+        iconEl.className = 'fa-solid fa-circle-check text-emerald-400 text-xs';
+      } else if (type === 'error') {
+        iconEl.className = 'fa-solid fa-circle-exclamation text-rose-400 text-xs';
+      } else if (type === 'music') {
+        iconEl.className = 'fa-solid fa-music text-[#FA8072] text-xs';
+      } else {
+        iconEl.className = 'fa-solid fa-sparkles text-[#FA8072] text-xs';
+      }
+    }
+  }
+
+  toast.classList.remove('opacity-0', '-translate-y-4', 'pointer-events-none');
   toast.classList.add('opacity-100', 'translate-y-0');
 
   toastTimeout = setTimeout(() => {
-    toast.classList.add('opacity-0', 'translate-y-[-12px]', 'pointer-events-none');
+    toast.classList.add('opacity-0', '-translate-y-4', 'pointer-events-none');
     toast.classList.remove('opacity-100', 'translate-y-0');
   }, 3200);
 }
