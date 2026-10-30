@@ -121,11 +121,13 @@ function broadcastPlaybackState(action, position, playingStatus) {
       trackId: track.id || '',
       trackTitle: track.title || '',
       trackArtist: track.artist || '',
+      trackCover: track.cover || '',
+      trackAudioUrl: track.audioUrl || '',
+      youtubeId: track.youtubeId || '',
       playlistId: currentPlayingPlaylistId,
       position: curPos,
       isPlaying: isCurrentlyPlaying,
-      senderName: state.yourName || 'Pasangan',
-      roomId: currentJamRoomId
+      senderName: (typeof getCurrentAccount === 'function' ? getCurrentAccount()?.name : null) || state.yourName || 'Pasangan'
     });
   }
 }
@@ -222,11 +224,25 @@ function handleRemotePlaybackSync(payload) {
 
     const match = findTrackAcrossAllPlaylists(payload.trackId, payload.trackTitle, payload.playlistId);
 
-    if (!isSameTrack && match) {
-      currentPlayingPlaylistId = match.playlist.id;
-      state.activePlaylistId = match.playlist.id;
-      loadTrack(match.index, payload.isPlaying, match.playlist.id);
-      // Anti-replay: hanya seek jika lagu pasangan memang sudah berjalan lebih dari 2.5 detik
+    if (!isSameTrack) {
+      if (match) {
+        currentPlayingPlaylistId = match.playlist.id;
+        state.activePlaylistId = match.playlist.id;
+        loadTrack(match.index, payload.isPlaying, match.playlist.id);
+      } else if (payload.trackTitle || payload.trackId) {
+        // Fallback: jika lagu belum ada di playlist lokal perangkat, putar langsung dari metadata payload
+        const dynamicTrack = {
+          id: payload.trackId || ('t_' + Date.now()),
+          title: payload.trackTitle || 'Lagu Berdua',
+          artist: payload.trackArtist || 'Lullaby',
+          cover: payload.trackCover || 'images/spotify_covers/jakarta.jpg',
+          audioUrl: payload.trackAudioUrl || '',
+          youtubeId: payload.youtubeId || ''
+        };
+        if (typeof playTrackByObject === 'function') {
+          playTrackByObject(dynamicTrack);
+        }
+      }
       if (targetSeconds > 2.5) {
         setTimeout(() => {
           applyDirectSeekAndPlay(targetSeconds, payload.isPlaying);

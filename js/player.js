@@ -518,6 +518,8 @@ function updatePlayButtons() {
 }
 
 function nextTrack() {
+  isRemotePlaybackSync = false;
+  if (typeof lastRemoteSyncTime !== 'undefined') lastRemoteSyncTime = 0;
   const tracks = getPlayingTracks();
   if (!tracks.length) return;
   if (isShuffle) {
@@ -529,6 +531,8 @@ function nextTrack() {
 }
 
 function prevTrack() {
+  isRemotePlaybackSync = false;
+  if (typeof lastRemoteSyncTime !== 'undefined') lastRemoteSyncTime = 0;
   if (currentEngine === 'youtube' && isYtReady && ytPlayer) {
     if (ytPlayer.getCurrentTime() > 3) {
       ytPlayer.seekTo(0, true);

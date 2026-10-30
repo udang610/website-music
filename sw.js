@@ -3,7 +3,7 @@
 // Provides PWA offline shell & instant loading for TWA Android APK
 // =====================================================================
 
-const CACHE_NAME = 'lullaby-static-v1';
+const CACHE_NAME = 'lullaby-static-v2';
 
 const CORE_ASSETS = [
   './',
@@ -82,15 +82,27 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Stale-While-Revalidate for app shell
+  // Network-First for JS & HTML scripts so updates on GitHub are always instantly fetched
+  if (url.pathname.endsWith('.js') || url.pathname.endsWith('.html') || url.pathname === '/' || url.pathname.endsWith('/')) {
+    event.respondWith(
+      fetch(req).then((networkResp) => {
+        if (networkResp && networkResp.status === 200 && networkResp.type === 'basic') {
+          const respClone = networkResp.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(req, respClone));
+        }
+        return networkResp;
+      }).catch(() => caches.match(req))
+    );
+    return;
+  }
+
+  // Stale-While-Revalidate for images, fonts, styles
   event.respondWith(
     caches.match(req).then((cachedResp) => {
       const fetchPromise = fetch(req).then((networkResp) => {
         if (networkResp && networkResp.status === 200 && networkResp.type === 'basic') {
           const respClone = networkResp.clone();
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(req, respClone);
-          });
+          caches.open(CACHE_NAME).then((cache) => cache.put(req, respClone));
         }
         return networkResp;
       }).catch(() => cachedResp);
