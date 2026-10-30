@@ -271,7 +271,25 @@ function loadState() {
     }
 
     // Default room chat is strictly empty unless user has joined an active room
-    if (!localStorage.getItem('romantic_jam_room_id')) {
+    // Restore persistent couple chat messages (like WhatsApp, never wiped on refresh)
+    const savedChatMessages = localStorage.getItem('romantic_music_chat_messages');
+    if (savedChatMessages !== null) {
+      try {
+        const parsedChat = JSON.parse(savedChatMessages);
+        if (Array.isArray(parsedChat) && parsedChat.length > 0) {
+          const existingMsgs = Array.isArray(parsed.jamMessages) ? parsed.jamMessages : [];
+          const seenMsgIds = new Set(parsedChat.map(m => m && m.id).filter(Boolean));
+          existingMsgs.forEach(m => {
+            if (m && m.id && !seenMsgIds.has(m.id)) {
+              parsedChat.push(m);
+              seenMsgIds.add(m.id);
+            }
+          });
+          parsed.jamMessages = parsedChat;
+        }
+      } catch (e) { }
+    }
+    if (false && !localStorage.getItem('romantic_jam_room_id')) {
       parsed.jamMessages = [];
     }
     if (Array.isArray(parsed.jamMessages)) {
@@ -317,6 +335,9 @@ function saveState() {
       loveNote: state.loveNote
     };
     localStorage.setItem('romantic_music_profile_config', JSON.stringify(profileConfig));
+    if (Array.isArray(state.jamMessages)) {
+      localStorage.setItem('romantic_music_chat_messages', JSON.stringify(state.jamMessages));
+    }
   } catch (err) {
     console.warn('Could not save profile config:', err);
   }
@@ -352,7 +373,18 @@ function initSupabaseSync() {
       if (cloudState.pinCode !== undefined) state.pinCode = cloudState.pinCode;
       if (cloudState.loveNote !== undefined) state.loveNote = cloudState.loveNote;
       if (Array.isArray(cloudState.polaroidMemories)) state.polaroidMemories = cloudState.polaroidMemories;
-      if (Array.isArray(cloudState.jamMessages)) state.jamMessages = cloudState.jamMessages;
+      if (Array.isArray(cloudState.jamMessages)) {
+        const localMsgs = Array.isArray(state.jamMessages) ? state.jamMessages : [];
+        const mergedMsgs = [...cloudState.jamMessages];
+        const cloudIds = new Set(mergedMsgs.map(m => m && m.id).filter(Boolean));
+        localMsgs.forEach(m => {
+          if (m && m.id && !cloudIds.has(m.id)) {
+            mergedMsgs.push(m);
+            cloudIds.add(m.id);
+          }
+        });
+        state.jamMessages = mergedMsgs;
+      }
 
       // Jaga identitas user yang sedang aktif di browser ini (Dhafin / Nadia) agar tidak tertimpa
       if (typeof getCurrentAccount === 'function' && typeof applyAccountIdentity === 'function') {
@@ -380,6 +412,7 @@ function initSupabaseSync() {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
         localStorage.setItem('romantic_music_custom_pin', state.pinCode);
         localStorage.setItem('romantic_music_polaroid_memories', JSON.stringify(state.polaroidMemories));
+        localStorage.setItem('romantic_music_chat_messages', JSON.stringify(state.jamMessages || []));
         localStorage.setItem('romantic_music_profile_config', JSON.stringify({
           yourName: state.yourName,
           partnerName: state.partnerName,
@@ -445,6 +478,7 @@ function initSupabaseSync() {
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
         localStorage.setItem('romantic_music_polaroid_memories', JSON.stringify(state.polaroidMemories));
+        localStorage.setItem('romantic_music_chat_messages', JSON.stringify(state.jamMessages || []));
       } catch (e) { }
     },
     onSynced: () => {

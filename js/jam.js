@@ -20,9 +20,9 @@ function initJamRoomSession() {
     }
   } else {
     // Secara default room chat kosong & user harus membuat room baru atau memasukkan ID Room
-    currentJamRoomId = '';
-    localStorage.removeItem('romantic_jam_room_id');
-    state.jamMessages = [];
+    currentJamRoomId = localStorage.getItem('romantic_jam_room_id') || '';
+    // Riwayat chat tetap tersimpan permanen seperti WhatsApp (tidak pernah di-reset)
+    if (!Array.isArray(state.jamMessages)) state.jamMessages = [];
   }
 
   if (currentJamRoomId && window.MusicDB && typeof window.MusicDB.connectJamRoom === 'function') {
@@ -54,10 +54,10 @@ function renderJamRoomUI() {
     if (disconnectedBar) disconnectedBar.classList.remove('hidden');
     if (syncBadge) syncBadge.textContent = 'Mode Pribadi';
     if (chatInput) {
-      chatInput.disabled = true;
-      chatInput.placeholder = 'Buat atau gabung room di atas untuk mulai chat...';
+      chatInput.disabled = false;
+      chatInput.placeholder = 'Ketik pesan untuk pasanganmu...';
     }
-    if (chatSendBtn) chatSendBtn.disabled = true;
+    if (chatSendBtn) chatSendBtn.disabled = false;
   }
 
   renderMainJamChat();
@@ -111,7 +111,7 @@ function joinJamRoom(roomId) {
 
   if (currentJamRoomId !== clean) {
     // Masuk ke room baru: bersihkan chat sebelumnya agar selalu mulai bersih
-    state.jamMessages = [];
+    if (!Array.isArray(state.jamMessages)) state.jamMessages = [];
     saveState();
   }
 
@@ -151,7 +151,7 @@ function createRandomJamRoom() {
 function leaveCurrentJamRoom() {
   currentJamRoomId = '';
   localStorage.removeItem('romantic_jam_room_id');
-  state.jamMessages = [];
+  // Jangan hapus state.jamMessages saat keluar room agar chat permanen seperti WhatsApp
   saveState();
   if (window.MusicDB && typeof window.MusicDB.leaveJamRoom === 'function') {
     window.MusicDB.leaveJamRoom();
@@ -161,8 +161,8 @@ function leaveCurrentJamRoom() {
 }
 
 function handleRemoteChatMessage(payload) {
-  if (!payload || !currentJamRoomId) return;
-  if (payload.roomId && payload.roomId !== currentJamRoomId) return;
+  if (!payload) return;
+  // Chat bersifat global untuk pasangan (seperti WhatsApp), tidak dibatasi per roomId
 
   const currentAcc = getCurrentAccount();
   if (payload.senderId && payload.senderId === currentAcc.id) return; // abaikan pesan sendiri
@@ -176,7 +176,7 @@ function handleRemoteChatMessage(payload) {
     senderId: payload.senderId,
     senderName: payload.senderName || currentAcc.partnerName,
     senderAvatar: payload.senderAvatar || currentAcc.partnerAvatar,
-    sender: 'partner',
+    sender: payload.senderId || 'partner',
     text: payload.text,
     time: payload.time || getCurrentTimeStr()
   });
@@ -227,7 +227,7 @@ function scheduleBroadcastSeek(targetSec) {
 
 function handleRemotePlaybackSync(payload) {
   if (!payload || !syncModeActive || !currentJamRoomId) return;
-  if (payload.roomId && payload.roomId !== currentJamRoomId) return; // Abaikan paket dari room lain!
+  // Chat bersifat global untuk pasangan (seperti WhatsApp), tidak dibatasi per roomId // Abaikan paket dari room lain!
   const myDeviceId = window.MusicDB && window.MusicDB.getDeviceId ? window.MusicDB.getDeviceId() : null;
   if (payload.senderDeviceId && myDeviceId && payload.senderDeviceId === myDeviceId) return;
 
@@ -608,7 +608,7 @@ function simulatePartnerChatReply(userMessage) {
     senderId: currentAcc.partnerId,
     senderName: currentAcc.partnerName,
     senderAvatar: currentAcc.partnerAvatar,
-    sender: 'partner',
+    sender: payload.senderId || 'partner',
     text: reply,
     time: getCurrentTimeStr()
   });
@@ -675,7 +675,7 @@ function renderMainJamChat() {
   const container = document.getElementById('mainJamChatContainer');
   if (!container) return;
 
-  if (!currentJamRoomId) {
+  if (false && !currentJamRoomId) {
     container.innerHTML = `
       <div class="flex flex-col items-center justify-center h-full text-center p-6 text-[#9A737C]">
         <div class="w-12 h-12 rounded-full bg-[#FFF0F3] border border-[#FFD2DC] flex items-center justify-center text-[#FA8072] mb-3 text-lg">
@@ -695,8 +695,8 @@ function renderMainJamChat() {
         <div class="w-12 h-12 rounded-full bg-[#FFF0F3] border border-[#FFD2DC] flex items-center justify-center text-[#FA8072] mb-3 text-lg">
           <i class="fa-solid fa-sparkles"></i>
         </div>
-        <p class="text-xs font-bold text-[#3B2328]">Room Sesi Aktif: <span class="font-mono text-[#FA8072]">${currentJamRoomId}</span></p>
-        <p class="text-[11px] text-[#9A737C] mt-1 max-w-[250px]">Kirim pesan pertama ke pasanganmu atau mulai putar lagu bersama 🎵</p>
+        <p class="text-xs font-bold text-[#3B2328]">Ruang Obrolan Berdua 💕</p>
+        <p class="text-[11px] text-[#9A737C] mt-1 max-w-[260px]">Kirim pesan manis ke pasanganmu kapan saja seperti WhatsApp. Seluruh chat tersimpan otomatis & tidak hilang saat refresh ✦</p>
       </div>
     `;
     return;
@@ -711,7 +711,8 @@ function renderMainJamChat() {
         </div>
       `;
     }
-    const isYou = (msg.senderId && msg.senderId === currentAcc.id) || (msg.sender === 'you' && (!msg.senderId || msg.senderId === currentAcc.id));
+    const msgSenderId = String(msg.senderId || msg.sender || '').toLowerCase().trim();
+    const isYou = (msgSenderId === currentAcc.id) || (msg.sender === 'you' && !msg.senderId);
     const senderName = isYou ? currentAcc.name : (msg.senderName || currentAcc.partnerName);
     const senderAvatar = isYou ? currentAcc.avatar : (msg.senderAvatar || currentAcc.partnerAvatar);
 
@@ -738,7 +739,7 @@ function renderMainJamChat() {
 
 function sendMainJamChatMessage(event) {
   if (event) event.preventDefault();
-  if (!currentJamRoomId) {
+  if (false && !currentJamRoomId) {
     showToastNotification('Silakan buat atau gabung room terlebih dahulu', 'warning');
     return;
   }
@@ -757,7 +758,7 @@ function sendMainJamChatMessage(event) {
     senderId: currentAcc.id,
     senderName: currentAcc.name,
     senderAvatar: currentAcc.avatar,
-    sender: 'you',
+    sender: currentAcc.id,
     text: text,
     time: timeStr
   };

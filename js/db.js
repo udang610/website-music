@@ -145,7 +145,7 @@
       if (!m.id || rows.messages[m.id]) return;
       rows.messages[m.id] = {
         id: m.id,
-        sender: str(m.sender) || 'system',
+        sender: str(m.senderId || m.sender) || 'system',
         text: str(m.text),
         time_label: str(m.time),
         position: i
@@ -175,7 +175,18 @@
     date: r.memory_date || '',
     location: r.location || ''
   });
-  const messageFromRow = (r) => ({ id: r.id, sender: r.sender, text: r.text, time: r.time_label || '' });
+  const messageFromRow = (r) => {
+    const rawSender = str(r.sender).trim();
+    const low = rawSender.toLowerCase();
+    const isKnownId = (low === 'dhafin' || low === 'nadia');
+    return {
+      id: r.id,
+      senderId: isKnownId ? low : undefined,
+      sender: rawSender,
+      text: r.text,
+      time: r.time_label || ''
+    };
+  };
 
   function applyProfileRow(target, r, defaults) {
     defaults = defaults || {};
@@ -455,10 +466,11 @@
       ids.forEach(id => { delete snapshot.polaroids[id]; deletedPolaroidIds.add(id); });
     }
 
-    // 6. Jam messages
+    // 6. Jam messages (persistent couple chat like WhatsApp — never auto-delete unless explicitly cleared)
     const ms = diffMap(prev.messages, next.messages);
     (await upsertRows(T.messages, ms.up)).forEach(r => { snapshot.messages[r.id] = r; });
-    if (ms.del.length) {
+    if (ms.del.length && window.__allowClearChatMessages) {
+      window.__allowClearChatMessages = false;
       const ids = ms.del.map(r => r.id);
       const { error } = await client.from(T.messages).delete().in('id', ids);
       if (error) throw error;
@@ -735,37 +747,65 @@
   }
 
   function broadcastChatMessage(payload) {
-    if (!jamChannel || !activeJamRoomId) return false;
-    try {
-      jamChannel.send({
-        type: 'broadcast',
-        event: 'chat_message',
-        payload: {
-          ...payload,
-          roomId: activeJamRoomId,
-          senderDeviceId: DEVICE_SESSION_ID,
-          sentAt: Date.now()
-        }
-      });
-      return true;
-    } catch (e) {
-      console.warn('[MusicDB] broadcastChatMessage error:', e);
-      return false;
+    const packet = {
+      ...payload,
+      roomId: activeJamRoomId || 'GLOBAL',
+      senderDeviceId: DEVICE_SESSION_ID,
+      sentAt: Date.now()
+    };
+    let sent = false;
+    if (channel) {
+      try {
+        channel.send({
+          type: 'broadcast',
+          event: 'chat_message',
+          payload: packet
+        });
+        sent = true;
+      } catch (e) {
+        console.warn('[MusicDB] global broadcastChatMessage error:', e);
+      }
     }
+    if (jamChannel && activeJamRoomId) {
+      try {
+        jamChannel.send({
+          type: 'broadcast',
+          event: 'chat_message',
+          payload: packet
+        });
+        sent = true;
+      } catch (e) {
+        console.warn('[MusicDB] room broadcastChatMessage error:', e);
+      }
+    }
+    return sent;
   }
 
   function subscribe() {
     if (channel) return;
-    channel = client.channel('music-db-v2');
+    channel = client.channel('music-db-v2', {
+      config: { broadcast: { self: false } }
+    });
 
-    // 1. Database table sync (selalu aktif untuk data, playlist, memori, profil)
+    // 1. Database table sync (selalu aktif untuk data, playlist, memori, profil, dan chat)
     Object.values(T).forEach(table => {
       channel.on('postgres_changes', { event: '*', schema: 'public', table }, (payload) => {
         try { handleRemote(table, payload); } catch (e) { console.warn('[MusicDB] realtime handler error:', e); }
       });
     });
 
-    // 2. Global presence sync: pantau apakah Dhafin / Nadia sedang membuka web
+    // 2. Global realtime chat broadcast (selalu aktif seperti WhatsApp tanpa perlu per-room)
+    channel.on('broadcast', { event: 'chat_message' }, ({ payload }) => {
+      if (payload && payload.senderDeviceId !== DEVICE_SESSION_ID && hooks.onChatMessage) {
+        try {
+          hooks.onChatMessage(payload);
+        } catch (e) {
+          console.warn('[MusicDB] onChatMessage error:', e);
+        }
+      }
+    });
+
+    // 3. Global presence sync: pantau apakah Dhafin / Nadia sedang membuka web
     channel.on('presence', { event: 'sync' }, () => {
       if (hooks.onGlobalPresenceSync) {
         try {
