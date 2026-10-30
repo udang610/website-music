@@ -294,6 +294,11 @@ function loadState() {
     }
     if (Array.isArray(parsed.jamMessages)) {
       parsed.jamMessages = parsed.jamMessages.filter(m => m && !String(m.text || '').includes('pakai cover album official'));
+    parsed.jamMessages.forEach(m => {
+      if (m && m.sender === 'system' && m.text && m.text.includes('Kamu memutar')) {
+        m.text = m.text.replace('Kamu memutar', `${parsed.partnerName || 'Nadia'} memutar`);
+      }
+    });
     }
 
     const mergedState = { ...defaultState, ...parsed };
@@ -381,6 +386,13 @@ function initSupabaseSync() {
           if (m && m.id && !cloudIds.has(m.id)) {
             mergedMsgs.push(m);
             cloudIds.add(m.id);
+          }
+        });
+        mergedMsgs.forEach(m => {
+          if (m && m.sender === 'system' && m.text && m.text.includes('Kamu memutar')) {
+            const currentAcc = (typeof getCurrentAccount === 'function') ? getCurrentAccount() : null;
+            const pName = currentAcc ? currentAcc.partnerName : 'Nadia';
+            m.text = m.text.replace('Kamu memutar', `${pName} memutar`);
           }
         });
         state.jamMessages = mergedMsgs;
@@ -605,4 +617,4 @@ function restoreLastPlayedTrack(autoPlay = false) {
   }
   return false;
 }
-
+

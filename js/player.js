@@ -368,7 +368,9 @@ function selectTrackFromList(index) {
   } else {
     loadTrack(index, true, state.activePlaylistId);
     if (syncModeActive && targetTrack) {
-      broadcastJamSystemNote(`🎧 Kamu memutar "${targetTrack.title}" untuk didengarkan berdua`);
+      const currentAcc = (typeof getCurrentAccount === 'function') ? getCurrentAccount() : null;
+      const userName = currentAcc ? currentAcc.name : (state.yourName || 'Dhafin');
+      broadcastJamSystemNote(`🎧 ${userName} memutar "${targetTrack.title}" untuk didengarkan berdua`);
     }
   }
   // Buka tampilan piringan hitam estetik secara detail jika di mobile

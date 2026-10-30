@@ -496,12 +496,18 @@ function updateJamLiveActivity(text) {
 }
 
 function broadcastJamSystemNote(msg) {
-  state.jamMessages.push({
+  const msgObj = {
+    id: 'msg-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
     sender: 'system',
     text: msg,
     time: getCurrentTimeStr()
-  });
+  };
+  if (!state.jamMessages) state.jamMessages = [];
+  state.jamMessages.push(msgObj);
   saveState();
+  if (window.MusicDB && typeof window.MusicDB.broadcastChatMessage === 'function') {
+    window.MusicDB.broadcastChatMessage(msgObj);
+  }
   renderJamChat();
 }
 
@@ -685,9 +691,14 @@ function renderMainJamChat() {
   const currentAcc = getCurrentAccount();
   container.innerHTML = messages.map(msg => {
     if (msg.sender === 'system') {
+      let displayText = msg.text || '';
+      if (displayText.includes('Kamu memutar')) {
+        const pName = currentAcc ? currentAcc.partnerName : (state.partnerName || 'Nadia');
+        displayText = displayText.replace('Kamu memutar', `${pName} memutar`);
+      }
       return `
         <div class="text-center py-1">
-          <span class="text-[10px] bg-[#FFF0F3] text-[#E85D75] px-2.5 py-0.5 rounded-full border border-[#FFD2DC]">${msg.text}</span>
+          <span class="text-[10px] bg-[#FFF0F3] text-[#E85D75] px-2.5 py-0.5 rounded-full border border-[#FFD2DC]">${displayText}</span>
         </div>
       `;
     }
