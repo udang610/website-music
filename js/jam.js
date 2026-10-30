@@ -2,6 +2,7 @@
 
 // ================= LISTENING TOGETHER (SPOTIFY JAM REALTIME SYNC) =================
 let isRemotePlaybackSync = false;
+let lastRemoteSyncTime = 0;
 let remoteSyncUnlockTimer = null;
 let seekDebounceTimer = null;
 let currentJamRoomId = '';
@@ -99,6 +100,8 @@ function handleRemoteChatMessage(payload) {
 
 function broadcastPlaybackState(action, position, playingStatus) {
   if (isRemotePlaybackSync) return;
+  // Anti-echo: cegah broadcast jika perangkat baru saja menerima sinkronisasi dari pasangan
+  if (action !== 'SEEK' && (Date.now() - lastRemoteSyncTime < 2200)) return;
   if (typeof syncModeActive !== 'undefined' && !syncModeActive) return;
 
   const track = getPlayingTrack();
@@ -201,6 +204,7 @@ function handleRemotePlaybackSync(payload) {
   }
 
   isRemotePlaybackSync = true;
+  lastRemoteSyncTime = Date.now();
   clearTimeout(remoteSyncUnlockTimer);
 
   try {
@@ -208,7 +212,7 @@ function handleRemotePlaybackSync(payload) {
 
     // Latency & drift compensation
     const now = Date.now();
-    const networkLatencySec = Math.max(0, Math.min(4, (now - (payload.sentAt || now)) / 1000));
+    const networkLatencySec = Math.max(0, Math.min(3, (now - (payload.sentAt || now)) / 1000));
     const targetSeconds = Math.max(0, (payload.position || 0) + (payload.isPlaying ? networkLatencySec : 0));
 
     const isSameTrack = currentTrack && (
@@ -222,24 +226,35 @@ function handleRemotePlaybackSync(payload) {
       currentPlayingPlaylistId = match.playlist.id;
       state.activePlaylistId = match.playlist.id;
       loadTrack(match.index, payload.isPlaying, match.playlist.id);
-      setTimeout(() => {
-        applyDirectSeekAndPlay(targetSeconds, payload.isPlaying);
-      }, 400);
+      // Anti-replay: hanya seek jika lagu pasangan memang sudah berjalan lebih dari 2.5 detik
+      if (targetSeconds > 2.5) {
+        setTimeout(() => {
+          applyDirectSeekAndPlay(targetSeconds, payload.isPlaying);
+        }, 500);
+      }
     } else {
-      // Same track: check drift
+      // Same track: periksa drift
       const currentSec = (currentEngine === 'youtube' && isYtReady && ytPlayer && ytPlayer.getCurrentTime)
         ? ytPlayer.getCurrentTime()
         : (audio.currentTime || 0);
 
       const drift = Math.abs(currentSec - targetSeconds);
 
-      if (payload.action === 'SEEK' || drift > 1.2) {
+      // Anti-replay: hanya seek jika user pasangan sengaja geser slider (SEEK) atau drift > 4.5s
+      if (payload.action === 'SEEK' || drift > 4.5) {
         applyDirectSeekAndPlay(targetSeconds, payload.isPlaying);
       } else {
+        // Jika drift kecil (< 4.5s), jangan pernah seek ulang agar lagu tidak ter-replay
         if (payload.isPlaying && !isPlaying) {
-          applyDirectSeekAndPlay(targetSeconds, true);
+          if (currentEngine === 'youtube' && isYtReady && ytPlayer && ytPlayer.playVideo) {
+            ytPlayer.playVideo();
+            isPlaying = true;
+            updatePlayButtons();
+          } else {
+            playAudio();
+          }
         } else if (!payload.isPlaying && isPlaying) {
-          applyDirectSeekAndPlay(targetSeconds, false);
+          pauseAudio();
         }
       }
     }
@@ -260,7 +275,7 @@ function handleRemotePlaybackSync(payload) {
   } finally {
     remoteSyncUnlockTimer = setTimeout(() => {
       isRemotePlaybackSync = false;
-    }, 700);
+    }, 2200);
   }
 }
 

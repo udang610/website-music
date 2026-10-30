@@ -352,6 +352,8 @@ function updateActiveTrackUI() {
 }
 
 function selectTrackFromList(index) {
+  isRemotePlaybackSync = false;
+  if (typeof lastRemoteSyncTime !== 'undefined') lastRemoteSyncTime = 0;
   const tracks = getActiveTracks();
   const targetTrack = tracks[index];
   const currentPlaying = getPlayingTrack();
@@ -441,6 +443,8 @@ function pauseAudio() {
 }
 
 function togglePlay() {
+  isRemotePlaybackSync = false;
+  if (typeof lastRemoteSyncTime !== 'undefined') lastRemoteSyncTime = 0;
   const track = getPlayingTrack();
   if (!track) {
     const plTracks = getPlayingTracks();
