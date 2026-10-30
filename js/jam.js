@@ -7,58 +7,25 @@ let seekDebounceTimer = null;
 let currentJamRoomId = '';
 
 function initJamRoomSession() {
-  const urlParams = new URLSearchParams(window.location.search);
-  const roomParam = urlParams.get('room');
-  if (roomParam) {
-    const cleanParam = decodeURIComponent(roomParam).trim().toUpperCase();
-    if (cleanParam) {
-      currentJamRoomId = cleanParam;
-      localStorage.setItem('romantic_jam_room_id', currentJamRoomId);
-      setTimeout(() => {
-        showToastNotification(`Terhubung ke Jam Room: ${currentJamRoomId} 💕`, 'success');
-      }, 700);
-    }
-  } else {
-    // Secara default room chat kosong & user harus membuat room baru atau memasukkan ID Room
-    currentJamRoomId = localStorage.getItem('romantic_jam_room_id') || '';
-    // Riwayat chat tetap tersimpan permanen seperti WhatsApp (tidak pernah di-reset)
-    if (!Array.isArray(state.jamMessages)) state.jamMessages = [];
-  }
-
-  if (currentJamRoomId && window.MusicDB && typeof window.MusicDB.connectJamRoom === 'function') {
-    window.MusicDB.connectJamRoom(currentJamRoomId);
-  }
+  if (!Array.isArray(state.jamMessages)) state.jamMessages = [];
   renderJamRoomUI();
 }
 
 function renderJamRoomUI() {
-  const connectedBar = document.getElementById('jamConnectedBar');
-  const disconnectedBar = document.getElementById('jamDisconnectedBar');
-  const activeCodeEl = document.getElementById('jamActiveRoomCode');
   const syncBadge = document.getElementById('jamSessionSyncBadge');
   const chatInput = document.getElementById('mainJamChatInput');
   const chatSendBtn = document.getElementById('mainJamChatSendBtn');
 
-  if (currentJamRoomId) {
-    if (connectedBar) connectedBar.classList.remove('hidden');
-    if (disconnectedBar) disconnectedBar.classList.add('hidden');
-    if (activeCodeEl) activeCodeEl.textContent = currentJamRoomId;
-    if (syncBadge) syncBadge.textContent = '100% Synced';
-    if (chatInput) {
-      chatInput.disabled = false;
-      chatInput.placeholder = 'Ketik pesan untuk pasanganmu...';
-    }
-    if (chatSendBtn) chatSendBtn.disabled = false;
-  } else {
-    if (connectedBar) connectedBar.classList.add('hidden');
-    if (disconnectedBar) disconnectedBar.classList.remove('hidden');
-    if (syncBadge) syncBadge.textContent = 'Mode Pribadi';
-    if (chatInput) {
-      chatInput.disabled = false;
-      chatInput.placeholder = 'Ketik pesan untuk pasanganmu...';
-    }
-    if (chatSendBtn) chatSendBtn.disabled = false;
+  if (syncBadge) {
+    syncBadge.textContent = (typeof syncModeActive !== 'undefined' && syncModeActive)
+      ? 'Dhafin & Nadia • Terhubung Otomatis'
+      : 'Sinkronisasi Musik Dijeda';
   }
+  if (chatInput) {
+    chatInput.disabled = false;
+    chatInput.placeholder = 'Ketik pesan untuk pasanganmu...';
+  }
+  if (chatSendBtn) chatSendBtn.disabled = false;
 
   renderMainJamChat();
   if (typeof updateMiniJamStatusCard === 'function') {
@@ -84,81 +51,24 @@ function updateMiniJamStatusCard() {
   if (avatar1 && state.yourAvatar) avatar1.src = state.yourAvatar;
   if (avatar2 && state.partnerAvatar) avatar2.src = state.partnerAvatar;
 
-  if (currentJamRoomId) {
-    // State B: Sedang ada room yang terbuat / Jamming Together aktif
-    cardTitle.textContent = `Room: ${currentJamRoomId}`;
-    if (cardBadge) cardBadge.classList.remove('hidden');
-    cardDesc.textContent = `${partnerName} (${isPartnerOnline ? 'Online 🟢' : 'Offline ⚪'}) • Sinkron Aktif`;
-    cardBtn.textContent = 'Buka Jam';
-    cardBtn.className = 'shrink-0 px-3 py-1.5 rounded-xl bg-gradient-to-r from-[#FA8072] to-[#E85D75] text-white text-xs font-bold shadow-xs hover:opacity-95 transition whitespace-nowrap';
-    if (avatar2) avatar2.className = 'w-8 h-8 rounded-full object-cover ring-2 ring-[#FA8072] live-ring shadow-xs';
-  } else {
-    // State A: Belum ada room yang terbuat / belum jamming together
-    cardTitle.textContent = 'Listening Together';
-    if (cardBadge) cardBadge.classList.add('hidden');
-    cardDesc.textContent = isPartnerOnline 
-      ? `${partnerName} sedang online 🟢 • Dengar bareng!` 
-      : 'Belum ada sesi aktif • Ajak pasanganmu 💕';
-    cardBtn.textContent = 'Mulai Jam';
-    cardBtn.className = 'shrink-0 px-3 py-1.5 rounded-xl bg-white border border-[#FFD2DC] text-[#E85D75] text-xs font-bold shadow-2xs hover:bg-[#FA8072] hover:text-white hover:border-[#FA8072] transition whitespace-nowrap';
-    if (avatar2) avatar2.className = 'w-8 h-8 rounded-full object-cover ring-2 ring-white shadow-2xs';
-  }
+  cardTitle.textContent = 'Listening Together';
+  if (cardBadge) cardBadge.classList.remove('hidden');
+  cardDesc.textContent = isPartnerOnline 
+    ? `${partnerName} sedang online 🟢 • Sinkron Otomatis` 
+    : `${partnerName} offline ⚪ • Sesi Berdua Aktif`;
+  cardBtn.textContent = 'Buka Jam';
+  cardBtn.className = 'shrink-0 px-3 py-1.5 rounded-xl bg-gradient-to-r from-[#FA8072] to-[#E85D75] text-white text-xs font-bold shadow-xs hover:opacity-95 transition whitespace-nowrap';
+  if (avatar2) avatar2.className = isPartnerOnline 
+    ? 'w-8 h-8 rounded-full object-cover ring-2 ring-[#FA8072] live-ring shadow-xs' 
+    : 'w-8 h-8 rounded-full object-cover ring-2 ring-white shadow-xs';
 }
 
-function joinJamRoom(roomId) {
-  const clean = String(roomId || '').trim().toUpperCase();
-  if (!clean) return;
-
-  if (currentJamRoomId !== clean) {
-    // Masuk ke room baru: bersihkan chat sebelumnya agar selalu mulai bersih
-    if (!Array.isArray(state.jamMessages)) state.jamMessages = [];
-    saveState();
-  }
-
-  currentJamRoomId = clean;
-  localStorage.setItem('romantic_jam_room_id', currentJamRoomId);
-  if (window.MusicDB && typeof window.MusicDB.connectJamRoom === 'function') {
-    window.MusicDB.connectJamRoom(currentJamRoomId);
-  }
-  renderJamRoomUI();
-  showToastNotification(`Berhasil bergabung ke Sesi: ${currentJamRoomId} ✦`, 'success');
-
-  // Broadcast current track to partner if host is playing
-  if (isPlaying) {
-    broadcastPlaybackState('PLAY', audio.currentTime || 0, true);
-  }
-}
-
-function joinJamRoomFromInput() {
-  const input = document.getElementById('inputJamRoomId');
-  const val = input ? input.value.trim() : '';
-  if (!val) {
-    showToastNotification('Silakan masukkan ID Room terlebih dahulu', 'warning');
-    return;
-  }
-  joinJamRoom(val);
-  if (input) input.value = '';
-}
-
-function createRandomJamRoom() {
-  const prefixes = ['LUV', 'JAM', 'NDEY', 'DHAF', 'LOVE'];
-  const pfx = prefixes[Math.floor(Math.random() * prefixes.length)];
-  const num = Math.floor(1000 + Math.random() * 9000);
-  joinJamRoom(`${pfx}-${num}`);
-  showToastNotification(`Room baru dibuat: ${currentJamRoomId} 💕 Bagikan link atau kodenya ke pasanganmu!`, 'success');
-}
-
-function leaveCurrentJamRoom() {
-  currentJamRoomId = '';
-  localStorage.removeItem('romantic_jam_room_id');
-  // Jangan hapus state.jamMessages saat keluar room agar chat permanen seperti WhatsApp
-  saveState();
-  if (window.MusicDB && typeof window.MusicDB.leaveJamRoom === 'function') {
-    window.MusicDB.leaveJamRoom();
-  }
-  renderJamRoomUI();
-  showToastNotification('Mode pribadi aktif. Kamu telah keluar dari sesi bersama.', 'info');
-}
+// Stubs for backwards compatibility
+function joinJamRoom() { renderJamRoomUI(); }
+function joinJamRoomFromInput() { renderJamRoomUI(); }
+function createRandomJamRoom() { renderJamRoomUI(); }
+function leaveCurrentJamRoom() { renderJamRoomUI(); }
+function copyInviteLink() { navigateTo('jam'); }
 
 function handleRemoteChatMessage(payload) {
   if (!payload) return;
@@ -189,7 +99,6 @@ function handleRemoteChatMessage(payload) {
 
 function broadcastPlaybackState(action, position, playingStatus) {
   if (isRemotePlaybackSync) return;
-  if (!currentJamRoomId) return; // Mode pribadi: jangan broadcast jika belum join room!
   if (typeof syncModeActive !== 'undefined' && !syncModeActive) return;
 
   const track = getPlayingTrack();
@@ -225,9 +134,63 @@ function scheduleBroadcastSeek(targetSec) {
   }, 220);
 }
 
+
+function findTrackAcrossAllPlaylists(trackId, trackTitle, preferredPlaylistId) {
+  // 1. Cek preferred playlist
+  if (preferredPlaylistId) {
+    let pl = null;
+    if (preferredPlaylistId === 'pl-liked' && typeof getLikedSongsPlaylist === 'function') {
+      pl = getLikedSongsPlaylist();
+    } else {
+      pl = (state.playlists || []).find(p => p.id === preferredPlaylistId);
+    }
+    if (pl && pl.tracks) {
+      const idx = pl.tracks.findIndex(t => 
+        (trackId && t.id === trackId) ||
+        (trackTitle && t.title && t.title.toLowerCase().trim() === trackTitle.toLowerCase().trim())
+      );
+      if (idx !== -1) return { playlist: pl, index: idx, track: pl.tracks[idx] };
+    }
+  }
+
+  // 2. Cek current playing playlist
+  const curPl = typeof getPlayingPlaylist === 'function' ? getPlayingPlaylist() : null;
+  if (curPl && curPl.tracks && curPl.id !== preferredPlaylistId) {
+    const idx = curPl.tracks.findIndex(t => 
+      (trackId && t.id === trackId) ||
+      (trackTitle && t.title && t.title.toLowerCase().trim() === trackTitle.toLowerCase().trim())
+    );
+    if (idx !== -1) return { playlist: curPl, index: idx, track: curPl.tracks[idx] };
+  }
+
+  // 3. Cari di seluruh playlist
+  for (const pl of (state.playlists || [])) {
+    if (pl && pl.tracks) {
+      const idx = pl.tracks.findIndex(t => 
+        (trackId && t.id === trackId) ||
+        (trackTitle && t.title && t.title.toLowerCase().trim() === trackTitle.toLowerCase().trim())
+      );
+      if (idx !== -1) return { playlist: pl, index: idx, track: pl.tracks[idx] };
+    }
+  }
+
+  // 4. Cari di Liked Songs
+  if (typeof getLikedSongsPlaylist === 'function') {
+    const likedPl = getLikedSongsPlaylist();
+    if (likedPl && likedPl.tracks) {
+      const idx = likedPl.tracks.findIndex(t => 
+        (trackId && t.id === trackId) ||
+        (trackTitle && t.title && t.title.toLowerCase().trim() === trackTitle.toLowerCase().trim())
+      );
+      if (idx !== -1) return { playlist: likedPl, index: idx, track: likedPl.tracks[idx] };
+    }
+  }
+
+  return null;
+}
+
 function handleRemotePlaybackSync(payload) {
-  if (!payload || !syncModeActive || !currentJamRoomId) return;
-  // Chat bersifat global untuk pasangan (seperti WhatsApp), tidak dibatasi per roomId // Abaikan paket dari room lain!
+  if (!payload || !syncModeActive) return;
   const myDeviceId = window.MusicDB && window.MusicDB.getDeviceId ? window.MusicDB.getDeviceId() : null;
   if (payload.senderDeviceId && myDeviceId && payload.senderDeviceId === myDeviceId) return;
 
@@ -242,30 +205,23 @@ function handleRemotePlaybackSync(payload) {
 
   try {
     const currentTrack = getPlayingTrack();
-    const playingTracks = getPlayingTracks();
 
     // Latency & drift compensation
     const now = Date.now();
     const networkLatencySec = Math.max(0, Math.min(4, (now - (payload.sentAt || now)) / 1000));
     const targetSeconds = Math.max(0, (payload.position || 0) + (payload.isPlaying ? networkLatencySec : 0));
 
-    // Check track match
-    let trackIdx = -1;
-    if (payload.trackId) {
-      trackIdx = playingTracks.findIndex(t => t.id === payload.trackId);
-    }
-    if (trackIdx === -1 && payload.trackTitle) {
-      trackIdx = playingTracks.findIndex(t => t.title && t.title.toLowerCase().trim() === payload.trackTitle.toLowerCase().trim());
-    }
-
     const isSameTrack = currentTrack && (
       (payload.trackId && currentTrack.id === payload.trackId) ||
       (payload.trackTitle && currentTrack.title && currentTrack.title.toLowerCase().trim() === payload.trackTitle.toLowerCase().trim())
     );
 
-    if (!isSameTrack && trackIdx !== -1) {
-      // Switch track and seek
-      loadTrack(trackIdx, payload.isPlaying, payload.playlistId || currentPlayingPlaylistId);
+    const match = findTrackAcrossAllPlaylists(payload.trackId, payload.trackTitle, payload.playlistId);
+
+    if (!isSameTrack && match) {
+      currentPlayingPlaylistId = match.playlist.id;
+      state.activePlaylistId = match.playlist.id;
+      loadTrack(match.index, payload.isPlaying, match.playlist.id);
       setTimeout(() => {
         applyDirectSeekAndPlay(targetSeconds, payload.isPlaying);
       }, 400);
@@ -457,9 +413,18 @@ setInterval(() => {
 // Unlock audio context on first touch for mobile devices
 (function initMobileAudioUnlock() {
   const unlock = () => {
-    if (audio && audio.src && isPlaying) { audio.load(); }
-    window.removeEventListener('touchstart', unlock);
-    window.removeEventListener('click', unlock);
+    if (audio) {
+      const prevMuted = audio.muted;
+      audio.muted = true;
+      const p = audio.play();
+      if (p !== undefined) {
+        p.then(() => {
+          audio.pause();
+          audio.muted = prevMuted;
+          window.__audioUnlocked = true;
+        }).catch(() => {});
+      }
+    }
   };
   window.addEventListener('touchstart', unlock, { once: true, passive: true });
   window.addEventListener('click', unlock, { once: true, passive: true });
@@ -776,4 +741,4 @@ function sendMainJamChatMessage(event) {
   renderJamChat();
   sendFloatingReaction('💌', true);
 }
-
+

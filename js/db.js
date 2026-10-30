@@ -727,14 +727,13 @@
   }
 
   function broadcastPlayback(payload) {
-    if (!jamChannel || !activeJamRoomId) return false;
+    if (!channel) return false;
     try {
-      jamChannel.send({
+      channel.send({
         type: 'broadcast',
         event: 'playback_sync',
         payload: {
           ...payload,
-          roomId: activeJamRoomId,
           senderDeviceId: DEVICE_SESSION_ID,
           sentAt: Date.now()
         }
@@ -794,7 +793,18 @@
       });
     });
 
-    // 2. Global realtime chat broadcast (selalu aktif seperti WhatsApp tanpa perlu per-room)
+    // 2. Global realtime playback sync (selalu aktif untuk Dhafin & Nadia tanpa perlu room)
+    channel.on('broadcast', { event: 'playback_sync' }, ({ payload }) => {
+      if (payload && payload.senderDeviceId !== DEVICE_SESSION_ID && hooks.onPlaybackSync) {
+        try {
+          hooks.onPlaybackSync(payload);
+        } catch (e) {
+          console.warn('[MusicDB] onPlaybackSync error:', e);
+        }
+      }
+    });
+
+    // 3. Global realtime chat broadcast (selalu aktif seperti WhatsApp tanpa perlu per-room)
     channel.on('broadcast', { event: 'chat_message' }, ({ payload }) => {
       if (payload && payload.senderDeviceId !== DEVICE_SESSION_ID && hooks.onChatMessage) {
         try {

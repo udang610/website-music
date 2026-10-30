@@ -398,6 +398,14 @@ function playAudio() {
       }
     }).catch(err => {
       console.warn('Audio playback notice:', err);
+      if (err && (err.name === 'NotAllowedError' || String(err).includes('interact'))) {
+        const track = typeof getPlayingTrack === 'function' ? getPlayingTrack() : null;
+        const currentAcc = (typeof getCurrentAccount === 'function') ? getCurrentAccount() : null;
+        const partnerName = currentAcc ? currentAcc.partnerName : 'Pasangan';
+        if (typeof showToastNotification === 'function' && track) {
+          showToastNotification(`🎧 ${partnerName} memutar "${track.title}" • Ketuk layar untuk dengar bareng 💕`, 'music');
+        }
+      }
       // Fallback to YouTube if available
       const track = getPlayingTrack();
       if (track && track.youtubeId && isYtReady && ytPlayer && ytPlayer.loadVideoById) {
@@ -876,4 +884,4 @@ if (typeof document !== 'undefined') {
     initMediaSession();
   }
 }
-
+

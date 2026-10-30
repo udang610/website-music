@@ -495,11 +495,11 @@
               <i class="fa-solid fa-plus text-sm"></i>
             </button>
 
-            <!-- Invite / Share Jam Session -->
-            <button onclick="copyInviteLink()"
+            <!-- Listening Together Shortcut -->
+            <button onclick="navigateTo('jam')"
               class="w-8 h-8 rounded-full border-2 border-[#9A737C] text-[#9A737C] hover:border-[#FA8072] hover:text-[#FA8072] flex items-center justify-center transition"
-              title="Salin Kode Undangan Listening Together">
-              <i class="fa-solid fa-user-plus text-xs"></i>
+              title="Buka Listening Together">
+              <i class="fa-solid fa-users-rays text-xs"></i>
             </button>
           </div>
 
@@ -587,45 +587,19 @@
                 Mendengarkan Bersama ✦
               </h2>
               <p class="text-xs sm:text-sm text-white/90 mt-1 max-w-md font-medium">
-                Kamu dan pasangan terhubung dalam sesi musik yang sama. Tersinkronisasi real-time!
+                Dhafin & Nadia terhubung otomatis dalam sesi musik yang sama. Tersinkronisasi real-time!
               </p>
 
-              <!-- Room Code & Join/Leave Bar -->
+              <!-- Couple Jam Sync Status Bar -->
               <div id="jamRoomControlBox" class="mt-4 flex flex-wrap items-center justify-center md:justify-start gap-2.5 text-xs">
-                <!-- State 1: When connected to room -->
-                <div id="jamConnectedBar" class="flex flex-wrap items-center gap-2">
-                  <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/25 border border-white/30 font-mono font-bold text-white text-xs">
-                    <span class="w-2 h-2 rounded-full bg-emerald-300 animate-pulse"></span>
-                    Room: <span id="jamActiveRoomCode">LUV-2407</span>
-                  </span>
-                  <button onclick="copyInviteLink()"
-                    class="px-3 py-1.5 rounded-xl bg-white text-[#FA8072] font-bold hover:bg-[#FFF0F3] shadow-xs transition flex items-center gap-1.5 text-xs cursor-pointer">
-                    <i class="fa-solid fa-copy"></i> Salin Link
-                  </button>
-                  <button onclick="leaveCurrentJamRoom()"
-                    class="px-3 py-1.5 rounded-xl bg-white/20 hover:bg-white/30 text-white font-bold transition flex items-center gap-1.5 text-xs cursor-pointer"
-                    title="Keluar dari sesi berdua dan kembali ke mode pribadi">
-                    <i class="fa-solid fa-arrow-right-from-bracket"></i> Keluar Room
-                  </button>
-                </div>
-
-                <!-- State 2: When in private mode (not connected to room) -->
-                <div id="jamDisconnectedBar" class="hidden flex flex-wrap items-center gap-2">
-                  <div class="relative">
-                    <input id="inputJamRoomId" type="text" placeholder="ID ROOM (cth: LUV-2407)" maxlength="16"
-                      class="px-3.5 py-1.5 rounded-xl bg-white/25 border border-white/40 text-white placeholder-white/70 font-mono font-bold text-xs focus:outline-none focus:bg-white/35 uppercase w-48 shadow-inner"
-                      onkeydown="if(event.key === 'Enter') joinJamRoomFromInput()" />
-                  </div>
-                  <button onclick="joinJamRoomFromInput()"
-                    class="px-3.5 py-1.5 rounded-xl bg-white text-[#FA8072] font-bold hover:bg-[#FFF0F3] shadow-xs transition flex items-center gap-1 text-xs cursor-pointer">
-                    <i class="fa-solid fa-link"></i> Gabung Sesi
-                  </button>
-                  <button onclick="createRandomJamRoom()"
-                    class="px-3 py-1.5 rounded-xl bg-white/20 hover:bg-white/30 text-white font-bold transition text-xs cursor-pointer"
-                    title="Buat Room ID acak">
-                    + Buat Baru
-                  </button>
-                </div>
+                <span class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-white/25 border border-white/30 font-bold text-white text-xs">
+                  <span class="w-2 h-2 rounded-full bg-emerald-300 animate-pulse"></span>
+                  <span id="jamSessionSyncBadge">Dhafin & Nadia • Terhubung Otomatis</span>
+                </span>
+                <label class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-white/20 hover:bg-white/30 text-white font-semibold cursor-pointer transition select-none">
+                  <input type="checkbox" id="syncPlayToggle" onchange="toggleSyncMode()" checked class="accent-[#FA8072] rounded cursor-pointer" />
+                  <span>Sinkron Musik Realtime</span>
+                </label>
               </div>
             </div>
 
