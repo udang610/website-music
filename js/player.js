@@ -100,14 +100,30 @@ window.onYouTubeIframeAPIReady = function () {
         }
       },
       onError: (err) => {
-        console.warn('YouTube notice, falling back to direct stream:', err);
-        const t = getActiveTracks()[currentIndex];
-        if (t && t.audioUrl) {
+        console.warn('YouTube notice, checking fallback audio stream:', err);
+        const t = (typeof getPlayingTrack === 'function') ? getPlayingTrack() : getActiveTracks()[currentIndex];
+        if (t && t.audioUrl && (t.audioUrl.startsWith('audio/') || t.audioUrl.startsWith('blob:'))) {
           currentEngine = 'html5';
           audio.src = t.audioUrl;
           if (isPlaying) {
             playAudio();
           }
+        } else if (t && t.title) {
+          // Jika video ID ini diblokir embed (misal error 101/150), cari video alternatif
+          const altQuery = `${t.title} official audio`;
+          fetch(`/api/search-youtube?q=${encodeURIComponent(altQuery)}`)
+            .then(res => res.json())
+            .then(data => {
+              if (data && data.youtubeId && data.youtubeId !== t.youtubeId) {
+                t.youtubeId = data.youtubeId;
+                if (ytPlayer && ytPlayer.loadVideoById) {
+                  ytPlayer.loadVideoById(t.youtubeId);
+                  isPlaying = true;
+                  updatePlayButtons();
+                  startYtScrubber();
+                }
+              }
+            }).catch(() => {});
         }
       }
     }
@@ -515,6 +531,9 @@ function playAudio() {
         const partnerName = currentAcc ? currentAcc.partnerName : 'Pasangan';
         if (typeof showToastNotification === 'function' && track) {
           showToastNotification(`🎧 ${partnerName} memutar "${track.title}" • Ketuk layar untuk dengar bareng 💕`, 'music');
+        }
+        if (typeof showAutoplayResumeBanner === 'function') {
+          showAutoplayResumeBanner(track);
         }
       }
       // Fallback to YouTube if HTML5 audio preview fails or is blocked

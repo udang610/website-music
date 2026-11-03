@@ -144,6 +144,9 @@ function navigateTo(view, playlistId = null) {
     renderPolaroidGallery();
   } else if (view === 'jam') {
     activeViewEl = listeningTogetherView;
+    if (typeof requestPartnerPlaybackSync === 'function') {
+      requestPartnerPlaybackSync();
+    }
     updateMainJamView();
   } else {
     activeViewEl = playlistView;
@@ -670,4 +673,4 @@ document.addEventListener('click', (e) => {
     if (icon) icon.className = 'fa-solid fa-ellipsis text-xs';
   }
 });
-
+

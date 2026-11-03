@@ -613,12 +613,12 @@
                   <span id="jamJoinLeaveBtnText">Gabung Room Berdua 💕</span>
                 </button>
 
-                <!-- Button Sync to Partner Now (One-Click Auto-Sync) -->
+                <!-- Button Sync to Partner Now (Selalu Terlihat & Aksesibel Cepat) -->
                 <button type="button" id="jamSyncToPartnerHeaderBtn" onclick="syncToPartnerJamNow()"
-                  class="hidden px-3.5 py-1.5 rounded-xl bg-white/25 hover:bg-white/35 text-white font-bold text-xs border border-white/30 transition flex items-center gap-1.5 active:scale-95"
-                  title="Sinkronkan pemutaran ke musik pasangan saat ini">
-                  <i class="fa-solid fa-bolt text-yellow-300"></i>
-                  <span id="jamSyncToPartnerHeaderBtnText">Sinkron ke Pasangan</span>
+                  class="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-500 hover:to-orange-600 text-white font-extrabold text-xs shadow-md transition flex items-center gap-1.5 active:scale-95"
+                  title="Klik untuk menyamakan lagu & detik pemutaran dengan pasangan saat ini">
+                  <i class="fa-solid fa-bolt text-yellow-200"></i>
+                  <span id="jamSyncToPartnerHeaderBtnText">⚡ Samakan Lagu Sekarang</span>
                 </button>
               </div>
             </div>
@@ -696,19 +696,19 @@
           <!-- Controls inside Jam View & One-Click Sync -->
           <div class="flex flex-wrap items-center gap-2.5 sm:gap-3 shrink-0 justify-end">
             <button id="jamSyncActionBtn" onclick="syncToPartnerJamNow()"
-              class="hidden px-3.5 py-2 rounded-2xl bg-gradient-to-r from-[#FA8072] to-[#E85D75] text-white text-xs font-bold shadow-md hover:scale-105 active:scale-95 transition flex items-center gap-1.5"
-              title="Klik untuk langsung mendengarkan lagu yang diputar pasangan">
+              class="px-4 py-2 rounded-2xl bg-gradient-to-r from-[#FA8072] to-[#E85D75] hover:opacity-95 text-white text-xs font-extrabold shadow-md hover:scale-105 active:scale-95 transition flex items-center gap-1.5 ring-2 ring-[#FFD2DC]"
+              title="Klik untuk langsung menyamakan dan mendengarkan lagu yang diputar pasangan">
               <i class="fa-solid fa-bolt text-yellow-300"></i>
-              <span>Dengar Bareng Sekarang</span>
+              <span id="jamSyncActionBtnText">⚡ Samakan Lagu Sekarang</span>
             </button>
             <button onclick="prevTrack()"
               class="w-10 h-10 rounded-full bg-white border border-[#FFD2DC] text-[#3B2328] hover:text-[#FA8072] flex items-center justify-center shadow-xs transition"
               title="Sebelumnya">
               <i class="fa-solid fa-backward-step"></i>
             </button>
-            <button onclick="togglePlay()"
+            <button onclick="toggleJamPlay()"
               class="w-12 h-12 rounded-full bg-gradient-to-r from-[#FA8072] to-[#E85D75] hover:opacity-95 text-white flex items-center justify-center shadow-md shadow-[#FA8072]/30 hover:scale-105 transition"
-              title="Play/Pause">
+              title="Play/Pause Lagu Berdua">
               <i id="mainJamPlayIcon" class="fa-solid fa-play text-lg ml-0.5"></i>
             </button>
             <button onclick="nextTrack()"
@@ -2245,14 +2245,21 @@
   <script src="js/data.js?v=20261103_v5"></script>
   <script src="js/auth.js?v=20261103_v5"></script>
   <script src="js/state.js?v=20261103_v5"></script>
-  <script src="js/player.js?v=20261103_v7"></script>
-  <script src="js/views.js?v=20261103_v5"></script>
+  <script src="js/player.js?v=20261103_v9"></script>
+  <script src="js/views.js?v=20261103_v9"></script>
   <script src="js/playlist.js?v=20261103_v5"></script>
   <script src="js/track-actions.js?v=20261103_v5"></script>
-  <script src="js/jam.js?v=20261103_v5"></script>
+  <script src="js/jam.js?v=20261103_v9"></script>
   <script src="js/polaroid.js?v=20261103_v5"></script>
   <script src="js/modals.js?v=20261103_v5"></script>
   <script src="js/app.js?v=20261103_v5"></script>
+  <!-- Floating Tap-to-Play Autoplay Unblocker Banner -->
+  <div id="jamAutoplayUnblockBanner" onclick="resumeBlockedAutoplayNow()"
+    class="hidden fixed bottom-24 sm:bottom-28 left-1/2 transform -translate-x-1/2 z-50 px-5 py-3 rounded-full bg-gradient-to-r from-[#FA8072] to-[#E85D75] text-white font-extrabold text-xs sm:text-sm shadow-xl flex items-center gap-2.5 cursor-pointer animate-bounce border-2 border-white select-none">
+    <i class="fa-solid fa-play text-sm"></i>
+    <span id="jamAutoplayUnblockText">🎧 Pasanganmu sedang memutar lagu • Ketuk di sini untuk dengar bareng 💕</span>
+  </div>
+
 </body>
 
 </html>
