@@ -271,8 +271,8 @@ async function quickAddSongDirectly(idx, btn) {
       }
     }
 
-    // 4. Dynamic YouTube resolution: Automatically resolve full song from YouTube API in real time!
-    if (!matchedAudioUrl && !matchedYoutubeId) {
+    // 4. Dynamic YouTube resolution: ALWAYS resolve full song so the song can play full studio audio!
+    if (!matchedYoutubeId) {
       try {
         const queryStr = `${artistName} ${songTitle}`;
         const ytRes = await fetch(`/api/search-youtube?q=${encodeURIComponent(queryStr)}`);

@@ -1,3 +1,36 @@
+function resolveAndPlayTrack(track, shouldAutoPlay = true) {
+  if (!track || !track.title) return;
+  const qStr = `${track.artist || ''} ${track.title || ''}`.trim();
+
+  fetch(`/api/search-youtube?q=${encodeURIComponent(qStr)}`)
+    .then(res => res.json())
+    .then(data => {
+      if (data && data.youtubeId) {
+        track.youtubeId = data.youtubeId;
+        if (typeof saveState === 'function') saveState();
+
+        const currentNow = (typeof getPlayingTrack === 'function') ? getPlayingTrack() : null;
+        if (currentNow && (currentNow.id === track.id || currentNow.title === track.title)) {
+          currentEngine = 'youtube';
+          try { audio.pause(); } catch (e) {}
+          stopYtScrubber();
+          if (isYtReady && ytPlayer && ytPlayer.loadVideoById) {
+            if (shouldAutoPlay) {
+              ytPlayer.loadVideoById(track.youtubeId);
+              isPlaying = true;
+              updatePlayButtons();
+            } else if (ytPlayer.cueVideoById) {
+              ytPlayer.cueVideoById(track.youtubeId);
+            }
+          }
+        }
+      }
+    })
+    .catch(err => {
+      console.warn('YouTube fallback resolution note:', err);
+    });
+}
+
 // ================= DUAL AUDIO ENGINE & PLAYBACK =================
 
 // ================= YOUTUBE REAL AUDIO ENGINE =================
@@ -172,32 +205,14 @@ function loadTrack(index, autoPlay = true, playlistId = null) {
     }
   }
 
-  // If track has neither audioUrl nor youtubeId, dynamically resolve full YouTube track
-  if (!track.audioUrl && !track.youtubeId && track.title) {
-    const qStr = `${track.artist || ''} ${track.title || ''}`.trim();
-    fetch(`/api/search-youtube?q=${encodeURIComponent(qStr)}`)
-      .then(res => res.json())
-      .then(data => {
-        if (data && data.youtubeId) {
-          track.youtubeId = data.youtubeId;
-          if (currentPlayingTrack === track) {
-            currentEngine = 'youtube';
-            if (isYtReady && ytPlayer) {
-              if (isPlaying && ytPlayer.loadVideoById) {
-                ytPlayer.loadVideoById(track.youtubeId);
-              } else if (ytPlayer.cueVideoById) {
-                ytPlayer.cueVideoById(track.youtubeId);
-              }
-            }
-          }
-        }
-      }).catch(() => {});
+  // Jika track belum punya youtubeId dan bukan audio lokal studio, otomatis resolve stream YouTube
+  const isLocalFullAudio = track.audioUrl && (track.audioUrl.startsWith('audio/') || track.audioUrl.startsWith('blob:'));
+  if (!track.youtubeId && !isLocalFullAudio && track.title) {
+    resolveAndPlayTrack(track, autoPlay);
   }
 
   // Check audio sources:
   // 1. Is it a real local full audio file?
-  const isLocalFullAudio = track.audioUrl && (track.audioUrl.startsWith('audio/') || track.audioUrl.startsWith('blob:'));
-
   if (isLocalFullAudio) {
     // Play full studio local file via HTML5
     currentEngine = 'html5';
@@ -219,14 +234,21 @@ function loadTrack(index, autoPlay = true, playlistId = null) {
     if (isYtReady && ytPlayer && ytPlayer.loadVideoById) {
       if (autoPlay) {
         ytPlayer.loadVideoById(track.youtubeId);
+        isPlaying = true;
+        updatePlayButtons();
       } else {
         ytPlayer.cueVideoById(track.youtubeId);
       }
     } else {
       setTimeout(() => {
         if (isYtReady && ytPlayer && ytPlayer.loadVideoById) {
-          if (autoPlay) ytPlayer.loadVideoById(track.youtubeId);
-          else ytPlayer.cueVideoById(track.youtubeId);
+          if (autoPlay) {
+            ytPlayer.loadVideoById(track.youtubeId);
+            isPlaying = true;
+            updatePlayButtons();
+          } else {
+            ytPlayer.cueVideoById(track.youtubeId);
+          }
         }
       }, 300);
     }
@@ -451,15 +473,16 @@ function playAudio() {
           showToastNotification(`🎧 ${partnerName} memutar "${track.title}" • Ketuk layar untuk dengar bareng 💕`, 'music');
         }
       }
-      // Fallback to YouTube if available
+      // Fallback to YouTube if HTML5 audio preview fails or is blocked
       const track = getPlayingTrack();
-      if (track && track.youtubeId && isYtReady && ytPlayer && ytPlayer.loadVideoById) {
+      if (!track) return;
+      if (track.youtubeId && isYtReady && ytPlayer && ytPlayer.loadVideoById) {
         currentEngine = 'youtube';
-    if (isPlaying && ytPlayer.loadVideoById) {
-      ytPlayer.loadVideoById(track.youtubeId);
-    } else if (ytPlayer.cueVideoById) {
-      ytPlayer.cueVideoById(track.youtubeId);
-    }
+        ytPlayer.loadVideoById(track.youtubeId);
+        isPlaying = true;
+        updatePlayButtons();
+      } else if (track.title) {
+        resolveAndPlayTrack(track, true);
       } else {
         isPlaying = false;
         updatePlayButtons();
@@ -670,9 +693,15 @@ audio.addEventListener('ended', () => {
 audio.addEventListener('error', (e) => {
   console.warn('HTML5 Audio error event:', e);
   const track = getPlayingTrack();
-  if (track && track.youtubeId && isYtReady && ytPlayer && ytPlayer.loadVideoById) {
+  if (!track) return;
+  if (track.youtubeId && isYtReady && ytPlayer && ytPlayer.loadVideoById) {
     currentEngine = 'youtube';
     ytPlayer.loadVideoById(track.youtubeId);
+    isPlaying = true;
+    updatePlayButtons();
+  } else if (track.title) {
+    // Otomatis cari YouTube stream jika audio HTML5 gagal / expired
+    resolveAndPlayTrack(track, true);
   } else {
     isPlaying = false;
     updatePlayButtons();
