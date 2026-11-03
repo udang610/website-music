@@ -116,6 +116,20 @@
         <div class="absolute top-0 bottom-0 left-0 bg-gradient-to-r from-[#FA8072] to-[#E85D75] rounded-full w-full animate-loading-bar"></div>
       </div>
     </div>
+    <script>
+      // Hard safety timer: Loader WAJIB hilang maksimal 750ms agar web terbuka kilat
+      setTimeout(function() {
+        var loader = document.getElementById('appLoadingScreen');
+        if (loader && !loader.dataset.dismissed) {
+          loader.dataset.dismissed = 'true';
+          loader.classList.add('opacity-0', 'pointer-events-none');
+          setTimeout(function() {
+            loader.classList.add('hidden');
+            loader.style.display = 'none';
+          }, 350);
+        }
+      }, 750);
+    </script>
   </div>
 
   <!-- ================= PIN LOCK SCREEN MODAL (SIMPLE & PRIVATE) ================= -->
@@ -2219,20 +2233,20 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <!-- Database & Realtime Sync Layer (v2 Normalized) -->
-  <script src="js/db.js?v=20261027_v2"></script>
+  <script src="js/db.js?v=20261103_v3"></script>
 
   <!-- Modular App Architecture -->
-  <script src="js/data.js?v=20261027_v2"></script>
-  <script src="js/auth.js?v=20261027_v2"></script>
-  <script src="js/state.js?v=20261027_v2"></script>
-  <script src="js/player.js?v=20261027_v2"></script>
-  <script src="js/views.js?v=20261027_v2"></script>
-  <script src="js/playlist.js?v=20261027_v2"></script>
-  <script src="js/track-actions.js?v=20261027_v2"></script>
-  <script src="js/jam.js?v=20261027_v2"></script>
-  <script src="js/polaroid.js?v=20261027_v2"></script>
-  <script src="js/modals.js?v=20261027_v2"></script>
-  <script src="js/app.js?v=20261027_v2"></script>
+  <script src="js/data.js?v=20261103_v3"></script>
+  <script src="js/auth.js?v=20261103_v3"></script>
+  <script src="js/state.js?v=20261103_v3"></script>
+  <script src="js/player.js?v=20261103_v3"></script>
+  <script src="js/views.js?v=20261103_v3"></script>
+  <script src="js/playlist.js?v=20261103_v3"></script>
+  <script src="js/track-actions.js?v=20261103_v3"></script>
+  <script src="js/jam.js?v=20261103_v3"></script>
+  <script src="js/polaroid.js?v=20261103_v3"></script>
+  <script src="js/modals.js?v=20261103_v3"></script>
+  <script src="js/app.js?v=20261103_v3"></script>
 </body>
 
 </html>

@@ -774,13 +774,18 @@ function renderMainJamChat() {
     return;
   }
 
-  const currentAcc = getCurrentAccount();
+  const currentAcc = (typeof getCurrentAccount === 'function') ? getCurrentAccount() : null;
+  const myId = (currentAcc?.id || localStorage.getItem('romantic_current_user') || 'dhafin').toLowerCase();
+  const myName = currentAcc?.name || state.yourName || 'Dhafin';
+  const myAvatar = currentAcc?.avatar || state.yourAvatar || 'images/spotify_covers/me.jpeg';
+  const partnerName = currentAcc?.partnerName || state.partnerName || 'Nadia';
+  const partnerAvatar = currentAcc?.partnerAvatar || state.partnerAvatar || 'images/spotify_covers/ndey.jpeg';
+
   container.innerHTML = messages.map(msg => {
     if (msg.sender === 'system') {
       let displayText = msg.text || '';
       if (displayText.includes('Kamu memutar')) {
-        const pName = currentAcc ? currentAcc.partnerName : (state.partnerName || 'Nadia');
-        displayText = displayText.replace('Kamu memutar', `${pName} memutar`);
+        displayText = displayText.replace('Kamu memutar', `${partnerName} memutar`);
       }
       return `
         <div class="text-center py-1">
@@ -789,9 +794,9 @@ function renderMainJamChat() {
       `;
     }
     const msgSenderId = String(msg.senderId || msg.sender || '').toLowerCase().trim();
-    const isYou = (msgSenderId === currentAcc.id) || (msg.sender === 'you' && !msg.senderId);
-    const senderName = isYou ? currentAcc.name : (msg.senderName || currentAcc.partnerName);
-    const senderAvatar = isYou ? currentAcc.avatar : (msg.senderAvatar || currentAcc.partnerAvatar);
+    const isYou = (msgSenderId === myId) || (msg.sender === 'you' && !msg.senderId);
+    const senderName = isYou ? myName : (msg.senderName || partnerName);
+    const senderAvatar = isYou ? myAvatar : (msg.senderAvatar || partnerAvatar);
 
     return `
       <div class="flex items-end gap-2 mb-2 ${isYou ? 'flex-row-reverse' : 'flex-row'}">

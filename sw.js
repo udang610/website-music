@@ -1,9 +1,9 @@
 // =====================================================================
-// Lullaby Service Worker (v1.0.0)
+// Lullaby Service Worker (v1.0.1)
 // Provides PWA offline shell & instant loading for TWA Android APK
 // =====================================================================
 
-const CACHE_NAME = 'lullaby-static-v3';
+const CACHE_NAME = 'lullaby-static-v4';
 
 const CORE_ASSETS = [
   './',
@@ -54,7 +54,7 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// Fetch: Stale-while-revalidate for static assets, network-first/bypass for audio & cloud APIs
+// Fetch: Stale-While-Revalidate for ALL static assets for instant 0ms startup
 self.addEventListener('fetch', (event) => {
   const req = event.request;
   const url = new URL(req.url);
@@ -62,7 +62,7 @@ self.addEventListener('fetch', (event) => {
   // Bypass non-GET requests
   if (req.method !== 'GET') return;
 
-  // Bypass audio media files & stream range requests to avoid high memory/storage usage
+  // Bypass audio media files & stream range requests
   if (
     url.pathname.includes('/audio/') ||
     url.pathname.endsWith('.m4a') ||
@@ -82,23 +82,9 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Network-First for JS & HTML scripts so updates on GitHub are always instantly fetched
-  if (url.pathname.endsWith('.js') || url.pathname.endsWith('.html') || url.pathname === '/' || url.pathname.endsWith('/')) {
-    event.respondWith(
-      fetch(req).then((networkResp) => {
-        if (networkResp && networkResp.status === 200 && networkResp.type === 'basic') {
-          const respClone = networkResp.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(req, respClone));
-        }
-        return networkResp;
-      }).catch(() => caches.match(req))
-    );
-    return;
-  }
-
-  // Stale-While-Revalidate for images, fonts, styles
+  // Instant Stale-While-Revalidate for app shell (HTML, JS, CSS, images, fonts)
   event.respondWith(
-    caches.match(req).then((cachedResp) => {
+    caches.match(req, { ignoreSearch: true }).then((cachedResp) => {
       const fetchPromise = fetch(req).then((networkResp) => {
         if (networkResp && networkResp.status === 200 && networkResp.type === 'basic') {
           const respClone = networkResp.clone();
@@ -107,6 +93,7 @@ self.addEventListener('fetch', (event) => {
         return networkResp;
       }).catch(() => cachedResp);
 
+      // Return instantly from cache if available, otherwise fetch
       return cachedResp || fetchPromise;
     })
   );

@@ -2,6 +2,9 @@
 
 // ================= INITIALIZATION =================
 window.addEventListener('DOMContentLoaded', () => {
+  // 1. Fast safety dismiss: segera sembunyikan intro loader agar web terbuka kilat
+  setTimeout(dismissLoadingScreen, 300);
+
   // Check persisted login / unlock session
   try {
     if (localStorage.getItem('romantic_music_unlocked') === 'true') {
@@ -14,31 +17,33 @@ window.addEventListener('DOMContentLoaded', () => {
   } catch (e) { }
 
   // Pulihkan identitas akun aktif (Dhafin / Nadia)
-  const currentAcc = (typeof getCurrentAccount === 'function') ? getCurrentAccount() : null;
-  if (currentAcc && typeof applyAccountIdentity === 'function') {
-    applyAccountIdentity(currentAcc);
-  }
+  try {
+    const currentAcc = (typeof getCurrentAccount === 'function') ? getCurrentAccount() : null;
+    if (currentAcc && typeof applyAccountIdentity === 'function') {
+      applyAccountIdentity(currentAcc);
+    }
+  } catch (e) { }
 
-  hydrateUI();
-  navigateTo('home');
+  try { hydrateUI(); } catch (e) { console.warn('hydrateUI note:', e); }
+  try { navigateTo('home'); } catch (e) { console.warn('navigateTo note:', e); }
 
   // Pulihkan history lagu terakhir
-  const restored = restoreLastPlayedTrack(false);
-  if (!restored && state.playlists && state.playlists[0] && state.playlists[0].tracks && state.playlists[0].tracks.length > 0) {
-    loadTrack(0, false, state.playlists[0].id);
-  }
+  try {
+    const restored = restoreLastPlayedTrack(false);
+    if (!restored && state.playlists && state.playlists[0] && state.playlists[0].tracks && state.playlists[0].tracks.length > 0) {
+      loadTrack(0, false, state.playlists[0].id);
+    }
+  } catch (e) { }
 
-  renderJamChat();
-  hydrateItunesCovers();
-  checkUrlPlayParam();
-  initSupabaseSync();
-  initJamRoomSession();
-  if (typeof updateGalleryFrameTypeButtons === 'function') {
-    updateGalleryFrameTypeButtons();
-  }
-  if (typeof updateMiniJamStatusCard === 'function') {
-    updateMiniJamStatusCard();
-  }
+  try { renderJamChat(); } catch (e) { }
+  try { hydrateItunesCovers(); } catch (e) { }
+  try { checkUrlPlayParam(); } catch (e) { }
+  try { initSupabaseSync(); } catch (e) { }
+  try { initJamRoomSession(); } catch (e) { }
+  try {
+    if (typeof updateGalleryFrameTypeButtons === 'function') updateGalleryFrameTypeButtons();
+    if (typeof updateMiniJamStatusCard === 'function') updateMiniJamStatusCard();
+  } catch (e) { }
 
   // Register Service Worker for PWA & TWA Android APK
   if ('serviceWorker' in navigator) {
@@ -62,7 +67,7 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Dismiss intro loading screen with smooth fade-out
+  // Final confirmation to dismiss loading screen
   dismissLoadingScreen();
 });
 
@@ -70,16 +75,13 @@ function dismissLoadingScreen() {
   const loader = document.getElementById('appLoadingScreen');
   if (!loader || loader.dataset.dismissed) return;
   loader.dataset.dismissed = 'true';
+  loader.classList.add('opacity-0', 'pointer-events-none');
   setTimeout(() => {
-    loader.classList.add('opacity-0', 'pointer-events-none');
-    setTimeout(() => {
-      loader.classList.add('hidden');
-      loader.style.display = 'none';
-    }, 700);
-  }, 500);
+    loader.classList.add('hidden');
+    loader.style.display = 'none';
+  }, 400);
 }
 
-// Fallback safety in case DOMContentLoaded has already passed
+// Fallback safety in case DOMContentLoaded has already passed or takes too long
 window.addEventListener('load', dismissLoadingScreen, { once: true });
-
-
+setTimeout(dismissLoadingScreen, 800);
