@@ -2,6 +2,11 @@ function resolveAndPlayTrack(track, shouldAutoPlay = true) {
   if (!track || !track.title) return;
   const qStr = `${track.artist || ''} ${track.title || ''}`.trim();
 
+  // Bersihkan preview 30s agar tidak terpancing memutar cuplikan
+  if (track.audioUrl && (track.audioUrl.includes('audio-ssl') || track.audioUrl.includes('itunes.apple.com') || track.audioUrl.includes('AudioPreview'))) {
+    track.audioUrl = '';
+  }
+
   fetch(`/api/search-youtube?q=${encodeURIComponent(qStr)}`)
     .then(res => res.json())
     .then(data => {
@@ -9,20 +14,33 @@ function resolveAndPlayTrack(track, shouldAutoPlay = true) {
         track.youtubeId = data.youtubeId;
         if (typeof saveState === 'function') saveState();
 
+        if (window.MusicDB && typeof window.MusicDB.flushNow === 'function') {
+          window.MusicDB.flushNow().catch(() => {});
+        } else if (typeof triggerSupabaseSync === 'function') {
+          triggerSupabaseSync();
+        }
+
         const currentNow = (typeof getPlayingTrack === 'function') ? getPlayingTrack() : null;
         if (currentNow && (currentNow.id === track.id || currentNow.title === track.title)) {
           currentEngine = 'youtube';
-          try { audio.pause(); } catch (e) {}
+          try { audio.pause(); audio.src = ''; } catch (e) {}
           stopYtScrubber();
-          if (isYtReady && ytPlayer && ytPlayer.loadVideoById) {
-            if (shouldAutoPlay) {
-              ytPlayer.loadVideoById(track.youtubeId);
-              isPlaying = true;
-              updatePlayButtons();
-            } else if (ytPlayer.cueVideoById) {
-              ytPlayer.cueVideoById(track.youtubeId);
+
+          const tryPlayVideo = (attempts = 0) => {
+            if (isYtReady && ytPlayer && ytPlayer.loadVideoById) {
+              if (shouldAutoPlay) {
+                ytPlayer.loadVideoById(track.youtubeId);
+                isPlaying = true;
+                updatePlayButtons();
+                startYtScrubber();
+              } else if (ytPlayer.cueVideoById) {
+                ytPlayer.cueVideoById(track.youtubeId);
+              }
+            } else if (attempts < 25) {
+              setTimeout(() => tryPlayVideo(attempts + 1), 200);
             }
-          }
+          };
+          tryPlayVideo();
         }
       }
     })
@@ -198,14 +216,18 @@ function loadTrack(index, autoPlay = true, playlistId = null) {
     }
   }
 
-  // If track has a 30s preview link but also has youtubeId, strip the 30s link so full song plays!
-  if (track.audioUrl && (track.audioUrl.includes('AudioPreview') || track.audioUrl.includes('itunes.apple.com') || track.audioUrl.includes('audio-ssl'))) {
-    if (track.youtubeId) {
-      track.audioUrl = '';
-    }
+  // Jangan pernah memutar preview iTunes 30 detik sebagai audio utama!
+  // Jika ini preview iTunes, kosongkan audioUrl agar sistem memutar lagu FULL via YouTube!
+  const isPreviewAudio = track.audioUrl && (
+    track.audioUrl.includes('AudioPreview') ||
+    track.audioUrl.includes('itunes.apple.com') ||
+    track.audioUrl.includes('audio-ssl')
+  );
+  if (isPreviewAudio) {
+    track.audioUrl = '';
   }
 
-  // Jika track belum punya youtubeId dan bukan audio lokal studio, otomatis resolve stream YouTube
+  // Jika track belum punya youtubeId dan bukan audio lokal studio, otomatis resolve stream YouTube lagu full!
   const isLocalFullAudio = track.audioUrl && (track.audioUrl.startsWith('audio/') || track.audioUrl.startsWith('blob:'));
   if (!track.youtubeId && !isLocalFullAudio && track.title) {
     resolveAndPlayTrack(track, autoPlay);
@@ -300,40 +322,46 @@ function playTrackByObject(trackObj) {
     }
   }
 
-  const isMobile = (window.innerWidth < 1024) || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  // Jangan izinkan preview Apple iTunes 30 detik memotong pemutaran lagu full
+  const isPreviewAudio = trackObj.audioUrl && (
+    trackObj.audioUrl.includes('AudioPreview') ||
+    trackObj.audioUrl.includes('itunes.apple.com') ||
+    trackObj.audioUrl.includes('audio-ssl')
+  );
+  if (isPreviewAudio) {
+    trackObj.audioUrl = '';
+  }
 
-  if (trackObj.audioUrl && (isMobile || !trackObj.youtubeId)) {
+  const isLocalFull = trackObj.audioUrl && (trackObj.audioUrl.startsWith('audio/') || trackObj.audioUrl.startsWith('blob:'));
+
+  if (isLocalFull) {
     currentEngine = 'html5';
     if (ytPlayer && ytPlayer.pauseVideo) try { ytPlayer.pauseVideo(); } catch (e) {}
     stopYtScrubber();
     audio.src = trackObj.audioUrl;
     audio.load();
     playAudio();
-  } else if (trackObj.youtubeId && isYtReady && ytPlayer) {
+  } else if (trackObj.youtubeId) {
     currentEngine = 'youtube';
-    try { audio.pause(); } catch (e) {}
-    ytPlayer.loadVideoById(trackObj.youtubeId);
-  } else if (trackObj.audioUrl) {
-    currentEngine = 'html5';
-    audio.src = trackObj.audioUrl;
-    audio.load();
-    playAudio();
-  } else if (trackObj.title) {
-    // Dynamic YouTube fallback: cari otomatis jika youtubeId belum ada agar audio tidak macet di lagu lama
-    const qStr = `${trackObj.artist || ''} ${trackObj.title || ''}`.trim();
-    fetch(`/api/search-youtube?q=${encodeURIComponent(qStr)}`)
-      .then(res => res.json())
-      .then(data => {
-        if (data && data.youtubeId) {
-          trackObj.youtubeId = data.youtubeId;
-          if (currentPlayingTrack === trackObj) {
-            currentEngine = 'youtube';
-            if (isYtReady && ytPlayer && ytPlayer.loadVideoById) {
-              ytPlayer.loadVideoById(trackObj.youtubeId);
-            }
-          }
+    try { audio.pause(); audio.src = ''; } catch (e) {}
+    stopYtScrubber();
+    if (isYtReady && ytPlayer && ytPlayer.loadVideoById) {
+      ytPlayer.loadVideoById(trackObj.youtubeId);
+      isPlaying = true;
+      updatePlayButtons();
+      startYtScrubber();
+    } else {
+      setTimeout(() => {
+        if (isYtReady && ytPlayer && ytPlayer.loadVideoById) {
+          ytPlayer.loadVideoById(trackObj.youtubeId);
+          isPlaying = true;
+          updatePlayButtons();
+          startYtScrubber();
         }
-      }).catch(err => console.warn('YouTube fallback search failed:', err));
+      }, 300);
+    }
+  } else if (trackObj.title) {
+    resolveAndPlayTrack(trackObj, true);
   }
 }
 
@@ -377,6 +405,22 @@ function updateActiveTrackUI() {
   document.getElementById('rightTrackTitle').textContent = track.title;
   document.getElementById('rightTrackArtist').textContent = track.artist;
   renderMemoryNote(track);
+
+  // Segera tampilkan durasi asli lagu dari metadata agar tidak macet di 0:30 atau --:--
+  const durEl = document.getElementById('durationTimeText');
+  const mobDurEl = document.getElementById('mobileDurationTimeText');
+  const curEl = document.getElementById('currentTimeText');
+  const mobCurEl = document.getElementById('mobileCurrentTimeText');
+  const progSlider = document.getElementById('progressSlider');
+  const mobSlider = document.getElementById('mobileProgressSlider');
+
+  const validDur = (track.duration && track.duration !== 'Full' && track.duration !== '0:30') ? track.duration : '--:--';
+  if (durEl) durEl.textContent = validDur;
+  if (mobDurEl) mobDurEl.textContent = validDur;
+  if (curEl) curEl.textContent = '0:00';
+  if (mobCurEl) mobCurEl.textContent = '0:00';
+  if (progSlider) progSlider.value = 0;
+  if (mobSlider) mobSlider.value = 0;
 
   // Polaroid Modal
   if (typeof updatePolaroidModal === 'function') {
