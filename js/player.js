@@ -255,32 +255,78 @@ function loadTrack(index, autoPlay = true, playlistId = null) {
 }
 
 function playTrackByObject(trackObj) {
+  if (!trackObj) return;
   const tracks = getActiveTracks();
   const foundIdx = tracks.findIndex(t => t.id === trackObj.id);
   if (foundIdx !== -1) {
     loadTrack(foundIdx, true, state.activePlaylistId);
-  } else {
-    // Fallback direct play
-    currentPlayingTrack = trackObj;
-    updateActiveTrackUI();
-    const isMobile = (window.innerWidth < 1024) || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    if (trackObj.audioUrl && (isMobile || !trackObj.youtubeId)) {
-      currentEngine = 'html5';
-      if (ytPlayer && ytPlayer.pauseVideo) try { ytPlayer.pauseVideo(); } catch (e) {}
-      stopYtScrubber();
-      audio.src = trackObj.audioUrl;
-      audio.load();
-      playAudio();
-    } else if (trackObj.youtubeId && isYtReady && ytPlayer) {
-      currentEngine = 'youtube';
-      try { audio.pause(); } catch (e) {}
-      ytPlayer.loadVideoById(trackObj.youtubeId);
-    } else if (trackObj.audioUrl) {
-      currentEngine = 'html5';
-      audio.src = trackObj.audioUrl;
-      audio.load();
-      playAudio();
+    return;
+  }
+
+  // Fallback direct play for remote sync or independent track objects
+  currentPlayingTrack = trackObj;
+  updateActiveTrackUI();
+
+  // Match local realAudioTracks if available
+  const lowTitle = (trackObj.title || '').toLowerCase();
+  if (!trackObj.audioUrl && typeof realAudioTracks !== 'undefined' && realAudioTracks) {
+    for (const [key, localPath] of Object.entries(realAudioTracks)) {
+      if (lowTitle.includes(key)) {
+        trackObj.audioUrl = localPath;
+        break;
+      }
     }
+  }
+
+  const isMobile = (window.innerWidth < 1024) || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+  if (trackObj.audioUrl && (isMobile || !trackObj.youtubeId)) {
+    currentEngine = 'html5';
+    if (ytPlayer && ytPlayer.pauseVideo) try { ytPlayer.pauseVideo(); } catch (e) {}
+    stopYtScrubber();
+    audio.src = trackObj.audioUrl;
+    audio.load();
+    playAudio();
+  } else if (trackObj.youtubeId && isYtReady && ytPlayer) {
+    currentEngine = 'youtube';
+    try { audio.pause(); } catch (e) {}
+    ytPlayer.loadVideoById(trackObj.youtubeId);
+  } else if (trackObj.audioUrl) {
+    currentEngine = 'html5';
+    audio.src = trackObj.audioUrl;
+    audio.load();
+    playAudio();
+  } else if (trackObj.title) {
+    // Dynamic YouTube fallback: cari otomatis jika youtubeId belum ada agar audio tidak macet di lagu lama
+    const qStr = `${trackObj.artist || ''} ${trackObj.title || ''}`.trim();
+    fetch(`/api/search-youtube?q=${encodeURIComponent(qStr)}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.youtubeId) {
+          trackObj.youtubeId = data.youtubeId;
+          if (currentPlayingTrack === trackObj) {
+            currentEngine = 'youtube';
+            if (isYtReady && ytPlayer && ytPlayer.loadVideoById) {
+              ytPlayer.loadVideoById(trackObj.youtubeId);
+            }
+          }
+        }
+      }).catch(err => console.warn('YouTube fallback search failed:', err));
+  }
+}
+
+function playTrackInJamRoom(trackObj) {
+  if (!trackObj) return;
+  window.__isJamSessionActive = true;
+  playTrackByObject(trackObj);
+  if (typeof broadcastPlaybackState === 'function') {
+    broadcastPlaybackState('TRACK_CHANGE', 0, true, true);
+  }
+  if (typeof updateMainJamView === 'function') {
+    updateMainJamView();
+  }
+  if (typeof showToastNotification === 'function') {
+    showToastNotification(`🎧 Memutar "${trackObj.title}" di Room Berdua 💕`, 'music');
   }
 }
 
@@ -367,11 +413,6 @@ function selectTrackFromList(index) {
     togglePlay();
   } else {
     loadTrack(index, true, state.activePlaylistId);
-    if (syncModeActive && targetTrack) {
-      const currentAcc = (typeof getCurrentAccount === 'function') ? getCurrentAccount() : null;
-      const userName = currentAcc ? currentAcc.name : (state.yourName || 'Dhafin');
-      broadcastJamSystemNote(`🎧 ${userName} memutar "${targetTrack.title}" untuk didengarkan berdua`);
-    }
   }
   // Buka tampilan piringan hitam estetik secara detail jika di mobile
   if (window.innerWidth < 1024) {

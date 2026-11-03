@@ -584,10 +584,10 @@
                 Live Couple Listening Together
               </span>
               <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight">
-                Mendengarkan Bersama ✦
+                Room Musik Berdua 💕
               </h2>
               <p class="text-xs sm:text-sm text-white/90 mt-1 max-w-md font-medium">
-                Dhafin & Nadia terhubung otomatis dalam sesi musik yang sama. Tersinkronisasi real-time!
+                Room Permanen: KITA. Pemutaran di ruang ini 100% tersinkronkan berdua dan terpisah dari pemutaran solo.
               </p>
 
               <!-- Couple Jam Sync Status Bar -->
@@ -673,8 +673,14 @@
             </div>
           </div>
 
-          <!-- Controls inside Jam View -->
-          <div class="flex items-center gap-3 shrink-0">
+          <!-- Controls inside Jam View & One-Click Sync -->
+          <div class="flex flex-wrap items-center gap-2.5 sm:gap-3 shrink-0 justify-end">
+            <button id="jamSyncActionBtn" onclick="syncToPartnerJamNow()"
+              class="hidden px-3.5 py-2 rounded-2xl bg-gradient-to-r from-[#FA8072] to-[#E85D75] text-white text-xs font-bold shadow-md hover:scale-105 active:scale-95 transition flex items-center gap-1.5"
+              title="Klik untuk langsung mendengarkan lagu yang diputar pasangan">
+              <i class="fa-solid fa-bolt text-yellow-300"></i>
+              <span>Dengar Bareng Sekarang</span>
+            </button>
             <button onclick="prevTrack()"
               class="w-10 h-10 rounded-full bg-white border border-[#FFD2DC] text-[#3B2328] hover:text-[#FA8072] flex items-center justify-center shadow-xs transition"
               title="Sebelumnya">

@@ -3,7 +3,7 @@
 // Provides PWA offline shell & instant loading for TWA Android APK
 // =====================================================================
 
-const CACHE_NAME = 'lullaby-static-v2';
+const CACHE_NAME = 'lullaby-static-v3';
 
 const CORE_ASSETS = [
   './',

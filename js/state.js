@@ -293,12 +293,16 @@ function loadState() {
       parsed.jamMessages = [];
     }
     if (Array.isArray(parsed.jamMessages)) {
-      parsed.jamMessages = parsed.jamMessages.filter(m => m && !String(m.text || '').includes('pakai cover album official'));
-    parsed.jamMessages.forEach(m => {
-      if (m && m.sender === 'system' && m.text && m.text.includes('Kamu memutar')) {
-        m.text = m.text.replace('Kamu memutar', `${parsed.partnerName || 'Nadia'} memutar`);
-      }
-    });
+      // Purge all system / track playback broadcast messages so couple chat stays WhatsApp-clean
+      parsed.jamMessages = parsed.jamMessages.filter(m => {
+        if (!m) return false;
+        if (m.sender === 'system') return false;
+        const txt = String(m.text || '');
+        if (txt.includes('untuk didengarkan berdua') || txt.includes('memutar "') || txt.includes('pakai cover album')) {
+          return false;
+        }
+        return true;
+      });
     }
 
     const mergedState = { ...defaultState, ...parsed };
