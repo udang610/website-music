@@ -1,14 +1,18 @@
 // ================= MODALS & POPUPS =================
 
 // ================= FULL MP3 UPLOAD & ITUNES SEARCH =================
+window.__uploadedAudioFile = null;
+
 function handleFullMp3Upload(event) {
   const file = event.target.files[0];
   if (!file) return;
 
+  window.__uploadedAudioFile = file;
+
   const badge = document.getElementById('fullAudioSelectedBadge');
   const badgeName = document.getElementById('fullAudioFileName');
   if (badge && badgeName) {
-    badgeName.textContent = file.name;
+    badgeName.textContent = `${file.name} (${(file.size / (1024 * 1024)).toFixed(1)} MB)`;
     badge.classList.remove('hidden');
   }
 
@@ -22,22 +26,20 @@ function handleFullMp3Upload(event) {
   }
   document.getElementById('inputSongTitle').value = detectedTitle;
   document.getElementById('inputSongArtist').value = detectedArtist;
+  document.getElementById('inputSongAudio').value = `localfile:${file.name}`;
 
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    const audioData = e.target.result;
-    document.getElementById('inputSongAudio').value = audioData;
-
-    const tempAudio = new Audio();
-    tempAudio.src = audioData;
-    tempAudio.addEventListener('loadedmetadata', () => {
-      if (tempAudio.duration && isFinite(tempAudio.duration)) {
-        const durStr = formatTime(tempAudio.duration);
-        showToastNotification(`File "${file.name}" siap diputar Full (${durStr})! 💕`, 'success');
-      }
-    });
-  };
-  reader.readAsDataURL(file);
+  // Baca durasi menggunakan URL blob temporary tanpa membebani memori base64
+  const tempUrl = URL.createObjectURL(file);
+  const tempAudio = new Audio();
+  tempAudio.src = tempUrl;
+  tempAudio.addEventListener('loadedmetadata', () => {
+    if (tempAudio.duration && isFinite(tempAudio.duration)) {
+      const durStr = formatTime(tempAudio.duration);
+      window.__uploadedAudioDuration = durStr;
+      showToastNotification(`⚡ File audio "${file.name}" terdeteksi (${durStr}) • Siap diputar instan! 💕`, 'success');
+    }
+    setTimeout(() => URL.revokeObjectURL(tempUrl), 5000);
+  });
 
   tryAutoFetchCover(detectedTitle, detectedArtist);
 }
@@ -536,6 +538,18 @@ function saveNewSong(e) {
         if (currentView === 'playlist') renderTracklist();
       }
     });
+  }
+
+  // Simpan file audio binary ke IndexedDB AudioCache agar tidak crash di localStorage
+  if (window.__uploadedAudioFile && window.AudioCache && typeof window.AudioCache.saveTrackAudio === 'function') {
+    newTrack.duration = window.__uploadedAudioDuration || 'Full';
+    newTrack.isCached = true;
+    newTrack.audioUrl = `cache:${newTrack.id}`;
+    window.AudioCache.saveTrackAudio(newTrack, window.__uploadedAudioFile).then(() => {
+      console.log(`⚡ [AudioCache] Berhasil menyimpan file MP3 lokal untuk "${newTrack.title}"`);
+    });
+    window.__uploadedAudioFile = null;
+    window.__uploadedAudioDuration = null;
   }
 
   activePl.tracks.push(newTrack);

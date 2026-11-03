@@ -152,11 +152,21 @@ async function downloadTrackByIdx(index) {
 }
 
 async function downloadDirectSong(title, artist, audioUrl, youtubeId) {
-  showToastNotification(`Mempersiapkan unduhan "${title}"...`, 'info');
+  showToastNotification(`⚡ Menyimpan lagu "${title}" ke memori HP...`, 'info');
   const safeFilename = `${title} - ${artist}`.replace(/[/\\?%*:|"<>]/g, '_') + '.mp3';
 
+  // 1. Jika file lokal / audio url, simpan juga ke IndexedDB AudioCache
   if (audioUrl && (audioUrl.startsWith('blob:') || audioUrl.startsWith('data:') || audioUrl.startsWith('audio/'))) {
     triggerBrowserDownload(audioUrl, safeFilename);
+    if (window.AudioCache && typeof window.AudioCache.saveTrackAudio === 'function') {
+      try {
+        const resp = await fetch(audioUrl);
+        const blob = await resp.blob();
+        await window.AudioCache.saveTrackAudio({ title, artist, audioUrl }, blob);
+        showToastNotification(`⚡ "${title}" tersimpan di memori HP! Kini bisa diputar instan tanpa buffering 💕`, 'success');
+        return;
+      } catch (e) {}
+    }
     showToastNotification(`Berhasil mengunduh "${title}"! 💕`, 'success');
     return;
   }
@@ -534,4 +544,4 @@ function checkUrlPlayParam() {
     }, 400);
   }
 }
-
+

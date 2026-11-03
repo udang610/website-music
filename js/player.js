@@ -232,6 +232,29 @@ function loadTrack(index, autoPlay = true, playlistId = null) {
     }
   }
 
+  // 0. PRIORITY 0: Periksa apakah lagu sudah tersimpan di IndexedDB Cache Lokal (Instan 0.05s)!
+  if (window.AudioCache && typeof window.AudioCache.getTrackAudio === 'function') {
+    const targetTrackId = track.id || track.title;
+    window.AudioCache.getTrackAudio(track).then((cached) => {
+      if (cached && cached.objectUrl) {
+        const currentNow = (typeof getPlayingTrack === 'function') ? getPlayingTrack() : null;
+        if (currentNow && (currentNow.id === track.id || currentNow.title === track.title)) {
+          console.log(`⚡ [AudioCache] Memutar "${track.title}" dari memori internal HP (Instan <0.05s)`);
+          currentEngine = 'html5';
+          if (isYtReady && ytPlayer && ytPlayer.pauseVideo) {
+            try { ytPlayer.pauseVideo(); } catch (e) {}
+          }
+          stopYtScrubber();
+          audio.src = cached.objectUrl;
+          audio.load();
+          if (autoPlay) {
+            playAudio();
+          }
+        }
+      }
+    }).catch(() => {});
+  }
+
   // Jangan pernah memutar preview iTunes 30 detik sebagai audio utama!
   // Jika ini preview iTunes, kosongkan audioUrl agar sistem memutar lagu FULL via YouTube!
   const isPreviewAudio = track.audioUrl && (
@@ -336,6 +359,20 @@ function playTrackByObject(trackObj) {
         break;
       }
     }
+  }
+
+  // Cek apakah ada di AudioCache IndexedDB
+  if (window.AudioCache && typeof window.AudioCache.getTrackAudio === 'function') {
+    window.AudioCache.getTrackAudio(trackObj).then((cached) => {
+      if (cached && cached.objectUrl && currentPlayingTrack === trackObj) {
+        currentEngine = 'html5';
+        if (ytPlayer && ytPlayer.pauseVideo) try { ytPlayer.pauseVideo(); } catch (e) {}
+        stopYtScrubber();
+        audio.src = cached.objectUrl;
+        audio.load();
+        playAudio();
+      }
+    }).catch(() => {});
   }
 
   // Jangan izinkan preview Apple iTunes 30 detik memotong pemutaran lagu full
