@@ -604,16 +604,28 @@
                 Room Permanen: KITA. Pemutaran di ruang ini 100% tersinkronkan berdua dan terpisah dari pemutaran solo.
               </p>
 
-              <!-- Couple Jam Sync Status Bar -->
+              <!-- Couple Jam Sync Status Bar with Join/Leave & Sync Buttons -->
               <div id="jamRoomControlBox" class="mt-4 flex flex-wrap items-center justify-center md:justify-start gap-2.5 text-xs">
-                <span class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-white/25 border border-white/30 font-bold text-white text-xs">
-                  <span class="w-2 h-2 rounded-full bg-emerald-300 animate-pulse"></span>
-                  <span id="jamSessionSyncBadge">Dhafin & Nadia • Terhubung Otomatis</span>
+                <!-- Status Room Badge -->
+                <span id="jamRoomStatusBadge" class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-white/25 border border-white/30 font-bold text-white text-xs">
+                  <span id="jamRoomStatusDot" class="w-2 h-2 rounded-full bg-slate-300"></span>
+                  <span id="jamSessionSyncBadge">Mode Solo (Di Luar Room)</span>
                 </span>
-                <label class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-white/20 hover:bg-white/30 text-white font-semibold cursor-pointer transition select-none">
-                  <input type="checkbox" id="syncPlayToggle" onchange="toggleSyncMode()" checked class="accent-[#FA8072] rounded cursor-pointer" />
-                  <span>Sinkron Musik Realtime</span>
-                </label>
+
+                <!-- Button Join / Leave Room -->
+                <button type="button" id="jamJoinLeaveBtn" onclick="toggleJoinLeaveJamRoom()"
+                  class="px-4 py-1.5 rounded-xl bg-white text-[#E85D75] hover:bg-[#FFE4E9] font-extrabold text-xs shadow-md transition flex items-center gap-1.5 active:scale-95">
+                  <i class="fa-solid fa-right-to-bracket text-[#FA8072]"></i>
+                  <span id="jamJoinLeaveBtnText">Gabung Room Berdua 💕</span>
+                </button>
+
+                <!-- Button Sync to Partner Now (One-Click Auto-Sync) -->
+                <button type="button" id="jamSyncToPartnerHeaderBtn" onclick="syncToPartnerJamNow()"
+                  class="hidden px-3.5 py-1.5 rounded-xl bg-white/25 hover:bg-white/35 text-white font-bold text-xs border border-white/30 transition flex items-center gap-1.5 active:scale-95"
+                  title="Sinkronkan pemutaran ke musik pasangan saat ini">
+                  <i class="fa-solid fa-bolt text-yellow-300"></i>
+                  <span id="jamSyncToPartnerHeaderBtnText">Sinkron ke Pasangan</span>
+                </button>
               </div>
             </div>
 
@@ -2233,20 +2245,20 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <!-- Database & Realtime Sync Layer (v2 Normalized) -->
-  <script src="js/db.js?v=20261103_v3"></script>
+  <script src="js/db.js?v=20261103_v4"></script>
 
   <!-- Modular App Architecture -->
-  <script src="js/data.js?v=20261103_v3"></script>
-  <script src="js/auth.js?v=20261103_v3"></script>
-  <script src="js/state.js?v=20261103_v3"></script>
-  <script src="js/player.js?v=20261103_v3"></script>
-  <script src="js/views.js?v=20261103_v3"></script>
-  <script src="js/playlist.js?v=20261103_v3"></script>
-  <script src="js/track-actions.js?v=20261103_v3"></script>
-  <script src="js/jam.js?v=20261103_v3"></script>
-  <script src="js/polaroid.js?v=20261103_v3"></script>
-  <script src="js/modals.js?v=20261103_v3"></script>
-  <script src="js/app.js?v=20261103_v3"></script>
+  <script src="js/data.js?v=20261103_v4"></script>
+  <script src="js/auth.js?v=20261103_v4"></script>
+  <script src="js/state.js?v=20261103_v4"></script>
+  <script src="js/player.js?v=20261103_v4"></script>
+  <script src="js/views.js?v=20261103_v4"></script>
+  <script src="js/playlist.js?v=20261103_v4"></script>
+  <script src="js/track-actions.js?v=20261103_v4"></script>
+  <script src="js/jam.js?v=20261103_v4"></script>
+  <script src="js/polaroid.js?v=20261103_v4"></script>
+  <script src="js/modals.js?v=20261103_v4"></script>
+  <script src="js/app.js?v=20261103_v4"></script>
 </body>
 
 </html>

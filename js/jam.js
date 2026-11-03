@@ -9,21 +9,93 @@ const PERMANENT_JAM_ROOM_ID = 'OURS_FOREVER';
 let currentJamRoomId = PERMANENT_JAM_ROOM_ID;
 let latestPartnerPlayback = null; // Data lagu yang sedang disetel pasangan di Jam Room
 
+function isJamRoomJoined() {
+  return localStorage.getItem('romantic_jam_room_joined') === 'true';
+}
+
+function setJamRoomJoined(joined) {
+  try {
+    localStorage.setItem('romantic_jam_room_joined', joined ? 'true' : 'false');
+  } catch (e) {}
+  updateJamRoomJoinUI();
+}
+
+function toggleJoinLeaveJamRoom() {
+  const currentlyJoined = isJamRoomJoined();
+  const nextState = !currentlyJoined;
+  setJamRoomJoined(nextState);
+
+  if (nextState) {
+    if (typeof showToastNotification === 'function') {
+      showToastNotification('Kamu telah bergabung di Room Berdua 💕 Lagu yang kamu putar otomatis tersinkron', 'success');
+    }
+    // Jika pasangan sedang memutar lagu di room, langsung otomatis sinkronkan ke musik pasangan!
+    if (latestPartnerPlayback && latestPartnerPlayback.trackTitle) {
+      setTimeout(() => {
+        syncToPartnerJamNow();
+      }, 200);
+    }
+  } else {
+    if (typeof showToastNotification === 'function') {
+      showToastNotification('Keluar dari room. Mode Solo aktif (pemutaran lagu pribadi)', 'info');
+    }
+  }
+}
+
+function updateJamRoomJoinUI() {
+  const isJoined = isJamRoomJoined();
+  const badge = document.getElementById('jamSessionSyncBadge');
+  const dot = document.getElementById('jamRoomStatusDot');
+  const btn = document.getElementById('jamJoinLeaveBtn');
+  const btnText = document.getElementById('jamJoinLeaveBtnText');
+  const syncHeaderBtn = document.getElementById('jamSyncToPartnerHeaderBtn');
+  const syncHeaderBtnText = document.getElementById('jamSyncToPartnerHeaderBtnText');
+
+  if (badge) {
+    badge.textContent = isJoined ? 'Room KITA 💕 • Terhubung' : 'Mode Solo (Di Luar Room)';
+  }
+  if (dot) {
+    dot.className = isJoined ? 'w-2 h-2 rounded-full bg-emerald-300 animate-pulse' : 'w-2 h-2 rounded-full bg-white/60';
+  }
+  if (btn && btnText) {
+    if (isJoined) {
+      btn.className = 'px-4 py-1.5 rounded-xl bg-white/20 hover:bg-white/30 text-white font-bold text-xs border border-white/30 transition flex items-center gap-1.5 active:scale-95';
+      btn.innerHTML = '<i class="fa-solid fa-door-open"></i> <span>Keluar Room (Mode Solo)</span>';
+    } else {
+      btn.className = 'px-4 py-1.5 rounded-xl bg-white text-[#E85D75] hover:bg-[#FFE4E9] font-extrabold text-xs shadow-md transition flex items-center gap-1.5 active:scale-95';
+      btn.innerHTML = '<i class="fa-solid fa-right-to-bracket text-[#FA8072]"></i> <span>Gabung Room Berdua 💕</span>';
+    }
+  }
+
+  // Tombol Sinkron ke Pasangan di Header
+  if (syncHeaderBtn) {
+    if (latestPartnerPlayback && latestPartnerPlayback.trackTitle) {
+      syncHeaderBtn.classList.remove('hidden');
+      const partnerName = latestPartnerPlayback.senderName || state.partnerName || 'Pasangan';
+      const shortTitle = latestPartnerPlayback.trackTitle.length > 15 ? latestPartnerPlayback.trackTitle.slice(0, 15) + '...' : latestPartnerPlayback.trackTitle;
+      if (syncHeaderBtnText) {
+        syncHeaderBtnText.textContent = `Sinkron ke ${partnerName} ("${shortTitle}")`;
+      }
+    } else {
+      syncHeaderBtn.classList.add('hidden');
+    }
+  }
+
+  if (typeof updateMiniJamStatusCard === 'function') {
+    updateMiniJamStatusCard();
+  }
+}
+
 function initJamRoomSession() {
   if (!Array.isArray(state.jamMessages)) state.jamMessages = [];
   renderJamRoomUI();
 }
 
 function renderJamRoomUI() {
-  const syncBadge = document.getElementById('jamSessionSyncBadge');
+  updateJamRoomJoinUI();
+
   const chatInput = document.getElementById('mainJamChatInput');
   const chatSendBtn = document.getElementById('mainJamChatSendBtn');
-
-  if (syncBadge) {
-    syncBadge.textContent = (typeof syncModeActive !== 'undefined' && syncModeActive)
-      ? 'Room Permanen: KITA 💕 • Terhubung'
-      : 'Sinkronisasi Musik Dijeda';
-  }
   if (chatInput) {
     chatInput.disabled = false;
     chatInput.placeholder = 'Ketik pesan untuk pasanganmu...';
@@ -50,17 +122,29 @@ function updateMiniJamStatusCard() {
   const partnerName = currentAcc ? currentAcc.partnerName : (state.partnerName || 'Nadia');
   const partnerId = currentAcc && currentAcc.id === 'nadia' ? 'dhafin' : 'nadia';
   const isPartnerOnline = Boolean(presenceStateMap && presenceStateMap[partnerId]);
+  const isJoined = isJamRoomJoined();
 
   if (avatar1 && state.yourAvatar) avatar1.src = state.yourAvatar;
   if (avatar2 && state.partnerAvatar) avatar2.src = state.partnerAvatar;
 
-  cardTitle.textContent = 'Listening Together';
-  if (cardBadge) cardBadge.classList.remove('hidden');
-  cardDesc.textContent = isPartnerOnline 
-    ? `${partnerName} sedang online 🟢 • Sinkron Otomatis` 
-    : `${partnerName} offline ⚪ • Sesi Berdua Aktif`;
-  cardBtn.textContent = 'Buka Jam';
-  cardBtn.className = 'shrink-0 px-3 py-1.5 rounded-xl bg-gradient-to-r from-[#FA8072] to-[#E85D75] text-white text-xs font-bold shadow-xs hover:opacity-95 transition whitespace-nowrap';
+  cardTitle.textContent = isJoined ? 'Room Berdua (Aktif)' : 'Listening Together';
+  if (cardBadge) {
+    cardBadge.classList.toggle('hidden', !isJoined);
+  }
+  
+  if (isJoined) {
+    cardDesc.textContent = isPartnerOnline 
+      ? `${partnerName} online 🟢 • Pemutaran tersinkron berdua` 
+      : `${partnerName} offline ⚪ • Room Berdua Aktif`;
+    cardBtn.textContent = 'Buka Jam';
+    cardBtn.className = 'shrink-0 px-3 py-1.5 rounded-xl bg-gradient-to-r from-[#FA8072] to-[#E85D75] text-white text-xs font-bold shadow-xs hover:opacity-95 transition whitespace-nowrap';
+  } else {
+    cardDesc.textContent = (latestPartnerPlayback && latestPartnerPlayback.trackTitle)
+      ? `${partnerName} sedang memutar musik di Room! 💕`
+      : 'Mode Solo • Gabung untuk dengar berdua';
+    cardBtn.textContent = 'Gabung Room';
+    cardBtn.className = 'shrink-0 px-3 py-1.5 rounded-xl bg-white border border-[#FFD2DC] text-[#E85D75] text-xs font-bold shadow-2xs hover:bg-[#FA8072] hover:text-white hover:border-[#FA8072] transition whitespace-nowrap';
+  }
   if (avatar2) avatar2.className = isPartnerOnline 
     ? 'w-8 h-8 rounded-full object-cover ring-2 ring-[#FA8072] live-ring shadow-xs' 
     : 'w-8 h-8 rounded-full object-cover ring-2 ring-white shadow-xs';
@@ -106,11 +190,11 @@ function broadcastPlaybackState(action, position, playingStatus, force = false) 
   if (!force && action !== 'SEEK' && (Date.now() - lastRemoteSyncTime < 2200)) return;
   if (!force && typeof syncModeActive !== 'undefined' && !syncModeActive) return;
 
-  // Pemisahan Mode Solo (General) vs Mode Listening Together (Double Listening):
-  // Broadcast HANYA dikirim jika user berada di menu 'jam' ATAU force === true (aksi khusus Room Berdua)
-  const inJam = (typeof currentView !== 'undefined' && currentView === 'jam') || Boolean(window.__isJamSessionActive);
-  if (!force && !inJam) {
-    return; // Mode Solo lokal: lagu diri sendiri tidak membajak lagu pasangan
+  // ATURAN SINKRONISASI USER:
+  // "jika user sudah join maka jika mereka play lewat general pun otomatis masuk listening together, jika mereka leave room baru kembali ke solo lagi"
+  const isJoined = isJamRoomJoined();
+  if (!force && !isJoined) {
+    return; // Mode Solo lokal: user di luar room, lagu tidak dikirim ke pasangan
   }
 
   const track = getPlayingTrack();
@@ -255,12 +339,16 @@ function handleRemotePlaybackSync(payload, isDirectUserAction = false) {
     syncBtn.innerHTML = `<i class="fa-solid fa-bolt text-yellow-300"></i> Dengar Bareng (${payload.trackTitle ? payload.trackTitle.slice(0, 15) : 'Lagu'}...)`;
   }
 
-  // Jika user sedang TIDAK berada di menu Jam dan ini bukan aksi klik langsung:
-  // Jangan ganti audio solo user secara mendadak; cukup tampilkan banner toast ajakan dengar bareng
-  const inJam = (typeof currentView !== 'undefined' && currentView === 'jam') || Boolean(window.__isJamSessionActive);
-  if (!inJam && !isDirectUserAction) {
+  // Perbarui UI tombol sync di header & card
+  updateJamRoomJoinUI();
+
+  // ATURAN SINKRONISASI:
+  // Jika user belum join room dan ini bukan aksi klik langsung:
+  // Jangan ganti audio solo user secara mendadak; tampilkan notifikasi ajakan gabung room
+  const isJoined = isJamRoomJoined();
+  if (!isJoined && !isDirectUserAction) {
     if (typeof showToastNotification === 'function' && payload.trackTitle) {
-      showToastNotification(`🎧 ${partnerName} sedang memutar "${payload.trackTitle}" di Room Berdua • Buka Jam untuk dengar bareng 💕`, 'music');
+      showToastNotification(`🎧 ${partnerName} sedang memutar "${payload.trackTitle}" di Room Berdua • Gabung room untuk dengar bareng 💕`, 'music');
     }
     return;
   }
